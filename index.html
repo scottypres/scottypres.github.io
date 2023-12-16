@@ -16,6 +16,9 @@
   <button id="getWindDataButton" onclick="getWindSpeedsFromSelectedLocation()">Get Wind Data</button>
   <p id="thresholdInfoText">Ground level is HRRR. All other levels are GFS.</p>
   <button onclick="showConfigPopup()">Configure Thresholds</button>
+  <div id="tableContainer">
+    <!-- Wind data table will be inserted here by JavaScript. -->
+</div>
   <!-- Pop-up and overlay structures -->
   <div class="overlay" id="configOverlay" onclick="hideConfigPopup()"></div>
 <div class="popup" id="configPopup">
@@ -29,6 +32,8 @@
       <input type="text" id="greenThreshold" />
   </div>
   <div>
+    <input type="hidden" id="latitude">
+    <input type="hidden" id="longitude">
       <label for="redThreshold">Red Threshold (high wind):</label>
       <input type="text" id="redThreshold" />
   </div>
