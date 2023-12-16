@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Location Autocomplete</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Ensure proper scaling on mobile -->
+    <title>Wind Speeds by Altitude and Time</title>
+    
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,11 +13,35 @@
     <input type="text" id="location-input" autocomplete="off" placeholder="Type your location...">
     <div id="autocomplete-list"></div>
   </div>
-
-  <p>Selected Location Coordinates:</p>
-  Latitude: <input type="text" id="latitude" readonly><br>
-  Longitude: <input type="text" id="longitude" readonly>
+  <button id="getWindDataButton" onclick="getWindSpeedsFromSelectedLocation()">Get Wind Data</button>
+  <p id="thresholdInfoText">Ground level is HRRR. All other levels are GFS.</p>
+  <button onclick="showConfigPopup()">Configure Thresholds</button>
+  <!-- Pop-up and overlay structures -->
+  <div class="overlay" id="configOverlay" onclick="hideConfigPopup()"></div>
+<div class="popup" id="configPopup">
+  <h3>Configure Thresholds</h3>
+  <div>
+      <label for="blueThreshold">Blue Threshold (nil/low wind):</label>
+      <input type="text" id="blueThreshold" />
+  </div>
+  <div>
+      <label for="greenThreshold">Green Threshold:</label>
+      <input type="text" id="greenThreshold" />
+  </div>
+  <div>
+      <label for="redThreshold">Red Threshold (high wind):</label>
+      <input type="text" id="redThreshold" />
+  </div>
+  <button onclick="saveThresholds()">Apply</button>
+  <button onclick="hideConfigPopup()">Cancel</button>
+</div>
+  <div class="overlay" id="overlay" onclick="closePopup()"></div>
+  <div class="popup" id="popup">
+      <span id="popupContent">Wind Speed: </span>
+      <button onclick="closePopup()">Close</button>
+  </div>
 
   <script src="script.js"></script>
+  
 </body>
 </html>
