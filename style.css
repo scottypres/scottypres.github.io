@@ -1,12 +1,15 @@
-.autocomplete-wrapper {
-    margin: 2rem;
-    position: relative;
-}
+#autocomplete-list {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #d4d4d4;
+    z-index: 99;
+  }
 
-#autocomplete {
-    width: 100%;
-    padding: 0.5rem;
-    font-size: 1rem;
-    border: 2px solid #ddd;
-    border-radius: 4px;
-}
+  #autocomplete-list div {
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  #autocomplete-list div:hover {
+    background-color: #e9e9e9;
+  }
