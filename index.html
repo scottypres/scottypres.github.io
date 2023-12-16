@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Location Autocomplete</title>
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Location Autocomplete</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Enter Your Location</h1>
+  <div style="position: relative;">
+    <input type="text" id="location-input" autocomplete="off" placeholder="Type your location...">
+    <div id="autocomplete-list"></div>
+  </div>
 
-  
-</style>
-<script src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/autocomplete.html"></script>
+  <p>Selected Location Coordinates:</p>
+  Latitude: <input type="text" id="latitude" readonly><br>
+  Longitude: <input type="text" id="longitude" readonly>
+
+  <script src="script.js"></script>
 </body>
 </html>
