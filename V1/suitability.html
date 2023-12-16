@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Paramotoring Suitability Analysis</title>
+</head>
+<body>
+    <script>
+        // Function to fetch the weather data
+        async function fetchWeather() {
+            const apiUrl = 'https://api.open-meteo.com/v1/gfs?latitude=26.64&longitude=-81.87&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_speed_80m,wind_direction_10m,wind_direction_80m,windspeed_1000hPa,windspeed_975hPa,windspeed_950hPa,windspeed_925hPa,windspeed_900hPa,windspeed_850hPa,windspeed_800hPa,winddirection_1000hPa,winddirection_975hPa,winddirection_950hPa,winddirection_925hPa,winddirection_900hPa,winddirection_850hPa,winddirection_800hPa&forecast_days=14';
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                return data.hourly;
+            } catch (error) {
+                console.error("Error fetching weather data: ", error);
+                return null;
+            }
+        }
+
+        // Function to analyze the data
+       function analyzeData(hourlyData) {
+    let scores = [];
+    const windThresholds = {
+    wind_speed_10m: 5, // Maintain threshold in m/s
+    wind_speed_80m: 5, // Maintain threshold in m/s
+    windspeed_1000hPa: 5, // Mai
+    };
+
+    hourlyData.time.forEach((time, index) => {
+        let score = 0;
+        let totalLevels = 0;
+        let windSpeeds = {};
+        let windSpeedSum = 0; // Sum of wind speeds to calculate average
+        
+        // Calculate for each wind speed threshold
+        for (const level in windThresholds) {
+    let windSpeed = parseFloat(hourlyData[level][index]); // Wind speed in m/s
+    windSpeeds[level] = windSpeed * 2.237; // Convert and store the wind speed for reporting in mph
+    windSpeedSum += windSpeed; // Sum up the original wind speed in m/s for average calculation
+            
+            if (windSpeed < windThresholds[level]) {
+                score += 1; // Increment score if below threshold
+            }
+            totalLevels += 1; // Track the number of levels being considered
+        }
+
+        // Calculate average wind speed in mph
+        let averageWindSpeed = windSpeedSum / Object.keys(windThresholds).length;
+
+        // Consider precipitation probability in the score
+        let precipitationProbability = parseFloat(hourlyData.precipitation_probability[index]);
+        let precipitationThreshold = 10;
+        if (precipitationProbability < precipitationThreshold) {
+            score += 1;
+        }
+        totalLevels += 1; // Account for the additional factor of precipitation
+
+        let combinedScore = score / totalLevels;
+        
+        scores.push({
+            time,
+            score: combinedScore,
+            windSpeeds,
+            averageWindSpeed,
+            precipitationProbability: precipitationProbability
+        });
+    });
+
+    scores.sort((a, b) => b.score - a.score);
+    let bestHours = scores.slice(0, 5);
+
+    bestHours.forEach(hour => {
+        console.log(`Date and Time: ${hour.time}`);
+        console.log(`Suitability Score: ${hour.score.toFixed(2)}`);
+        console.log(`Wind Speeds:`);
+        console.log(`- At 10m: ${hour.windSpeeds.wind_speed_10m.toFixed(2)} mph`);
+        console.log(`- At 80m: ${hour.windSpeeds.wind_speed_80m.toFixed(2)} mph`);
+        console.log(`- At 1000hPa: ${hour.windSpeeds.windspeed_1000hPa.toFixed(2)} mph`);
+        console.log(`Average Wind Speed: ${hour.averageWindSpeed.toFixed(2)} mph`);
+        console.log(`Precipitation Probability: ${hour.precipitationProbability.toFixed(0)}%`);
+        console.log('-----------');
+    });
+}
+
+        // Main function to run the weather analysis
+        async function runAnalysis() {
+            let hourlyData = await fetchWeather();
+            if (hourlyData) {
+                analyzeData(hourlyData);
+            } else {
+                console.log('No data available for analysis.');
+            }
+        }
+
+        // Start the analysis
+        runAnalysis();
+    </script>
+</body>
+</html>

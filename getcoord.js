@@ -1,37 +1,41 @@
-// Replace 'YOUR_API_KEY' with your actual API key
-const apiKey = 'pk.56b37a44389aea335d1c84d58086743d';
 
-// Function to query user location with autocomplete
-async function queryUserLocation() {
-  const locationInput = prompt('Enter your location:');
-
-  if (!locationInput) {
-    console.error('Location input cannot be empty.');
-    return;
-  }
-
-  try {
-    const response = await fetch(`https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${locationInput}&format=json`);
-    const data = await response.json();
-
-    if (data.length === 0) {
-      console.error('Location not found.');
-      return;
-    }
-
-    const latitude = data[0].lat;
-    const longitude = data[0].lon;
-
-    console.log('Latitude:', latitude);
-    console.log('Longitude:', longitude);
-
-    // Use the latitude and longitude as needed
-    // ...
-
-  } catch (error) {
-    console.error('An error occurred while fetching user location:', error);
-  }
-}
-
-// Call the function to query user location
-queryUserLocation();
+document.addEventListener("DOMContentLoaded", function() {
+    const apiUrl = 'https://api.locationiq.com/v1/autocomplete.php';
+    let searchBox = document.getElementById('location-input');
+    let autoCompleteResults = document.getElementById('autocomplete-list');
+  
+    searchBox.addEventListener('input', function() {
+      let searchTerm = this.value;
+  
+      if (!searchTerm) {
+        autoCompleteResults.innerHTML = '';
+        return;
+      }
+  
+      fetch(`${apiUrl}?key=pk.56b37a44389aea335d1c84d58086743d&q=${encodeURIComponent(searchTerm)}&limit=5`)
+        .then(response => response.json())
+        .then(data => {
+          autoCompleteResults.innerHTML = '';
+          data.forEach(function(item) {
+            let div = document.createElement('div');
+            div.textContent = item.display_name;
+            div.addEventListener('click', function() {
+              searchBox.value = item.display_name;
+              autoCompleteResults.innerHTML = '';
+              document.getElementById('latitude').value = item.lat;
+              document.getElementById('longitude').value = item.lon;
+            });
+            autoCompleteResults.appendChild(div);
+          });
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    });
+  
+    document.addEventListener('click', function(e) {
+      if (e.target.id !== 'location-input') {
+        autoCompleteResults.innerHTML = '';
+      }
+    });
+  });

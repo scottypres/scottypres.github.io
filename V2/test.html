@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Paramotor Flight Weather Analysis</title>
+</head>
+<body>
+    <h1>Paramotor Flight Weather Analysis for Fort Myers</h1>
+    <button id="fetchData">Fetch Weather Data</button>
+    <div id="weatherReports"></div>
+
+    <script>
+        document.getElementById('fetchData').addEventListener('click', function() {
+            const lat = 26.64;
+            const lon = -81.87;
+            const models = ['forecast', 'dwd-icon', 'gfs'];
+            const hourlyParams = 'temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_speed_80m,wind_direction_10m,wind_direction_80m,windspeed_1000hPa,windspeed_975hPa,windspeed_950hPa,windspeed_925hPa,windspeed_900hPa,windspeed_850hPa,windspeed_800hPa,winddirection_1000hPa,winddirection_975hPa,winddirection_950hPa,winddirection_925hPa,winddirection_900hPa,winddirection_850hPa,winddirection_800hPa';
+
+            models.forEach(model => {
+                const apiUrl = `https://api.open-meteo.com/v1/${model}?latitude=${lat}&longitude=${lon}&hourly=${hourlyParams}`;
+                
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        analyzeWeatherData(data); // Function to analyze data and update the DOM
+                    })
+                    .catch(error => console.error(error));
+            });
+        });
+
+        function analyzeWeatherData(weatherData) {
+            // Analyze weather data logic here
+
+            // Filtering data by parameters (precipitation, wind speed below 5000 ft)
+            // Here you would have to calculate which altitude data corresponds to < 3000 ft
+            // Assuming windspeed_900hPa corresponds to < 3000 ft for simplification
+            
+            const suitableHours = weatherData.hourly.time.filter((time, index) => {
+                const precipitation = weatherData.hourly.precipitation_probability[index];
+                const windSpeed = weatherData.hourly.windspeed_900hPa[index];
+                
+                // Paramotor suitable conditions (example): Precipitation < 10% and Wind Speed < 20 km/h
+                return precipitation < 10 && windSpeed < 20;
+            });
+
+            // Sort this based on best to worst conditions. Assuming that less wind and no precipitation is best
+
+            // Add results to the DOM
+            const weatherReportsDiv = document.getElementById('weatherReports');
+            // Append suitableHours information to weatherReportsDiv
+        }
+    </script>
+</body>
+</html>

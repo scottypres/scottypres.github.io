@@ -7,18 +7,13 @@
     
   <link rel="stylesheet" href="style.css">
 </head>
-<script src="queryapi.js"></script>
 <body>
-
   <h1>Enter Your Location</h1>
   <div style="position: relative;">
     <input type="text" id="location-input" autocomplete="off" placeholder="Type your location...">
     <div id="autocomplete-list"></div>
   </div>
-  <!-- HTML: Remove the inline onclick attribute from your button -->
-<button id="queryApiButton">Get Winds</button>
-  
-  
+  <button id="getWindDataButton" onclick="getWindSpeedsFromSelectedLocation()">Get Wind Data</button>
   <p id="thresholdInfoText">Ground level is HRRR. All other levels are GFS.</p>
   <button onclick="showConfigPopup()">Configure Thresholds</button>
   <div id="tableContainer">
@@ -51,8 +46,7 @@
       <button onclick="closePopup()">Close</button>
   </div>
 
-  <script src="getcoord.js"></script>
+  <script src="script.js"></script>
   
-
 </body>
 </html>

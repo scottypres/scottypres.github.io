@@ -39,6 +39,10 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
+const iconApiUrl = 'https://api.open-meteo.com/v1/dwd-icon';
+const openMeteoApiUrl = 'https://api.open-meteo.com/v1/forecast';
+
+
   // Add these global variables to keep track of the thresholds in JavaScript.
 let blueThresholdValue = parseInt(localStorage.getItem('blueThreshold') || 4);
 let greenThresholdValue = parseInt(localStorage.getItem('greenThreshold') || 12);
@@ -82,6 +86,34 @@ function saveThresholds() {
  * @param {number} longitude - The longitude to fetch data for.  
  * @returns {Promise} Promise that resolves to the API response JSON.
  */
+
+async function getIconData(latitude, longitude) {
+    const url = `${iconApiUrl}?latitude=${latitude}&longitude=${longitude}` +
+    `&hourly=temperature_2m,precipitation_probability,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_gusts_10m,` +
+    `wind_speed_10m,wind_speed_80m,wind_direction_10m,wind_direction_80m,temperature_80m,temperature_1000hPa,temperature_975hPa,` +
+    `temperature_950hPa,temperature_925hPa,temperature_900hPa,temperature_850hPa,temperature_800hPa,` +
+    `windspeed_1000hPa,windspeed_975hPa,windspeed_950hPa,windspeed_925hPa,windspeed_900hPa,windspeed_850hPa,` +
+    `windspeed_800hPa,winddirection_1000hPa,winddirection_975hPa,winddirection_950hPa,winddirection_925hPa,` +
+    `winddirection_900hPa,winddirection_850hPa,winddirection_800hPa` +
+    `&daily=sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=16`;
+    const response = await fetch(url);
+    return response.json();
+    console.log(data); // This will show you the entire structure of the response
+}
+
+async function getOpenMeteoModelData(latitude, longitude) {
+    const url = `${openMeteoApiUrl}?latitude=${latitude}&longitude=${longitude}` +
+    `&hourly=temperature_2m,precipitation_probability,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_gusts_10m,` +
+    `wind_speed_10m,wind_speed_80m,wind_direction_10m,wind_direction_80m,temperature_80m,temperature_1000hPa,temperature_975hPa,` +
+    `temperature_950hPa,temperature_925hPa,temperature_900hPa,temperature_850hPa,temperature_800hPa,` +
+    `windspeed_1000hPa,windspeed_975hPa,windspeed_950hPa,windspeed_925hPa,windspeed_900hPa,windspeed_850hPa,` +
+    `windspeed_800hPa,winddirection_1000hPa,winddirection_975hPa,winddirection_950hPa,winddirection_925hPa,` +
+    `winddirection_900hPa,winddirection_850hPa,winddirection_800hPa` +
+    `&daily=sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=16`;
+    const response = await fetch(url);
+    return response.json();
+    console.log(data); // This will show you the entire structure of the response
+}
 async function getWindSpeeds(latitude, longitude) {
     const url = `https://api.open-meteo.com/v1/gfs?latitude=${latitude}&longitude=${longitude}` +
                 `&hourly=temperature_2m,precipitation_probability,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_gusts_10m,` +
@@ -93,6 +125,7 @@ async function getWindSpeeds(latitude, longitude) {
                 `&daily=sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=16`;
     const response = await fetch(url);
     return response.json();
+    console.log(data); // This will show you the entire structure of the response
 }
 
 function getArrowUnicodeFromDirection(direction) {
@@ -136,7 +169,41 @@ function hideConfigPopup() {
     document.getElementById('configPopup').style.display = 'none';
     document.getElementById('configOverlay').style.display = 'none';
 }
+searchBox.addEventListener('input', function() {
+    let searchTerm = this.value;
 
+    if (!searchTerm) {
+        autoCompleteResults.innerHTML = '';
+        return;
+    }
+
+    fetch(`${apiUrl}?key=pk.56b37a44389aea335d1c84d58086743d&q=${encodeURIComponent(searchTerm)}&limit=5`)
+        .then(response => response.json())
+        .then(data => {
+            console.log("API Response:", data); // Log the data to see the structure
+
+            if (!Array.isArray(data)) {
+                console.error('Expected an array but received:', data);
+                return; // Early exit if the data is not an array
+            }
+
+            autoCompleteResults.innerHTML = '';
+            data.forEach(function(item) {
+                let div = document.createElement('div');
+                div.textContent = item.display_name;
+                div.addEventListener('click', function() {
+                    searchBox.value = item.display_name;
+                    autoCompleteResults.innerHTML = '';
+                    document.getElementById('latitude').value = item.lat;
+                    document.getElementById('longitude').value = item.lon;
+                });
+                autoCompleteResults.appendChild(div);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+});
 // Function to save the thresholds to cookies
 
 async function getWindSpeedsFromSelectedLocation() {
@@ -149,11 +216,24 @@ async function getWindSpeedsFromSelectedLocation() {
         let latitude = latInput.value;
         let longitude = longInput.value;
 
-        // Call Open-Meteo API with the given latitude and longitude
         try {
-            const windData = await getWindSpeeds(latitude, longitude);
-            // Assuming `onWindDataReceived` is a function that takes windData as a parameter and updates the UI
-            onWindDataReceived(windData); // Use the existing function to display the wind data
+            // Call the GFS API
+            const gfsData = await getWindSpeeds(latitude, longitude);
+            //console.log("GFS Data:", JSON.stringify(gfsData, null, 2)); // Log GFS data
+
+            // Call the ICON API
+            const iconData = await getIconData(latitude, longitude);
+            //console.log("ICON Data:", JSON.stringify(iconData, null, 2)); // Log ICON data
+
+            // Call the OpenMeteo API
+            const openMeteoData = await getOpenMeteoModelData(latitude, longitude);
+           // console.log("OpenMeteo Data:", JSON.stringify(openMeteoData, null, 2)); // Log OpenMeteo data
+
+            // Process the data (to be implemented as needed)
+            onWindDataReceived(gfsData, 'GFS');
+            onWindDataReceived(openMeteoData, 'OpenMeteo');
+            onWindDataReceived(iconData, 'ICON');
+            
         } catch (error) {
             console.error('Failed to fetch wind data:', error);
             // Actual error handling for the user goes here
@@ -162,6 +242,8 @@ async function getWindSpeedsFromSelectedLocation() {
         alert("Please select a location first.");
     }
 }
+
+
 function displayWindDataWithNewThresholds() {
     // Use the current wind data to regenerate the wind data table.
     const windData = window.currentWindData;
@@ -194,7 +276,7 @@ function getCookie(name) {
     }
     return "";
 }
-function createTable(windData) {
+function createTable(windData, modelName) {
     const altitudes = [
         { label: 'L-Cloud%', speedKey: 'cloud_cover_low', dirKey: null, tempKey: null, extraClass: 'small-font' },
         { label: 'Cloud%', speedKey: 'cloud_cover', dirKey: null, tempKey: null, extraClass: 'small-font' },
@@ -209,13 +291,14 @@ function createTable(windData) {
     { label: '4921ft', speedKey: 'windspeed_850hPa', dirKey: 'winddirection_850hPa', tempKey: 'temperature_850hPa' },
     { label: '6234ft', speedKey: 'windspeed_800hPa', dirKey: 'winddirection_800hPa', tempKey: 'temperature_800hPa' }
 ];
-
+console.log("windData structure:", windData);
     const table = document.createElement('table');
     const headerRow = document.createElement('tr');
     headerRow.insertCell().innerHTML = 'Time/<br>Alt';
     table.appendChild(headerRow);
 
     const dayAbbreviations = ['SU', 'M', 'T', 'W', 'TR', 'F', 'SA'];
+    
     windData.hourly.time.forEach((time, columnIndex) => {
     const date = new Date(time);
     const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Convert month to MM format
@@ -228,10 +311,28 @@ function createTable(windData) {
     // Remove all references to 'minutes'
     // const minutes = date.getMinutes(); // This line is no longer needed
     // const formattedMinutes = minutes < 10 ? '0' + minutes : minutes; // Remove this line
+    console.log("windData:", windData);
+console.log("windData.hourly:", windData.hourly);
+console.log("windData.hourly.precipitation_probability:", windData.hourly.precipitation_probability);
     const headerCell = document.createElement('th');
     headerCell.innerHTML = `<span class="small-font">${month}/${day}</span><br>` + // Add the date with smaller font size
                            `${dayOfWeek}<br>${formattedHours} <br>${ampm}`;
-      const precipitationProbability = windData.hourly.precipitation_probability[columnIndex];
+                           if (!windData || !windData.hourly || !Array.isArray(windData.hourly.precipitation_probability)) {
+                            console.error('Error: Invalid wind data structure');
+                            // Handle the error appropriately, potentially by stopping the function or setting a default value
+                            return; // As an example action to take
+                        }
+                        
+                        // Ensure the index is in bounds of the array
+                        if (columnIndex < 0 || columnIndex >= windData.hourly.precipitation_probability.length) {
+                            console.error('Error: columnIndex out of bounds');
+                            // Handle the error appropriately
+                            return; // As an example action to take
+                        }
+                        
+                        // As we're sure the index is valid and the structure is correct,
+                        // we can access the precipitation probability
+                        const precipitationProbability = windData.hourly.precipitation_probability[columnIndex];
     const numberOfRowsToDraw = Math.floor(precipitationProbability / 9); // Example: 44% gives 4 rows to draw
 
     // Draw vertical borders around times of day when it's going to rain
@@ -252,35 +353,42 @@ function createTable(windData) {
     altitudes.forEach((altitude, altitudeIndex) => {
     const row = document.createElement('tr');
     const altitudeLabelCell = row.insertCell();
-     altitudeLabelCell.textContent = altitude.label;
-        if (altitude.extraClass) {
-            altitudeLabelCell.classList.add(altitude.extraClass);
-        }
-         // Special handling for cloud cover percentage cells
-        if (altitude.speedKey === 'cloud_cover_low' || altitude.speedKey === 'cloud_cover') {
-            windData.hourly[altitude.speedKey].forEach((cloudPercentage, columnIndex) => {
-                const cloudCell = row.insertCell();
-                cloudCell.textContent = `${cloudPercentage}%`; // Display percentage
-                styleCloudCell(cloudCell, cloudPercentage); // Style cell based on cloud percentage
-                cloudCell.classList.add('small-font'); // Add the small-font class to make text smaller
-            });
-
-        } else {
-            windData.hourly[altitude.speedKey].forEach((speed, columnIndex) => {
-                const windSpeedCell = row.insertCell();
-        const windGusts = windData.hourly['wind_gusts_10m'][columnIndex];
-        speed = Math.round(speed);
-        if (altitude.label === '262ft') {
-        row.classList.add('border-bottom-black');
+    altitudeLabelCell.textContent = altitude.label;
+    if (altitude.extraClass) {
+        altitudeLabelCell.classList.add(altitude.extraClass);
     }
-        
-        if (altitude.dirKey) { // Only add direction if dirKey is present
-            const direction = windData.hourly[altitude.dirKey][columnIndex];
-            const arrowUnicode = getArrowUnicodeFromDirection(direction);
-            windSpeedCell.innerHTML = `${speed}<br>${arrowUnicode}`;
-        } else {
-            windSpeedCell.textContent = `${speed}`; // For wind gusts, just show the speed
-        }
+
+    // Check if the temperature data is available for this altitude, if it is available in modelData
+    let hasTemperatureData = altitude.tempKey && altitude.tempKey in modelData.hourly;
+
+    // Check if the wind data is available for this altitude, it should always be in modelData
+    let hasWindData = altitude.speedKey in modelData.hourly;
+
+    // Check if we have precipitation probability in the current model data
+    let hasPrecipitationProbability = 'precipitation_probability' in modelData.hourly;
+
+    // If it's a cloud cover altitude and has cloud coverage data, special processing may be needed
+    if ((altitude.speedKey === 'cloud_cover_low' || altitude.speedKey === 'cloud_cover') && hasWindData) {
+        modelData.hourly[altitude.speedKey].forEach((cloudPercentage, columnIndex) => {
+            const cloudCell = row.insertCell();
+            cloudCell.textContent = `${cloudPercentage}%`; // Display percentage
+            styleCloudCell(cloudCell, cloudPercentage); // Style cell based on cloud percentage
+        });
+    } else if (hasWindData) {
+        // Otherwise, handle the typical wind speed/direction/temperature cells
+        modelData.hourly[altitude.speedKey].forEach((speed, columnIndex) => {
+            const windSpeedCell = row.insertCell();
+            speed = Math.round(speed);
+            windSpeedCell.textContent = speed; // Set the text to the speed value
+
+            // If direction is provided, append the direction arrow
+            if (altitude.dirKey && (altitude.dirKey in modelData.hourly)) {
+                const direction = modelData.hourly[altitude.dirKey][columnIndex];
+                const arrowUnicode = getArrowUnicodeFromDirection(direction);
+                windSpeedCell.innerHTML = `${speed}<br>${arrowUnicode}`; // Combine speed and direction
+            } else {
+            windSpeedCell.textContent = `${speed}`; // Fallback if direction key is missing
+}
         const { backgroundColor, textColor } = getWindSpeedColor(speed);
     
 windSpeedCell.style.backgroundColor = backgroundColor;
@@ -396,13 +504,42 @@ function flipTableRows(table) {
     rows.forEach(row => table.appendChild(row)); // Append rows back to the table in new order
 }
 
-function onWindDataReceived(windData) {
-    const table = createTable(windData);
-    const tableContainer = document.getElementById('tableContainer');
-    tableContainer.innerHTML = ''; 
-    tableContainer.appendChild(table);
+function onWindDataReceived(modelData, modelName) {
+    console.log(`Creating table for: ${modelName}`); // Debug log
 
-  
+    // Before creating the table, check that modelData has the correct structure
+    if (!modelData || !modelData.hourly || !modelData.hourly.time ||
+        !Array.isArray(modelData.hourly.time) || modelData.hourly.time.length === 0) {
+        console.error(`Model data for ${modelName} is missing or has incorrect structure.`);
+        return; // Do not proceed with table creation
+    }
+    // Function to create and return a table based on the wind data
+    const table = createTable(modelData, modelName);
+
+   // Create a new table container for this model
+   const modelContainerId = `${modelName.toLowerCase()}Container`;
+   let modelContainer = document.getElementById(modelContainerId);
+   if (!modelContainer) {
+       // Create the container if it does not exist
+       modelContainer = document.createElement('div');
+       modelContainer.id = modelContainerId;
+       document.getElementById('tableContainer').appendChild(modelContainer);
+   }
+
+   // Clear previous contents of the container
+   modelContainer.innerHTML = '';
+
+   // Create and append a heading for each model's data
+   const heading = document.createElement('h2');
+   heading.textContent = `${modelName} Wind Data`; // Set the text for the heading
+
+   // Check before appending that the elements actually exist
+   if (heading && table) {
+       modelContainer.appendChild(heading); // Append the heading
+       modelContainer.appendChild(table);   // Append the table
+   } else {
+       console.error(`Failed to create table or heading for ${modelName}`);
+   }
 }
 window.addEventListener('DOMContentLoaded', (event) => {
     const updateValueLabel = (inputId, valueId) => {
