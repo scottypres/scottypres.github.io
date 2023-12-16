@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Ensure proper scaling on mobile -->
+    <title>Wind Speeds by Altitude and Time</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif; /* Improve readability */
+        }
+        /* Style for the first cell in each row */
+    th:first-child, td:first-child {
+        width: 50px;
+    }
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+           
+           
+            table-layout: fixed;
+
+        }
+
+         th, td {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 2px; /* Increased padding for touch devices */
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #e8f4ff;
+        }
+
+        .blue {
+            background-color: blue;
+            color: white;
+        }
+
+        .green {
+            background-color: green;
+            color: black;
+        }
+
+        .red {
+            background-color: red;
+            color: white;
+        }
+        input[type=text], button {
+            font-size: 16px;
+            padding: 10px;
+            margin: 10px 0;
+            display: block;
+            width: calc(80% - 20px); /* Adjust width to allow for padding */
+        }
+
+        #zipCodeInput {
+            margin-bottom: 10px;
+        }
+
+        button {
+            margin-bottom: 20px;
+        }
+
+        .table-scrollable {
+            overflow-x: auto;
+            display: block;
+            width: 100%;
+        }
+    </style>
+<script>
+async function getLatLongFromZip(zipCode) {
+    const url = `https://api.zippopotam.us/us/${zipCode}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return {
+        latitude: data.places[0].latitude,
+        longitude: data.places[0].longitude
+    };
+}
+
+async function getWindSpeeds(latitude, longitude) {
+    const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latitude}&longitude=${longitude}` +
+                `&hourly=wind_speed_10m,wind_speed_80m,` +
+                `wind_speed_120m,wind_speed_180m,` +
+                `wind_direction_10m,wind_direction_80m,` +
+                `wind_direction_120m,wind_direction_180m,` +
+                `windspeed_1000hPa,windspeed_975hPa,windspeed_950hPa,`+
+                `windspeed_925hPa,windspeed_900hPa,windspeed_850hPa,windspeed_800hPa,`+
+                `winddirection_1000hPa,winddirection_975hPa,winddirection_950hPa,`+
+                `winddirection_925hPa,winddirection_900hPa,winddirection_850hPa,winddirection_800hPa,`+
+                `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`;
+    const response = await fetch(url);
+    return response.json();
+}
+
+function getArrowUnicodeFromDirection(direction) {
+    if (direction >= 337.5 || direction < 22.5) {
+        return '&#x2191;&#xFE0E;'; // North as text
+    } else if (direction >= 22.5 && direction < 67.5) {
+        return '&#x2197;&#xFE0E;'; // North-East as text
+    } else if (direction >= 67.5 && direction < 112.5) {
+        return '&#x2192;&#xFE0E;'; // East as text
+    } else if (direction >= 112.5 && direction < 157.5) {
+        return '&#x2198;&#xFE0E;'; // South-East as text
+    } else if (direction >= 157.5 && direction < 202.5) {
+        return '&#x2193;&#xFE0E;'; // South as text
+    } else if (direction >= 202.5 && direction < 247.5) {
+        return '&#x2199;&#xFE0E;'; // South-West as text
+    } else if (direction >= 247.5 && direction < 292.5) {
+        return '&#x2190;&#xFE0E;'; // West as text
+    } else {
+        return '&#x2196;&#xFE0E;'; // North-West as text
+    }
+}
+
+function createTable(windData) {
+    const altitudes = [
+        { label: '32ft', speedKey: 'wind_speed_10m', dirKey: 'wind_direction_10m' },
+        { label: '262ft', speedKey: 'wind_speed_80m', dirKey: 'wind_direction_80m' },
+        { label: '361ft', speedKey: 'windspeed_1000hPa', dirKey: 'winddirection_1000hPa' },
+        { label: '1050ft', speedKey: 'windspeed_975hPa', dirKey: 'winddirection_975hPa' },
+        { label: '1640ft', speedKey: 'windspeed_950hPa', dirKey: 'winddirection_950hPa' },
+        { label: '2625ft', speedKey: 'windspeed_925hPa', dirKey: 'winddirection_925hPa' },
+        { label: '3281ft', speedKey: 'windspeed_900hPa', dirKey: 'winddirection_900hPa' },
+        { label: '4921ft', speedKey: 'windspeed_850hPa', dirKey: 'winddirection_850hPa' },
+        { label: '6234ft', speedKey: 'windspeed_800hPa', dirKey: 'winddirection_800hPa' },
+        
+    ];
+    const cellWidth = '30px';
+    const table = document.createElement('table');
+    const headerRow = document.createElement('tr');
+    headerRow.insertCell().innerHTML = 'Time/<br>Altitude';
+    table.appendChild(headerRow);
+
+    const dayAbbreviations = ['SU', 'M', 'T', 'W', 'TR', 'F', 'SA'];
+    windData.hourly.time.forEach((time, columnIndex) => {
+        const date = new Date(time);
+        const dayOfWeek = dayAbbreviations[date.getDay()];
+        const hours = date.getHours();
+
+        if (!(hours >= 21 || hours < 5)) {
+            const headerCell = document.createElement('th');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = ((hours + 11) % 12 + 1);
+            const minutes = date.getMinutes();
+            const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+            headerCell.innerHTML = `${dayOfWeek}<br>${formattedHours}:${formattedMinutes} <br>${ampm}`;
+            headerRow.appendChild(headerCell);
+        }
+    });
+
+    //headerRow.childNodes.forEach(cell => {
+     //   cell.style.width = cellWidth;
+    //});
+
+    const dataRows = [];
+    altitudes.forEach(altitude => {
+    const row = document.createElement('tr');
+    const altitudeCell = row.insertCell();
+    altitudeCell.textContent = altitude.label;
+    //altitudeCell.style.width = cellWidth;
+
+     windData.hourly[altitude.speedKey].forEach((speed, columnIndex) => {
+            // Here we fix the date scope issue by making sure `date` and `hours` are retrieved for each wind speed entry
+        const time = windData.hourly.time[columnIndex];
+            const date = new Date(time);
+            const hours = date.getHours();
+
+          if (!(hours >= 21 || hours < 5)) {
+                const direction = windData.hourly[altitude.dirKey][columnIndex];
+                const arrowUnicode = getArrowUnicodeFromDirection(direction);
+                const windSpeedCell = row.insertCell();
+                windSpeedCell.innerHTML = `${speed}<br>${arrowUnicode}`;
+    
+                if (speed < 8) {
+                    windSpeedCell.classList.add('blue');
+                } else if (speed >= 8 && speed < 15) {
+                    windSpeedCell.classList.add('green');
+                } else if (speed >= 15) {
+                    windSpeedCell.classList.add('red');
+                }
+            }
+        });
+
+    dataRows.push(row); // Instead of appending directly, push the row to the dataRows array
+});
+
+    // Append the rows in reverse order to flip the table
+    for (let i = dataRows.length - 1; i >= 0; i--) {
+        table.appendChild(dataRows[i]);
+    }
+    
+    return table;
+}
+
+async function handleZipCode() {
+    const zipCode = document.getElementById('zipCodeInput').value;
+    const { latitude, longitude } = await getLatLongFromZip(zipCode);
+    const windData = await getWindSpeeds(latitude, longitude);
+    const table = createTable(windData);
+    document.getElementById('tableContainer').innerHTML = '';
+    document.getElementById('tableContainer').appendChild(table);
+}
+</script>
+</head>
+<body>
+    Enter ZIP code: <input type="text" id="zipCodeInput" />
+    <button onclick="handleZipCode()">Get Winds</button>
+    <div id="tableContainer" class="table-scrollable">
+        <!-- The table will be dynamically inserted here via JavaScript -->
+    </div>
+    <p id="thresholdInfoText">All levels are ICON.</p>
+</body>
+</html>

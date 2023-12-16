@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Wind Speeds by Altitude and Time</title>
+<script>
+async function getLatLongFromZip(zipCode) {
+    const url = `https://api.zippopotam.us/us/${zipCode}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return {
+        latitude: data.places[0].latitude,
+        longitude: data.places[0].longitude
+    };
+}
+
+async function getWindSpeeds(latitude, longitude) {
+    const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latitude}&longitude=${longitude}&hourly=wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`;
+    const response = await fetch(url);
+    return response.json();
+}
+
+function createTable(windData) {
+    const altitudesInFeet = [
+        { label: '32ft', value: '10m' },
+        { label: '262ft', value: '80m' },
+        { label: '394ft', value: '120m' },
+        { label: '590ft', value: '180m' }
+    ];
+    const table = document.createElement('table');
+    
+    // Create header row as before
+    const headerRow = table.insertRow();
+    headerRow.insertCell().textContent = 'Time/Altitude';
+    
+    const dayAbbreviations = ['SU', 'M', 'T', 'W', 'TR', 'F', 'SA'];
+
+    windData.hourly.time.forEach(time => {
+        const headerCell = document.createElement('th');
+        const date = new Date(time);
+        const dayOfWeek = dayAbbreviations[date.getDay()];
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = ((hours + 11) % 12 + 1);
+        const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+        headerCell.textContent = `${dayOfWeek} ${formattedHours}:${formattedMinutes} ${ampm}`;
+        headerRow.appendChild(headerCell);
+    });
+
+    // Create a document fragment to store the rows temporarily
+    let fragment = document.createDocumentFragment();
+
+    // Create rows for each altitude
+    altitudesInFeet.forEach(altitude => {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.textContent = altitude.label;
+        row.appendChild(cell);
+        windData.hourly[`wind_speed_${altitude.value}`].forEach(speed => {
+            const windSpeedCell = document.createElement('td');
+            windSpeedCell.textContent = speed;
+            
+            // Apply color-coding based on the speed
+            if (speed < 8) {
+                windSpeedCell.style.backgroundColor = 'blue';
+                windSpeedCell.style.color = 'white'; // Ensuring text is readable on a dark background
+            } else if (speed >= 8 && speed < 15) {
+                windSpeedCell.style.backgroundColor = 'green';
+                windSpeedCell.style.color = 'black'; // Optional, for contrast
+            } else if (speed >= 15) {
+                windSpeedCell.style.backgroundColor = 'red';
+                windSpeedCell.style.color = 'white'; // Ensuring text is readable on a dark background
+            }
+
+            row.appendChild(windSpeedCell);
+        });
+        fragment.appendChild(row);
+    });
+
+    // Append the rows in reverse order (excluding the header), effectively flipping the table
+    for (let i = fragment.childNodes.length - 1; i >= 0; i--) {
+        table.appendChild(fragment.childNodes[i]);
+    }
+
+    return table;
+}
+
+async function handleZipCode() {
+    const zipCode = document.getElementById('zipCodeInput').value;
+    const { latitude, longitude } = await getLatLongFromZip(zipCode);
+    const windData = await getWindSpeeds(latitude, longitude);
+    const table = createTable(windData);
+    document.getElementById('tableContainer').innerHTML = '';
+    document.getElementById('tableContainer').appendChild(table);
+}
+</script>
+</head>
+<body>
+    Enter ZIP code: <input type="text" id="zipCodeInput" />
+    <button onclick="handleZipCode()">Get Wind Speeds</button>
+    <div id="tableContainer"></div>
+</body>
+</html>

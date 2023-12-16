@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Collection</title>
+    <style>
+      .small-font {
+    font-size: 12px;
+}
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 3;
+}
+
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            position: relative; /* Add this line */
+        }
+
+        .header h2 {
+    /* Sticky positioning here is unnecessary as .sticky-header class already makes the header stick */
+    margin: 0;
+    /* The position, top, and background-color properties should be removed from here */
+}
+/* Add these CSS styles */
+th.daylight {
+    border: 2px solid orange;
+}
+
+th span {
+  font-size: 12px;
+}
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 3px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        th:first-child {
+            position: sticky;
+            left: 0;
+            background-color: white;
+            z-index: 2;
+            width: 120px; /* Set the width for the first column */
+        }
+        th:not(:first-child) {
+            white-space: nowrap; /* Prevent text wrapping in the header cells */
+        }
+        td:not(:first-child) {
+
+            white-space: nowrap; /* Prevent text wrapping in the data cells */
+        }
+        th {
+            min-width: 20px; /* Adjust the min-width to ensure the header text is visible */
+            white-space: nowrap; /* This will prevent the header text from wrapping */
+            overflow: hidden; /* Hide overflowed text */
+            text-overflow: ellipsis; /* Add an ellipsis to indicate the text is longer */
+        }
+        .grey-bg {
+            /* Max grey level 75% */
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+    </style>
+</head>
+<body>
+    <!-- ICON Table -->
+
+
+    <!-- OpenMeteo Table -->
+    <table id="openmeteo-table">
+        <!-- The table will be populated by JavaScript -->
+    </table>
+
+    
+
+    <!-- GFS Table -->
+    <table id="gfs-table">
+        <!-- The table will be populated by JavaScript -->
+    </table>
+
+    <table id="icon-table">
+    <!-- The table will be populated by JavaScript -->
+</table>
+    </div>
+
+
+<script>
+// Function to convert hPa to feet
+
+function hPaToFeet(hPa) {
+    const conversionTable = {
+        1000: 110,
+        975: 320,
+        950: 500,
+        925: 800,
+        900: 1000,
+        850: 1500,
+        800: 1900,
+        700: 3000,
+        600: 4200,
+        500: 5600,
+        400: 7200
+    };
+
+    const meters = conversionTable[hPa];
+    const feet = meters * 3.28084; // Convert meters to feet
+    return Math.round(feet);
+}
+async function checkAndFetchData(baseUrl, model) {
+    const commonParameters = [
+        'temperature_2m',
+        'weather_code',
+        'dew_point_2m',
+        'cloud_cover',
+        'cloud_cover_low',
+        'cloud_cover_mid',
+        'cloud_cover_high',
+        'cloud_cover_1000hPa',
+        'cloud_cover_975hPa',
+        'cloud_cover_950hPa',
+        'cloud_cover_925hPa',
+        'cloud_cover_900hPa',
+        'cloud_cover_850hPa',
+        'cloud_cover_800hPa',
+        'cloud_cover_750hPa',
+        'cloud_cover_700hPa',
+        'cloud_cover_650hPa',
+        'cloud_cover_600hPa',
+        'cloud_cover_550hPa',
+        'cloud_cover_500hPa',
+        'cloud_cover_450hPa',
+        'cloud_cover_400hPa'
+    ].join(',');
+
+    const location = {
+        latitude: 52.52,
+        longitude: 13.41
+    };
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch';
+
+    // Combine base URL, location, parameters, and units into a single API call
+    try {
+        const response = await fetch(`${baseUrl}?latitude=${location.latitude}&longitude=${location.longitude}&hourly=${commonParameters}${units}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const weatherData = await response.json();
+        console.log(`Data fetched successfully for model "${model}":`, weatherData);
+
+        // Call createTable to populate the table with fetched data
+        // This assumes you have a corresponding table ID and data structure for the model
+        createTable(`${model.toLowerCase()}-table`, weatherData, model);
+
+    } catch (error) {
+        console.error(`Failed to fetch data for model "${model}":`, error);
+    }
+}
+
+// Initialize and fetch data for each model
+const baseUrls = {
+    openMeteo: 'https://api.open-meteo.com/v1/forecast',
+    gfs: 'https://api.open-meteo.com/v1/gfs',
+    icon: 'https://api.open-meteo.com/v1/dwd-icon'
+};
+
+for (const [model, baseUrl] of Object.entries(baseUrls)) {
+    checkAndFetchData(baseUrl, model).catch(error => {
+        console.error(`Failed to fetch data for model "${model}":`, error);
+    });
+}
+
+
+
+
+
+function createTable(tableId, weatherData, model) {
+    const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400];
+    const timestamps = weatherData.hourly.time;
+    const dataTable = document.getElementById(tableId);
+
+    let tableHtml = `<tr><th>${model}</th>`;
+
+    // Add date headers 
+    timestamps.forEach((timestamp, index) => {  // 'index' is now defined in parameters
+    const date = new Date(timestamp);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const hour = date.getHours();
+    const hour12 = hour % 12 || 12; // Convert 24-hour to 12-hour format
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+
+    // Add "daylight" class to header cells of daylight hours
+    const isDaylight = hour >= 6 && hour < 18;
+    const headerClass = isDaylight ? 'daylight' : '';
+
+    // Wrap date in span with class to reduce font size
+      tableHtml += `<th id="${tableId}-header-${index}" class="${headerClass}">
+                        <span class="small-font">${month}/${day}</span><br>
+                        ${dayOfWeek}<br>${hour12}<br>${ampm}
+                      </th>`;
+});
+    tableHtml += '</tr>';
+
+    // Add rows for each altitude
+    altitudeLabels.reverse().forEach(hPa => {
+        const feet = hPaToFeet(hPa);
+        tableHtml += `<tr><th>${feet} ft</th>`;
+
+        const cloudCoverKey = `cloud_cover_${hPa}hPa`;
+        weatherData.hourly[cloudCoverKey].forEach(cloudCover => {
+            tableHtml += `<td class="grey-bg" style="background-color: rgba(0, 0, 0, ${cloudCover * 0.75 / 100})"></td>`;
+        });
+
+        tableHtml += '</tr>';
+    });
+
+    dataTable.innerHTML = tableHtml;
+    // Add event listeners after the table has been created
+    timestamps.forEach((timestamp, index) => {
+        const headerElement = document.getElementById(`${tableId}-header-${index}`);
+        if (headerElement) {
+            headerElement.addEventListener('click', () => {
+                // When clicked, call displayDataAtIndex with weatherData and the specific index
+                displayDataAtIndex(weatherData, index);
+            });
+        }
+    });
+    console.log(`Listeners added for ${model} model`);
+}
+
+function displayDataAtIndex(weatherData, index) {
+    console.log('Index:', index);
+    console.log('weatherData at Index:', weatherData.hourly.time[index]);
+    console.log('Total Cloud Cover:', weatherData.hourly.cloud_cover[index]);
+    console.log('Low Cloud Cover:', weatherData.hourly.cloud_cover_low[index]);
+    
+    // Assuming these are the next properties you are trying to log
+    console.log('Mid Cloud Cover:', weatherData.hourly.cloud_cover_mid ? weatherData.hourly.cloud_cover_mid[index] : 'None');
+    console.log('High Cloud Cover:', weatherData.hourly.cloud_cover_high ? weatherData.hourly.cloud_cover_high[index] : 'None');
+    console.log('Temperature:', weatherData.hourly.temperature_2m ? weatherData.hourly.temperature_2m[index] : 'None');
+    console.log('Dewpoint:', weatherData.hourly.dew_point_2m ? weatherData.hourly.dew_point_2m[index] : 'None');
+    
+
+    // Now we handle any remaining code with access to the possibly undefined properties
+    const tempDewpointSpread = (weatherData.hourly.temperature_2m && weatherData.hourly.dew_point_2m)
+        ? (weatherData.hourly.temperature_2m[index] - weatherData.hourly.dew_point_2m[index])
+        : 'N/A';
+    console.log('Temp-Dewpoint Spread:', tempDewpointSpread);
+    // Add similar lines for cloud_cover_mid, cloud_cover_high, temperature_2m, dew_point_2m, visibility
+    const dataForTimestamp = {
+        totalCloudCover: weatherData.hourly.cloud_cover[index],
+        lowCloudCover: weatherData.hourly.cloud_cover_low[index],
+        midCloudCover: weatherData.hourly.cloud_cover_mid[index],
+        highCloudCover: weatherData.hourly.cloud_cover_high[index],
+        temperature: weatherData.hourly.temperature_2m[index],
+        dewpoint: weatherData.hourly.dew_point_2m[index],
+
+    };
+
+
+    
+    // Display the alert without visibility data for ICON model
+    alert(
+        `Timestamp: ${weatherData.hourly.time[index]}\n` +
+        `Total Cloud Cover: ${dataForTimestamp.totalCloudCover}%\n` +
+        `Low Cloud Cover: ${dataForTimestamp.lowCloudCover}%\n` +
+        `Mid Cloud Cover: ${dataForTimestamp.midCloudCover}%\n` +
+        `High Cloud Cover: ${dataForTimestamp.highCloudCover}%\n` +
+        `Temperature: ${dataForTimestamp.temperature}°\n` +
+        `Dewpoint: ${dataForTimestamp.dewpoint}°\n` +
+        `Temp-Dewpoint Spread: ${tempDewpointSpread}°\n` 
+        
+    );
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Wind Speeds by Altitude and Time</title>
+<script>
+async function getLatLongFromZip(zipCode) {
+    const url = `https://api.zippopotam.us/us/${zipCode}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return {
+        latitude: data.places[0].latitude,
+        longitude: data.places[0].longitude
+    };
+}
+
+async function getWindSpeeds(latitude, longitude) {
+    const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latitude}&longitude=${longitude}&hourly=wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`;
+    const response = await fetch(url);
+    return response.json();
+}
+
+function createTable(windData, threshold) {
+    const altitudesInFeet = [
+        { label: '32ft', value: '10m' },
+        { label: '262ft', value: '80m' },
+        { label: '394ft', value: '120m' },
+        { label: '590ft', value: '180m' }
+    ];
+    
+    const table = document.createElement('table');
+    const headerRow = document.createElement('tr'); // Create a separate header row
+    headerRow.insertCell().textContent = 'Time/Altitude';
+    table.appendChild(headerRow); // Append the header row to the table first
+    
+    // Track which columns need to be deleted
+    let columnsToDelete = new Set();
+    
+    windData.hourly.time.forEach((time, columnIndex) => {
+        const date = new Date(time);
+        const hours = date.getHours();
+
+        // Skip the times from 9pm to 5am
+        if (hours >= 21 || hours < 5) {
+            columnsToDelete.add(columnIndex);
+            return;
+        }
+
+        const windSpeeds10m = windData.hourly.wind_speed_10m[columnIndex];
+        const windSpeeds80m = windData.hourly.wind_speed_80m[columnIndex];
+        
+        // If the wind speed at 32ft or 262ft exceeds the threshold, mark the column for deletion
+        if (windSpeeds10m > threshold || windSpeeds80m > threshold) {
+            columnsToDelete.add(columnIndex);
+        } else {
+            // Only create header cells for columns that won't be deleted
+            const headerCell = document.createElement('th');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = ((hours + 11) % 12 + 1);
+            const minutes = date.getMinutes();
+            const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+            headerCell.textContent = `${formattedHours}:${formattedMinutes} ${ampm}`;
+            headerRow.appendChild(headerCell);
+        }
+    });
+
+    // Add the threshold explanation text
+    let thresholdInfoRow = document.createElement('tr');
+    let thresholdInfoCell = thresholdInfoRow.insertCell();
+    thresholdInfoCell.colSpan = windData.hourly.time.length - columnsToDelete.size;
+    thresholdInfoCell.textContent = "Wind speed threshold applies to 32 and 262ft levels only";
+    table.appendChild(thresholdInfoRow); // Append before the data rows
+
+    // Create an array to store the non-header rows
+    let dataRows = [];
+
+    altitudesInFeet.forEach(altitude => {
+        const row = document.createElement('tr');
+        const altitudeCell = row.insertCell();
+        altitudeCell.textContent = altitude.label;
+
+        windData.hourly[`wind_speed_${altitude.value}`].forEach((speed, columnIndex) => {
+            // Skip over columns that are marked for deletion
+            if (!columnsToDelete.has(columnIndex)) {
+                const windSpeedCell = row.insertCell();
+                windSpeedCell.textContent = speed;
+
+                // Apply color-coding based on the speed
+                if (speed < 8) {
+                    windSpeedCell.style.backgroundColor = 'blue';
+                    windSpeedCell.style.color = 'white';
+                } else if (speed >= 8 && speed < 15) {
+                    windSpeedCell.style.backgroundColor = 'green';
+                    windSpeedCell.style.color = 'black';
+                } else if (speed >= 15) {
+                    windSpeedCell.style.backgroundColor = 'red';
+                    windSpeedCell.style.color = 'white';
+                }
+            }
+        });
+
+        // Store the row in an array instead of appending to the table
+        dataRows.push(row);
+    });
+
+    // Append the rows in reverse order to flip the table, except for the header
+    for (let i = dataRows.length - 1; i >= 0; i--) {
+        table.appendChild(dataRows[i]);
+    }
+
+    // The header row is already appended at the beginning of the function
+
+    return table;
+}
+
+async function handleZipCode() {
+    const zipCode = document.getElementById('zipCodeInput').value;
+    // Make sure to parse the threshold as a number
+    const threshold = parseFloat(document.getElementById('thresholdInput').value);
+    const { latitude, longitude } = await getLatLongFromZip(zipCode);
+    const windData = await getWindSpeeds(latitude, longitude);
+    const table = createTable(windData, threshold);
+    document.getElementById('tableContainer').innerHTML = ''; // Clear any previous table
+    document.getElementById('tableContainer').appendChild(table);
+}
+</script>
+</head>
+<body>
+    Enter ZIP code: <input type="text" id="zipCodeInput" />
+    Enter wind threshold (mph): <input type="text" id="thresholdInput" />
+    <button onclick="handleZipCode()">Get Best Times</button>
+    <div id="tableContainer"></div>
+</body>
+</html>

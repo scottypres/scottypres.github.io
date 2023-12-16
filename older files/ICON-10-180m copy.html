@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Wind Speeds by Altitude and Time</title>
+<script>
+async function getLatLongFromZip(zipCode) {
+    const url = `https://api.zippopotam.us/us/${zipCode}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return {
+        latitude: data.places[0].latitude,
+        longitude: data.places[0].longitude
+    };
+}
+
+async function getWindSpeeds(latitude, longitude) {
+    const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latitude}&longitude=${longitude}&hourly=wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`;
+    const response = await fetch(url);
+    return response.json();
+}
+
+function createTable(windData) {
+    const altitudes = ['10m', '80m', '120m', '180m'];
+    const table = document.createElement('table');
+    const headerRow = table.insertRow();
+    headerRow.insertCell().textContent = 'Time/Altitude';
+    
+    // Abbreviations for the days of the week
+    const dayAbbreviations = ['SU', 'M', 'T', 'W', 'TR', 'F', 'SA'];
+    
+    // Create header row with times in AM/PM format and add day of the week
+    windData.hourly.time.forEach(time => {
+        const headerCell = document.createElement('th');
+        // Assuming the time format is "YYYY-MM-DDTHH:mm", which needs to be converted to AM/PM format with the day
+        const date = new Date(time);
+        const dayOfWeek = dayAbbreviations[date.getDay()];
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = ((hours + 11) % 12 + 1); // Convert 24h to 12h format
+        const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+        headerCell.textContent = `${dayOfWeek} ${formattedHours}:${formattedMinutes} ${ampm}`;
+        headerRow.appendChild(headerCell);
+    });
+
+    // Create rows for each altitude
+    altitudes.forEach(altitude => {
+        const row = table.insertRow();
+        const cell = row.insertCell();
+        cell.textContent = altitude;
+        windData.hourly[`wind_speed_${altitude}`].forEach(speed => {
+            const windSpeedCell = row.insertCell();
+            windSpeedCell.textContent = speed + ' mph';
+            // Apply color-coding based on the speed
+            if (speed < 8) {
+                windSpeedCell.style.backgroundColor = 'blue';
+                windSpeedCell.style.color = 'white'; // Ensuring text is readable on a dark background
+            } else if (speed >= 8 && speed < 15) {
+                windSpeedCell.style.backgroundColor = 'green';
+                windSpeedCell.style.color = 'black'; // Optional, for contrast
+            } else if (speed >= 15) {
+                windSpeedCell.style.backgroundColor = 'red';
+                windSpeedCell.style.color = 'white'; // Ensuring text is readable on a dark background
+            }
+        });
+    });
+
+    return table;
+}
+
+async function handleZipCode() {
+    const zipCode = document.getElementById('zipCodeInput').value;
+    const { latitude, longitude } = await getLatLongFromZip(zipCode);
+    const windData = await getWindSpeeds(latitude, longitude);
+    const table = createTable(windData);
+    document.getElementById('tableContainer').innerHTML = '';
+    document.getElementById('tableContainer').appendChild(table);
+}
+</script>
+</head>
+<body>
+    Enter ZIP code: <input type="text" id="zipCodeInput" />
+    <button onclick="handleZipCode()">Get Wind Speeds</button>
+    <div id="tableContainer"></div>
+</body>
+</html>

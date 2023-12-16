@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Collection</title>
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: center;
+    }
+    th:first-child, td:first-child {
+        position: sticky;
+        left: 0;
+        background-color: white;
+        z-index: 2;
+    }
+    th {
+        background-color: #ddd;
+        z-index: 1;
+    }
+    .grey-bg {
+        /* Max grey level 75% */
+        background-color: rgba(0, 0, 0, 0.75);
+    }
+</style>
+</head>
+<body>
+
+<table id="data-table">
+    <!-- The table will be populated by JavaScript -->
+</table>
+
+<script>
+// Function to convert hPa to feet
+function hPaToFeet(hPa) {
+    const conversionTable = {
+        1000: 110,
+        975: 320,
+        950: 500,
+        925: 800,
+        900: 1000,
+        850: 1500,
+        800: 1900,
+        700: 3000,
+        600: 4200,
+        500: 5600,
+        400: 7200
+    };
+
+    const meters = conversionTable[hPa];
+    const feet = meters * 3.28084; // Convert meters to feet
+    return Math.round(feet);
+}
+
+function setGreyBackground(cell, cloudCover) {
+    const greyLevel = Math.round(cloudCover * 0.75); // 75% max grey level
+    cell.style.backgroundColor = `rgba(0, 0, 0, ${greyLevel / 100})`;
+}
+
+async function fetchData() {
+    const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=26.4187&longitude=-81.4173&hourly=cloud_cover_1000hPa,cloud_cover_975hPa,cloud_cover_950hPa,cloud_cover_925hPa,cloud_cover_900hPa,cloud_cover_850hPa,cloud_cover_800hPa,cloud_cover_700hPa,cloud_cover_600hPa,cloud_cover_500hPa,cloud_cover_400hPa');
+    const data = await response.json();
+
+    return data;
+}
+
+function createTable(weatherData) {
+    const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400];
+    const timestamps = weatherData.hourly.time;
+    const dataTable = document.getElementById('data-table');
+
+    let tableHtml = '<tr><th>Altitude/Time</th>';
+
+    // Add timestamp headers
+    timestamps.forEach(timestamp => {
+        tableHtml += `<th>${new Date(timestamp).toLocaleTimeString()}</th>`;
+    });
+    tableHtml += '</tr>';
+
+    // Add rows for each altitude
+    altitudeLabels.forEach(hPa => {
+        const feet = hPaToFeet(hPa);
+        tableHtml += `<tr><th>${feet} ft</th>`;
+
+        const cloudCoverKey = `cloud_cover_${hPa}hPa`;
+        weatherData.hourly[cloudCoverKey].forEach(cloudCover => {
+            tableHtml += `<td class="grey-bg" style="background-color: rgba(0, 0, 0, ${cloudCover * 0.75 / 100})">${cloudCover}%</td>`;
+        });
+
+        tableHtml += '</tr>';
+    });
+
+    dataTable.innerHTML = tableHtml;
+}
+
+// Initialize and create the table
+fetchData().then(weatherData => {
+    createTable(weatherData);
+});
+</script>
+</body>
+</html>

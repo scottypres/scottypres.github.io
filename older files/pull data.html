@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Data Fetch</title>
+<script>
+// Async function to fetch data from the Open-Meteo API
+async function fetchData(apiUrl) {
+    try {
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return { data, error: null };
+    } catch (error) {
+        console.error("Error fetching data: ", error);
+        return { data: null, error };
+    }
+}
+
+// Function to call when the "Fetch Data" button is clicked
+async function checkAndFetchData() {
+    const commonParameters = 'temperature_2m,weather_code,dew_point_2m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,cloud_cover_1000hPa,cloud_cover_975hPa,cloud_cover_950hPa,cloud_cover_925hPa,cloud_cover_900hPa,cloud_cover_850hPa,cloud_cover_800hPa,cloud_cover_750hPa,cloud_cover_700hPa,cloud_cover_650hPa,cloud_cover_600hPa,cloud_cover_550hPa,cloud_cover_500hPa,cloud_cover_450hPa,cloud_cover_400hPa';
+    const location = {
+        latitude: 52.52,
+        longitude: 13.41
+    };
+    const commonQuery = `latitude=${location.latitude}&longitude=${location.longitude}&hourly=${commonParameters}&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`;
+
+    // Build the URLs for the different APIs
+    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?${commonQuery}`;
+    const gfsUrl = `https://api.open-meteo.com/v1/gfs?${commonQuery}`;
+    const iconUrl = `https://api.open-meteo.com/v1/dwd-icon?${commonQuery}`;
+
+    // Fetch data from all three URLs
+    const results = await Promise.all([
+        fetchData(openMeteoUrl),
+        fetchData(gfsUrl),
+        fetchData(iconUrl)
+    ]);
+
+    // Check for errors and that data formats match
+    let errorMsg = "";
+    let isDataFormatSame = true;
+    const referenceData = JSON.stringify(Object.keys(results[0].data));
+    
+    for (const result of results) {
+        if (result.error) {
+            errorMsg += `${result.error.message}\n`;
+        } else {
+            const dataFormat = JSON.stringify(Object.keys(result.data));
+            if (dataFormat !== referenceData) {
+                isDataFormatSame = false;
+                break;
+            }
+        }
+    }
+
+    // Display results
+    const resultsElement = document.getElementById('results');
+
+    if (errorMsg) {
+        // If there are errors, display them
+        resultsElement.textContent = `Errors: ${errorMsg}`;
+    } else if (!isDataFormatSame) {
+        // If data formats don't match, display an error message
+        resultsElement.textContent = "Error: Data formats do not match.";
+    } else {
+        // If everything is okay, display the fetched data
+        resultsElement.textContent = "Successfully fetched and matched data format for all APIs.";
+    }
+            // Logging the data to the console
+        console.log("Open-Meteo Data:", results[0].data);
+        console.log("GFS Data:", results[1].data);
+        console.log("ICON Data:", results[2].data);
+}
+</script>
+</head>
+<body>
+<h1>Fetch Weather Data</h1>
+<button onclick="checkAndFetchData()">Fetch Data</button>
+<div id="results"></div>
+</body>
+</html>
