@@ -1,22 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Location Autocomplete</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Autocomplete</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
 <body>
-  <h1>Enter Your Location</h1>
-  <div style="position: relative;">
-    <input type="text" id="location-input" autocomplete="off" placeholder="Type your location...">
-    <div id="autocomplete-list"></div>
-  </div>
 
-  <p>Selected Location Coordinates:</p>
-  Latitude: <input type="text" id="latitude" readonly><br>
-  Longitude: <input type="text" id="longitude" readonly>
+<div class="autocomplete-wrapper">
+    <input id="autocomplete" type="text" placeholder="Enter your location">
+</div>
 
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
