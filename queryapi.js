@@ -2,6 +2,10 @@ let iconData;
 let openMeteoData;
 let GFSData;
 
+let tableIconWind 
+let tableOpenMeteoWind
+let tableGFSWind 
+
 const iconApiUrl = 'https://api.open-meteo.com/v1/dwd-icon';
 const openMeteoApiUrl = 'https://api.open-meteo.com/v1/forecast';
 const hPaToFt = {
@@ -23,20 +27,22 @@ getWindsButton.addEventListener('click', async function () {
     if (lat && lon) {
         try {
              iconData = await getIconData(lat, lon);
-            const convertedIconData = convertData(iconData);
+             convertedIconData = convertData(iconData);
             openMeteoData = await getOpenMeteoModelData(lat, lon);
-            const convertedOpenMeteoData = convertData(openMeteoData);
+             convertedOpenMeteoData = convertData(openMeteoData);
              GFSData = await getGFSData(lat, lon);
-            const convertedGFSData = convertData(GFSData);
+             convertedGFSData = convertData(GFSData);
             
-
+const tableIconWind = convertToTableData(convertedIconData);
+const tableOpenMeteoWind = convertToTableData(convertedOpenMeteoData);
+const tableGFSWind = convertToTableData(convertedGFSData);
            
 
 
 // Now you can use the converted data to update the UI or tables
-console.log('Converted ICON Data:', convertedIconData);
-console.log('Converted OpenMeteo Data:', convertedOpenMeteoData);
-console.log('Converted GFS Data:', convertedGFSData);
+console.log('Converted ICON Data:', tableIconWind);
+console.log('Converted OpenMeteo Data:', tableOpenMeteoWind);
+console.log('Converted GFS Data:', tableGFSWind);
 
             // Process the data here and update the table or display it in the UI
         } catch (error) {
@@ -141,4 +147,38 @@ function convertData(data) {
     }
 
     return convertedData;
+    
 }
+
+// This function converts the array of weather data entries into a table format
+function convertToTableData(weatherData) {
+    const tableData = {};
+
+    // Iterate over each entry to populate the table data
+    for (const entry of weatherData) {
+        console.log('Processing entry:', entry);
+
+        const timeHeader = entry.time;
+        if (!tableData[timeHeader]) {
+            tableData[timeHeader] = {};
+        }
+
+        for (const [key, value] of Object.entries(entry)) {
+            console.log(`Processing key: ${key}, value: ${value}`);
+
+            if (key.endsWith('ft')) {
+                if (!tableData[timeHeader][key]) {
+                    tableData[timeHeader][key] = { windSpeed: null, allData: {} };
+                }
+                if (key.includes('wind_speed')) {
+                    tableData[timeHeader][key].windSpeed = value;
+                }
+                tableData[timeHeader][key].allData[key] = value;
+            }
+        }
+    }
+
+    
+    return tableData;
+}
+

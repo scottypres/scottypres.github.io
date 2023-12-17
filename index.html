@@ -20,8 +20,22 @@
   
   <p id="thresholdInfoText">Ground level is HRRR. All other levels are GFS.</p>
   <button onclick="showConfigPopup()">Configure Thresholds</button>
-  <div id="tableContainer">
-    <!-- Wind data table will be inserted here by JavaScript. -->
+
+
+<div id="tableContainer">
+    <table id="tableIconWind">
+        <!-- Table headers and data rows will go here -->
+    </table>
+</div>
+<div id="tableContainer">
+    <table id="tableGFSWind">
+        <!-- Table headers and data rows will go here -->
+    </table>
+</div>
+<div id="tableContainer">
+    <table id="tableOpenMeteoWind">
+        <!-- Table headers and data rows will go here -->
+    </table>
 </div>
   <!-- Pop-up and overlay structures -->
   <div class="overlay" id="configOverlay" onclick="hideConfigPopup()"></div>
