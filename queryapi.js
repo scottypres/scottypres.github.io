@@ -6,6 +6,10 @@ let tableIconWind
 let tableOpenMeteoWind
 let tableGFSWind 
 
+let convertedIconData;
+let convertedOpenMeteoData;
+let convertedGFSData;
+
 const iconApiUrl = 'https://api.open-meteo.com/v1/dwd-icon';
 const openMeteoApiUrl = 'https://api.open-meteo.com/v1/forecast';
 const hPaToFt = {
@@ -37,13 +41,54 @@ const tableIconWind = convertToTableData(convertedIconData);
 const tableOpenMeteoWind = convertToTableData(convertedOpenMeteoData);
 const tableGFSWind = convertToTableData(convertedGFSData);
            
+//CREATE ARRAYS
 
+//ICON
+const windTableICON = processWeatherData(convertedIconData, 'wind_speed');
+const temperatureTableICON = processWeatherData(convertedIconData, 'temperature');
+const cloudCoverTableICON = processWeatherData(convertedIconData, 'cloud_cover');
+const windDirectionTableICON = processWeatherData(convertedIconData, 'wind_direction');
+// Process and create arrays for common surface hourly variables
+const totalCloudCoverTableICON = processWeatherData(convertedIconData, 'cloud_cover_total');
+const cloudCoverLowTableICON = processWeatherData(convertedIconData, 'cloud_cover_low');
+const cloudCoverMidTableICON = processWeatherData(convertedIconData, 'cloud_cover_mid');
+const cloudCoverHighTableICON = processWeatherData(convertedIconData, 'cloud_cover_high');
+const temperature2mMinTableICON = processWeatherData(convertedIconData, 'temperature_2m_min');
+const temperature2mMaxTableICON = processWeatherData(convertedIconData, 'temperature_2m_max');
+
+
+// Process and create arrays for OpenMeteo model
+const windTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'wind_speed');
+const temperatureTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'temperature');
+const cloudCoverTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'cloud_cover');
+const windDirectionTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'wind_direction');
+// OpenMeteo Surface Variables
+const cloudCoverLowTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'cloud_cover_low');
+const cloudCoverMidTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'cloud_cover_mid');
+const cloudCoverHighTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'cloud_cover_high');
+const temp2mMinTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'temperature_2m_min');
+const temp2mMaxTableOpenMeteo = processWeatherData(convertedOpenMeteoData, 'temperature_2m_max');
+
+
+// Process and create arrays for GFS model
+const windTableGFS = processWeatherData(convertedGFSData, 'wind_speed');
+const temperatureTableGFS = processWeatherData(convertedGFSData, 'temperature');
+const cloudCoverTableGFS = processWeatherData(convertedGFSData, 'cloud_cover');
+const windDirectionTableGFS = processWeatherData(convertedGFSData, 'wind_direction');
+// GFS Surface Variables
+const cloudCoverMidTableGFS = processWeatherData(convertedGFSData, 'cloud_cover_mid');
+const cloudCoverHighTableGFS = processWeatherData(convertedGFSData, 'cloud_cover_high');
+const temp2mMinTableGFS = processWeatherData(convertedGFSData, 'temperature_2m_min');
+const temp2mMaxTableGFS = processWeatherData(convertedGFSData, 'temperature_2m_max');
 
 // Now you can use the converted data to update the UI or tables
-console.log('mph ICON Data:', tableIconWind);
-console.log('mph OpenMeteo Data:', tableOpenMeteoWind);
-console.log('mph GFS Data:', tableGFSWind);
-
+console.log('Wind Table ICON:', windTableICON);
+console.log('Wind Table OpenMeteo:', windTableOpenMeteo);
+console.log('Wind Table GFS:', windTableGFS);
+console.log('Total Cloud Cover Table ICON:', totalCloudCoverTableICON);
+console.log('Low Cloud Cover Table OpenMeteo:', cloudCoverLowTableOpenMeteo);
+console.log('High Cloud Cover Table GFS:', cloudCoverHighTableGFS);
+console.log('temp2mMaxTableGFS', temp2mMaxTableGFS);
 
 
             // Process the data here and update the table or display it in the UI
@@ -184,3 +229,53 @@ function convertToTableData(weatherData) {
     return tableData;
 }
 
+
+
+/**
+ * Extracts all entries which include the keyword in their keys.
+ * 
+ * @param {Array} data - An array of weather data entries.
+ * @param {string} keyword - The keyword to look for in the keys.
+ * @returns {Array} An array of extracted entries.
+ */
+function processWeatherData(data, keyword) {
+    const resultArray = [];
+
+    for (const entry of data) {
+        let temperatureData = {};
+        let cloudCoverData = {};
+        let windSpeedData = {};
+        let windDirectionData = {};
+
+        for (const key in entry) {
+            if (key.includes(keyword)) {
+                switch(keyword) {
+                    case 'temperature':
+                        temperatureData[key] = entry[key];
+                        break;
+                    case 'cloud_cover':
+                        cloudCoverData[key] = entry[key];
+                        break;
+                    case 'wind_speed':
+                        windSpeedData[key] = entry[key];
+                        break;
+                    case 'wind_direction':
+                        windDirectionData[key] = entry[key];
+                        break;
+                }
+            }
+        }
+
+        if (keyword === 'temperature') {
+            resultArray.push(temperatureData);
+        } else if (keyword === 'cloud_cover') {
+            resultArray.push(cloudCoverData);
+        } else if (keyword === 'wind_speed') {
+            resultArray.push(windSpeedData);
+        } else if (keyword === 'wind_direction') {
+            resultArray.push(windDirectionData);
+        }
+    }
+
+    return resultArray;
+}
