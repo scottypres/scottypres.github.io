@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bobby Ben PPG Motivator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
+  
+  .heading {
+    font-size: calc(10px + 2vmin);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  #motivatorImage {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  #gifOverlay {
+    position: absolute;
+    display: none;
+    z-index: 10;
+  }
+  
+  #motivationalMessage {
+    font-size: 1.5rem;
+    display: none;
+    white-space: pre-wrap;
+    margin-top: 20px;
+  }
+  
+  #nameInput, #submitBtn {
+    margin-top: 20px;
+  }
+  
+</style>
+</head>
+<body>
+<h1 class="heading">Bobby Ben PPG Motivator</h1>
+<img id="motivatorImage" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/bobby.jpeg" alt="Bobby">
+<input type="text" id="nameInput" placeholder="What is your name?">
+<button id="submitBtn">Submit</button>
+<img id="gifOverlay" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/mouth.gif" alt="Motivational Gif">
+<p id="motivationalMessage"></p>
+
+<script>
+const motivationalStatements = [
+  // Add all 110 statements here...
+];
+
+const gifOverlay = document.getElementById('gifOverlay');
+const motivationalMessage = document.getElementById('motivationalMessage');
+const submitBtn = document.getElementById('submitBtn');
+const nameInput = document.getElementById('nameInput');
+
+submitBtn.addEventListener('click', function() {
+  const userName = nameInput.value.trim();
+  const randomIndex = Math.floor(Math.random() * motivationalStatements.length);
+  const statement = `${userName}, ${motivationalStatements[randomIndex]}`;
+  
+  // Show the GIF over the image at the specified coordinates
+  gifOverlay.style.left = '50%'; // Replace with your desired coordinate
+  gifOverlay.style.top = '50%'; // Replace with your desired coordinate
+  gifOverlay.style.transform = 'translate(-50%, -50%)'; // Center the gif
+  gifOverlay.style.display = 'block';
+  
+  typeOutMessage(statement);
+
+  setTimeout(() => {
+    gifOverlay.style.display = 'none';
+  }, 6000); // GIF is shown for 6 seconds
+});
+
+function typeOutMessage(message) {
+  let index = 0;
+  motivationalMessage.textContent = '';
+  motivationalMessage.style.display = 'block';
+
+  const typingInterval = setInterval(() => {
+    motivationalMessage.textContent += message.charAt(index);
+    index += 1;
+
+    if (index === message.length) {
+      clearInterval(typingInterval);
+    }
+  }, 50); // Typing speed - decrease for faster typing
+}
+
+</script>
+
+</body>
+</html>
