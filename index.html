@@ -495,7 +495,7 @@ async function checkAndFetchData(baseUrl, model) {
     ].join(',');
 
     
-    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch';
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
     let additionalParameters = ''; // Initialize additional parameters string
 
     // Check the model to determine the correct forecast_days parameter
