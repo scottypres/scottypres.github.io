@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrix Rain</title>
+<style>
+  body, html {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background-color: black;
+    color: green;
+  }
+  #matrixCanvas {
+    height: 100%;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+<canvas id="matrixCanvas"></canvas>
+<script>
+  const c = document.getElementById("matrixCanvas");
+  const ctx = c.getContext("2d");
+
+  c.height = window.innerHeight;
+  c.width = window.innerWidth;
+
+  const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%";
+  
+  const fontSize = 16;
+  const columns = c.width / fontSize;
+
+  const drops = [];
+  for (let x = 0; x < columns; x++) {
+    drops[x] = 1;
+  }
+
+  function draw() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    ctx.fillStyle = "#0F0";
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+      const text = characters.charAt(Math.floor(Math.random() * characters.length));
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > c.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+
+    window.requestAnimationFrame(draw);
+  }
+
+  draw();
+  
+  window.addEventListener('resize', function() {
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+    // Recalculate columns and reset drops array
+    const new_columns = c.width / fontSize;
+    drops.length = 0;
+    for (let x = 0; x < new_columns; x++) {
+      drops[x] = 1;
+    }
+  });
+</script>
+</body>
+</html>
