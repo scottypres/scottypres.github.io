@@ -10,6 +10,13 @@
     text-align: center;
   }
   
+  .image-container {
+  position: relative;
+  display: inline-block;
+  max-width: 400px; /* Maximum width of the container */
+  margin: 0 auto;
+}
+  
   .heading {
     font-size: calc(10px + 2vmin);
     white-space: nowrap;
@@ -17,16 +24,22 @@
     text-overflow: ellipsis;
   }
   
-  #motivatorImage {
-    max-width: 100%;
-    height: auto;
-  }
-  
   #gifOverlay {
-    position: absolute;
-    display: none;
-    z-index: 10;
-  }
+  width: 30%; /* This makes the GIF match the width of its container, which is the image */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  z-index: 10;
+}
+#motivatorImage {
+  width: 100%; /* Responsive width */
+  max-width: 400px; /* Maximum width of the image */
+  height: auto; /* Maintain aspect ratio */
+  display: block;
+  margin: 0 auto; /* Center the image within its container */
+}
   
   #motivationalMessage {
     font-size: 1.5rem;
@@ -42,16 +55,104 @@
 </style>
 </head>
 <body>
-<h1 class="heading">Bobby Ben PPG Motivator</h1>
-<img id="motivatorImage" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/bobby.jpeg" alt="Bobby">
-<input type="text" id="nameInput" placeholder="What is your name?">
-<button id="submitBtn">Submit</button>
-<img id="gifOverlay" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/mouth.gif" alt="Motivational Gif">
-<p id="motivationalMessage"></p>
-
-<script>
+    <h1 class="heading">Bobby Ben PPG Motivator</h1>
+    <div class="image-container">
+      <!-- Wrap the image and the GIF in a container -->
+      <img id="motivatorImage" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/bobby.jpeg" alt="Bobby">
+      <img id="gifOverlay" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/mouth.gif" alt="Motivational Gif">
+    </div>
+    <br><br>
+    <input type="text" id="nameInput" placeholder="What is your name?">
+    <button id="submitBtn">Submit</button>
+    <p id="motivationalMessage"></p>
+    
+    <script>
 const motivationalStatements = [
-  // Add all 110 statements here...
+  "stop crying over spilled protein shakes – get out there and make your muscles weep instead!",
+  "you miss 100% of the flights you don't take – power up that paraglider!",
+  "if you don't chase your dreams, they'll fly away faster than a paraglider on a windy day.",
+  "life's a climb, but the view from a powered paraglider is better.",
+  "forget about finding yourself, go create yourself up in the sky!",
+  "leg day at the gym? how about lift-off day with your paraglider!",
+  "excuses burn zero calories per hour. flying, on the other hand, burns self-doubt and calories.",
+  "remember, the early bird gets the worm, and the early pilot gets the best lift!",
+  "gravity is a myth, and i have a powered paraglider to prove it!",
+  "when life gives you lemons, strap on a paraglider and drop them from the sky.",
+  "bored of walking? it's time to add some altitude to your attitude.",
+  "if running away from your problems doesn't help, try flying away from them!",
+  "life’s too short to sit around – grab it by the risers and take charge.",
+  "fear is temporary; regret is forever. and so is the view from a thousand feet up.",
+  "you can't soar like an eagle with the mindset of a chicken – flap those wings!",
+  "don't just seize the day – dive-bomb it from the stratosphere!",
+  "life doesn't have a remote; get up and change it yourself – preferably from up high.",
+  "turn that ‘someday’ into ‘today,’ and let's hit the skies. procrastination doesn't have a parachute.",
+  "stop scrolling through life, start spiraling through the clouds!",
+  "your comfort zone is lovely, but the view is better over the rainbow – chase it!",
+  "are your dreams grounded? it’s time for a pre-flight check and takeoff!",
+  "sitting is the new smoking; flying is the new everything!",
+  "your future is in the clouds – don't let it float away!",
+  "no outfit is complete without a parachute. fashionably late? try fashionably elevated!",
+  "why play it safe? the sky's not going to explore itself!",
+  "feeling grounded? remember, every paraglider started as a bag of fabric.",
+  "don't be a spectator in life's airshow; grab your gear and headline the main event!",
+  "life is a thermic – catch that warm rising air and soar!",
+  "the sky is full of dreams, but you need to fly to catch them.",
+  "conquer the couch; command the clouds!",
+  "reality called, it's time for takeoff. send the voicemail to the sky!",
+  "if you hit turbulence in life, remember: it only means you're rising fast.",
+  "don't wait for good weather to fly; be the reason the weather clears up.",
+  "you're the pilot of your life – don't let anyone else steal your headset.",
+  "ground control to major fun: are you ready for liftoff?",
+  "life's too short for bad vibes – fly above them.",
+  "if the sky is the limit, then let's push the ceiling!",
+  "they said 'take a hike' – i took a flight instead.",
+  "become the storm others are talking about. harness the wind!",
+  "don’t just reach for the stars; glide amongst them in your powered paraglider!",
+  "don't let your dreams be dreams – unless you dream of flying. then do it for real.",
+  "if life throws you a curveball, launch into the wind and turn it into a loop-the-loop.",
+  "some look for the light at the end of the tunnel. i prefer the open skies at the end of the runway.",
+  "feeling small? just remember, you're bigger than any mountain when you're a thousand feet above it.",
+  "don't let life glide by; throttle up and chart a course for the clouds!",
+  "eagles may soar, but we've got engines. game on, birds.",
+  "if your comfort zone were a parachute, it’d be time to cut away. fly free!",
+  "why follow the yellow brick road when you can design your own skyway?",
+  "don’t just wait out the storm, strap in and ride it to new heights!",
+  "you can tell gravity to take a hike, because you've got a paraglider!",
+  // All remaining motivational statements up to number 105...
+  "not all those who wander are lost – some are just enjoying the view from the sky.",
+  "you can always land back on your feet, especially after a fantastic flight!",
+  "gravity is a suggestion. powered paragliding is the rebuttal.",
+  "life is the ultimate cross-country race, and your paraglider is the best sneaker.",
+  "fly like you tweet – often and with gusto!",
+  "be the pilot of your own adventure – because autopilot is no way to soar through life!",
+  "don't just sit on the sidelines, strap on a paraglider and take flight!",
+  "unleash your inner aviator and soar to new heights with a powered paraglider!",
+  "leave the ground behind and let the wind carry you towards new horizons.",
+  "embrace the freedom of flight with a powered paraglider. the sky is your playground!",
+  "no limits, just skies – powered paragliding lets you break free from the constraints of the earth.",
+  "dare to defy gravity and experience the exhilaration of powered paragliding.",
+  "escape the ordinary and embrace the extraordinary with a powered paraglider.",
+  "fly high, fly free – powered paragliding is all about reaching for the sky.",
+  "unleash your inner adventurer and explore the world from a whole new perspective.",
+  "ignite your passion for flight and discover the thrill of powered paragliding.",
+  "step into the realm of dreams and make them a reality as you glide through the sky.",
+  "let the wind guide your wings and carry you to places you've only imagined.",
+  "experience the sheer joy and liberation of soaring through the air with a powered paraglider.",
+  "take flight and witness the world from a bird's eye view – powered paragliding awaits!",
+  "elevate your senses and embrace the serenity of the sky with a powered paraglider.",
+  "unleash your inner aviator and let the wind whisper stories as you navigate the heavens.",
+  "life's too short to be grounded – take off and enjoy the freedom of powered paragliding!",
+  "sail through the sky like a master of the elements with powered paragliding.",
+  "experience the rush and thrill of powered paragliding as you defy gravity.",
+  "in the sky, your spirit is free – soar with a powered paraglider and embrace the adventure!",
+  "break the chains of gravity and discover a world of endless possibilities with powered paragliding.",
+  "let the sky be your playground and powered paragliding be your ticket to exhilaration.",
+  "experience the ultimate dance with the wind and take flight with a powered paraglider.",
+  "unleash your inner daredevil and let the sky become your playground with powered paragliding.",
+  "discover the epitome of freedom and adventure with powered paragliding.",
+  "embrace the call of the sky and soar to new heights of excitement with powered paragliding.",
+  "take flight and experience the world from a whole new perspective with powered paragliding.",
+  "let your spirit soar and experience the joy of powered paragliding."
 ];
 
 const gifOverlay = document.getElementById('gifOverlay');
@@ -65,9 +166,8 @@ submitBtn.addEventListener('click', function() {
   const statement = `${userName}, ${motivationalStatements[randomIndex]}`;
   
   // Show the GIF over the image at the specified coordinates
-  gifOverlay.style.left = '50%'; // Replace with your desired coordinate
-  gifOverlay.style.top = '50%'; // Replace with your desired coordinate
-  gifOverlay.style.transform = 'translate(-50%, -50%)'; // Center the gif
+
+  gifOverlay.style.transform = 'translate(-15%, -25%)rotate(10deg)'; // Center the gif
   gifOverlay.style.display = 'block';
   
   typeOutMessage(statement);
