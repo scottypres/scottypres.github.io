@@ -6,9 +6,6 @@
     <title>Data Collection</title>
     <style>
         /* Add a general header class to apply common header styles across tables */
-        .wind-speed-underline {
-    text-decoration: underline;
-}
         #autocomplete-list {
     position: absolute;
     background: #fff;
@@ -326,8 +323,7 @@ th {
  medWindThreshold = 15;
  highWindThreshold = 20;
     // Declare this at the top to store the initial view
-    const shearSpeed = 10; // Speed difference of 10 mph for wind shear
-const shearAngle = 90; // Direction difference of 90 degrees for wind shear
+
 let globalWeatherData = {};
 
 function getWindArrowClass(degrees) {
@@ -851,50 +847,52 @@ function updateToggleButton() {
 updateToggleButton();
 function fillTableWithWindSpeed(table, weatherData) {
     let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
-    const altitudeLevels = [10, 80, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
+    const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
 
-    const windDataByAltitude = altitudeLevels.map((alt) => {
-        const windSpeedKey = `wind_speed_${alt}m` in weatherData.hourly ? `wind_speed_${alt}m` : `windspeed_${alt}hPa`;
-        const windDirectionKey = `wind_direction_${alt}m` in weatherData.hourly ? `wind_direction_${alt}m` : `winddirection_${alt}hPa`;
-        return {
-            speed: weatherData.hourly[windSpeedKey],
-            direction: weatherData.hourly[windDirectionKey],
-        };
+    altitudeLevels.forEach(alt => {
+        let windSpeedKey, windDirectionKey;
+        let displayAltitude; // Define a variable to hold our display altitude
+        
+        if(alt === 10 || alt === 80 || alt === 180) {
+            // Handle the specific feet values (10m, 80m, 180m are in meters, need conversion to feet)
+            const altInFeet = Math.round(alt * 3.28084); // Convert meters to feet, rounding to the nearest whole number
+            windSpeedKey = `wind_speed_${alt}m`;
+            windDirectionKey = `wind_direction_${alt}m`;
+            displayAltitude = `${altInFeet} ft`; // Display in feet
+        } else {
+            // Handle hPa values and convert to feet for display
+            windSpeedKey = `windspeed_${alt}hPa`;
+            windDirectionKey = `winddirection_${alt}hPa`;
+            displayAltitude = `${hPaToFeet(alt)} ft`; // Covert hPa to feet and display in feet
+        }
+
+        // Check if wind data exists for this particular elevation
+        if(weatherData.hourly.hasOwnProperty(windSpeedKey) && weatherData.hourly.hasOwnProperty(windDirectionKey)) {
+            tableHtml += `<tr><th class="sticky-header">${displayAltitude}</th>`;
+
+            // Iterate over wind speeds and directions together
+            weatherData.hourly[windSpeedKey].forEach((windSpeed, idx) => {
+                const windDirection = weatherData.hourly[windDirectionKey][idx];
+                const windArrowClass = getWindArrowClass(windDirection);
+                const roundedWindSpeed = windSpeed !== null ? Math.round(windSpeed) : 'N/A';
+                
+                // Get the background and text color based on the wind speed
+                const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
+                
+                // Add wind speed and a Unicode arrow for wind direction with the proper rotation
+                tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">
+                                <div>${roundedWindSpeed}</div>
+                                <div class="${windArrowClass}">&#8593;</div>
+                              </td>`;
+            });
+
+            // Close the table row
+            tableHtml += '</tr>';
+        }
     });
 
-    windDataByAltitude.forEach((windData, altitudeIdx) => {
-        tableHtml += `<tr><th class="sticky-header">${windData.label}</th>`;
-
-        windData.speed.forEach((windSpeed, idx) => {
-            const windDirection = windData.direction[idx];
-            const windArrowClass = getWindArrowClass(windDirection);
-            const roundedWindSpeed = windSpeed !== null ? Math.round(windSpeed) : 'N/A';
-
-            let asterisk = '';
-            if (altitudeIdx < windDataByAltitude.length - 1) {
-                const nextAltitudeWindSpeed = Math.round(windDataByAltitude[altitudeIdx + 1].speed[idx]);
-                const nextAltitudeWindDirection = windDataByAltitude[altitudeIdx + 1].direction[idx];
-
-                const speedDifference = Math.abs(nextAltitudeWindSpeed - roundedWindSpeed);
-                const directionDifference = Math.abs(nextAltitudeWindDirection - windDirection);
-
-                if (speedDifference > shearSpeed || directionDifference > shearAngle) {
-                    asterisk = '* '; // Add asterisk if conditions are met
-                }
-            }
-
-            const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
-
-            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">
-                            <div>${roundedWindSpeed}</div>
-                            <div class="${windArrowClass}">${asterisk}&#8593;</div> <!-- Asterisk added here -->
-                          </td>`;
-        });
-
-        tableHtml += '</tr>';
-    });
-
-    table.innerHTML = tableHtml; // Update the table with the new HTML
+    // Finally, set the table's HTML to the newly created rows
+    table.innerHTML = tableHtml;
 }
 
 function displayWindDataAtIndex(weatherData, index) {
