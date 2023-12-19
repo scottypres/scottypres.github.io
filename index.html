@@ -283,8 +283,7 @@ th {
     </div>
     <div id="zipcode-section">
         <!-- ... existing HTML ... -->
-        <div id="recentSearches"></div>
-    </div>
+       
     <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
     <button id="toggleButton">Toggle Wind/Clouds</button>
     <button id="toggleHighAltitudeButton">Toggle High Altitude</button>
@@ -502,8 +501,7 @@ async function getCoordinatesByZipcode(zipcode) {
         console.error('Failed to fetch coordinates:', error);
         alert('Failed to get coordinates. Please check the zipcode and try again.');
     }
-    saveRecentSearch(zipcode);
-displayRecentSearches();
+   
 console.log("Check 4: getCoordinatesByZipcode end", new Date().toISOString());
 
     // Fetch and display weather data for the last searched zipcode
@@ -538,7 +536,7 @@ async function checkAndFetchData(baseUrl, model) {
         // Add new variables below
         'wind_speed_10m',
         'wind_speed_80m',
-        'wind_speed_180m',
+        'wind_speed_180m','wind_gusts_10m',
         'wind_direction_10m',
         'wind_direction_80m',
         'wind_direction_180m',
@@ -645,65 +643,9 @@ function getCookie(name) {
     return "";
 }
 
-function getRecentSearches() {
-    const searches = getCookie('recentSearches');
-    return searches ? JSON.parse(searches) : [];
-}
-
-function saveRecentSearch(zipcode) {
-    let searches = getRecentSearches();
-    
-    // Remove the zipcode if it's already in the array to prevent duplicates
-    const index = searches.indexOf(zipcode);
-    if (index > -1) {
-        searches.splice(index, 1);
-    }
-    
-    // Add the zipcode to the beginning of the array
-    searches.unshift(zipcode);
-    
-    // Keep only the latest 3 searches
-    if (searches.length > 3) {
-        searches = searches.slice(0, 3);
-    }
-    
-    // Save the updated searches to the cookie
-    setCookie('recentSearches', JSON.stringify(searches), 365);
-}
-
-// Make sure to call `displayRecentSearches` after updating the recent searches cookie
 
 
-function displayRecentSearches() {
-    let searches = getRecentSearches();
-    
-    if (searches.length === 0) {
-        searches = ['33919', '19144', '60610']; // Default values if no recent searches exist
-        setCookie('recentSearches', JSON.stringify(searches), 365);
-    }
-    
-    // Create HTML for recent searches
-    const recentSearchesDiv = document.getElementById('recentSearches');
-    recentSearchesDiv.innerHTML = searches.map(zipcode => {
-        return `<a href="#" class="recent-search" data-zip="${zipcode}">${zipcode}</a>`;
-    }).join(' | ');
-    
-    // Previously here you might have had individual `.addEventListener` calls for each link
-    // which is now replaced with the event delegation below.
-}
 
-// Use event delegation to handle clicks on recent searches
-// You attach the event listener to the parent '#recentSearches' div once, and it will work for all '.recent-search' links
-document.getElementById('recentSearches').addEventListener('click', function(event) {
-    event.preventDefault(); // Prevent the browser's default link click behavior
-    const target = event.target; // The actual clicked element inside the '#recentSearches'
-
-    // Check if the clicked element is indeed a recent search link
-    if (target.className === 'recent-search') {
-        const zipcode = target.dataset.zip; // Get the zipcode from the data-zip attribute
-        handleZipcodeFetch(zipcode); // Call the common functionality for fetching the weather data
-    }
-});
 
 window.onload = function() {
         console.log("Check 9: Window onload triggered", new Date().toISOString());
@@ -716,11 +658,7 @@ window.onload = function() {
     if (greenThreshold) document.getElementById('greenThreshold').value = greenThreshold;
     if (redThreshold) document.getElementById('redThreshold').value = redThreshold;
 
-    displayRecentSearches();
-    const recentSearches = getRecentSearches();
-    const lastSearch = recentSearches.length > 0 ? recentSearches[0] : '33919';
-    document.getElementById('zipcodeInput').value = lastSearch;
-    //getCoordinatesByZipcode(lastSearch);
+    
     
 };
 async function handleZipcodeFetch(zipcode) {
@@ -901,7 +839,7 @@ updateToggleButton();
 function fillTableWithWindSpeed(table, weatherData) {
     let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
     const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
-
+ let gustRowAdded = false; // Flag to control the addition of the gust row
     altitudeLevels.forEach(alt => {
         let windSpeedKey, windDirectionKey;
         let displayAltitude; // Define a variable to hold our display altitude
@@ -947,7 +885,31 @@ function fillTableWithWindSpeed(table, weatherData) {
     
     // Finally, set the table's HTML to the newly created rows
     table.innerHTML = tableHtml;
-    
+    const windGustsKey = `wind_gusts_10m`;
+    if (weatherData.hourly.hasOwnProperty(windGustsKey)) {
+        // Start the gusts table row with a descriptive header
+        tableHtml += `<tr><th class="sticky-header">Gusts</th>`;
+
+        // Add a data cell for each time interval with wind gusts data
+        weatherData.hourly[windGustsKey].forEach((windGust, idx) => {
+            const roundedWindGust = windGust !== null ? Math.round(windGust) : 'N/A';
+
+            // Get the background and text color based on the wind gust speed
+            const { backgroundColor, textColor } = getWindSpeedColor(roundedWindGust);
+
+            // Add wind gust value with the appropriate color coding
+            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">
+                    <div>${roundedWindGust}</div>
+                  </td>`;
+        });
+
+        // Close the gusts table row
+        tableHtml += '</tr>';
+    }
+
+    // Finally, set the table's HTML to the newly created rows
+    table.innerHTML = tableHtml;
+
     
 }
 
@@ -982,7 +944,7 @@ function checkForWindShear(table) {
                     // Highlight cells by adding the "shear-detected" class
                     rows[rowIndex].cells[colIndex].classList.add('shear-detected');
                     rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
-                    console.log('Shear detected between ' + cellCurrentAltitude + 'ft and ' + cellNextAltitude + 'ft.');
+                   // console.log('Shear detected between ' + cellCurrentAltitude + 'ft and ' + cellNextAltitude + 'ft.');
                 }
             }
         }
