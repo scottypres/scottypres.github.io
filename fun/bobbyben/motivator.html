@@ -25,7 +25,7 @@
   }
   
   #gifOverlay {
-  width: 30%; /* This makes the GIF match the width of its container, which is the image */
+  width: 23%; /* This makes the GIF match the width of its container, which is the image */
   position: absolute;
   top: 50%;
   left: 50%;
@@ -167,7 +167,8 @@ submitBtn.addEventListener('click', function() {
   
   // Show the GIF over the image at the specified coordinates
 
-  gifOverlay.style.transform = 'translate(-15%, -25%)rotate(10deg)'; // Center the gif
+  gifOverlay.style.transform = 'translate(0%, -30%) rotate(5deg) scaleX(-1)'; // Center the gif
+  
   gifOverlay.style.display = 'block';
   
   typeOutMessage(statement);
