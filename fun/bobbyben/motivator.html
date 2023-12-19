@@ -18,7 +18,7 @@
 }
   
   .heading {
-    font-size: calc(10px + 2vmin);
+    font-size: calc(25px + 2vmin);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -52,10 +52,10 @@
     margin-top: 20px;
   }
   #glassesOverlay {
-            width: 20%; /* Customize the size of the glasses overlay */
+            width: 52%; /* Customize the size of the glasses overlay */
             position: absolute;
-            top: 15%; /* Adjust the position to align properly with the image of Bobby */
-            left: 50%;
+            top: 37%; /* Adjust the position to align properly with the image of Bobby */
+            left: 58%;
             transform: translate(-50%, -50%);
             display: none;
             z-index: 9; /* Below the mouth GIF overlay */
@@ -177,7 +177,7 @@ submitBtn.addEventListener('click', function() {
   // Show the GIF over the image at the specified coordinates
 
   gifOverlay.style.transform = 'translate(0%, -30%) rotate(5deg) scaleX(-1)'; // Customize as needed
-            glassesOverlay.style.transform = 'translate(-50%, -50%)'; // Center the glasses overlay
+            glassesOverlay.style.transform = 'translate(-50%, -50%)rotate(7deg)'; // Center the glasses overlay
             gifOverlay.style.display = 'block';
             glassesOverlay.style.display = 'block'; // Show the glasses overlay
             
