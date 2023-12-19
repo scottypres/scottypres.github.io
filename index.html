@@ -322,8 +322,9 @@ const highWindThreshold = 20;
 let globalWeatherData = {};
 
 function getWindArrowClass(degrees) {
+  
     // Normalize the degrees to ensure it is between 0 and 360
-    degrees = degrees % 360;
+    degrees = (degrees + 180) % 360; // Add 180 degrees to flip the arrow direction
     // Round the degrees to the nearest 11.25 increment
     const roundedDegrees = Math.round(degrees / 11.25) * 11.25;
     // Replace dot with a dash for CSS class compatibility
