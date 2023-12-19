@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<audio id="motivationalAudio" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/youcandoit.mp3" preload="auto"></audio>
 <title>Bobby Ben PPG Motivator</title>
 <style>
   body {
@@ -173,6 +174,8 @@ submitBtn.addEventListener('click', function() {
   const userName = nameInput.value.trim();
   const randomIndex = Math.floor(Math.random() * motivationalStatements.length);
   const statement = `${userName}, ${motivationalStatements[randomIndex]}`;
+  const motivationalAudio = document.getElementById('motivationalAudio');
+  motivationalAudio.play();
   
   // Show the GIF over the image at the specified coordinates
 
