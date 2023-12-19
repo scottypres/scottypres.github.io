@@ -279,6 +279,10 @@ th {
         <input type="text" id="zipcodeInput" placeholder="Enter zipcode">
         <button id="fetchCoordinatesButton">Get Weather</button>
     </div>
+    <div id="zipcode-section">
+        <!-- ... existing HTML ... -->
+        <div id="recentSearches"></div>
+    </div>
     <button id="toggleButton">Toggle Wind/Clouds</button>
     <!-- ICON Table -->
     <div id="configPopup" class="config-popup" style="display: none;">
@@ -426,6 +430,8 @@ async function getCoordinatesByZipcode(zipcode) {
         console.error('Failed to fetch coordinates:', error);
         alert('Failed to get coordinates. Please check the zipcode and try again.');
     }
+    saveRecentSearch(zipcode);
+    displayRecentSearches(); // Update the displayed recent searches
 }
 
 async function checkAndFetchData(baseUrl, model) {
@@ -537,7 +543,87 @@ async function checkAndFetchData(baseUrl, model) {
 
 
 
+function setCookie(name, value, days) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = `expires=${d.toUTCString()}`;
+    document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)};${expires};path=/`;
+}
 
+function getCookie(name) {
+    const cname = `${encodeURIComponent(name)}=`;
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(cname) === 0) {
+            return c.substring(cname.length, c.length);
+        }
+    }
+    return "";
+}
+
+function getRecentSearches() {
+    const searches = getCookie('recentSearches');
+    return searches ? JSON.parse(searches) : [];
+}
+
+function saveRecentSearch(zipcode) {
+    const searches = getRecentSearches();
+    
+    // Remove the zipcode if it's already in the array to prevent duplicates
+    const index = searches.indexOf(zipcode);
+    if (index > -1) {
+        searches.splice(index, 1);
+    }
+    
+    // Add the zipcode to the beginning of the array
+    searches.unshift(zipcode);
+    
+    // Keep only the latest 3 searches
+    if (searches.length > 3) {
+        searches.length = 3;
+    }
+    
+    // Save the updated searches to the cookie
+    setCookie('recentSearches', JSON.stringify(searches), 365);
+}
+
+function displayRecentSearches() {
+    let searches = getRecentSearches();
+    
+    if (searches.length === 0) {
+        searches = ['33919', '19144', '60610'];
+        setCookie('recentSearches', JSON.stringify(searches), 365);
+    }
+    
+    const recentSearchesDiv = document.getElementById('recentSearches');
+    recentSearchesDiv.innerHTML = searches.map(zipcode => {
+        return `<a href="#" class="recent-search" data-zip="${zipcode}">${zipcode}</a>`;
+    }).join(' | ');
+
+    // Handle recent search link clicks
+    const recentSearchLinks = recentSearchesDiv.querySelectorAll('.recent-search');
+    recentSearchLinks.forEach(link => {
+        link.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default anchor link behavior
+            const zipcode = this.dataset.zip;
+            document.getElementById('zipcodeInput').value = zipcode;
+            getCoordinatesByZipcode(zipcode); // Fetch the weather details for that zipcode
+        });
+    });
+}
+
+window.onload = function() {
+    displayRecentSearches();
+    const recentSearches = getRecentSearches();
+    const lastSearch = recentSearches.length > 0 ? recentSearches[0] : '33919';
+    document.getElementById('zipcodeInput').value = lastSearch;
+    getCoordinatesByZipcode(lastSearch);
+};
 
 
 
