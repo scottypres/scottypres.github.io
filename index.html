@@ -283,6 +283,7 @@ th {
         <!-- ... existing HTML ... -->
         <div id="recentSearches"></div>
     </div>
+    <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
     <button id="toggleButton">Toggle Wind/Clouds</button>
     <!-- ICON Table -->
     <div id="configPopup" class="config-popup" style="display: none;">
@@ -318,9 +319,9 @@ th {
     longitude: 81.4173,  // Use a default longitude or prompt the user to enter a valid one.
 };
     // Initialize global threshold variables
-const lowWindThreshold = 7;
-const medWindThreshold = 15;
-const highWindThreshold = 20;
+ lowWindThreshold = 7;
+ medWindThreshold = 15;
+ highWindThreshold = 20;
     // Declare this at the top to store the initial view
 
 let globalWeatherData = {};
@@ -345,7 +346,9 @@ function initialTableSetup() {
     });
     updateToggleButton(); // Ensure the toggle button text is set correctly
 }
-
+function showConfigPopup() {
+    document.getElementById('configPopup').style.display = 'flex';
+}
 // Fetch data for each model
 const baseUrls = {
     openMeteo: 'https://api.open-meteo.com/v1/forecast',
@@ -362,6 +365,40 @@ for (const [model, baseUrl] of Object.entries(baseUrls)) {
         // If all fetches are done, call `initialTableSetup`
         if (fetchedModelsCount === Object.keys(baseUrls).length) {
             initialTableSetup();
+        }
+    });
+}
+document.getElementById('editThresholdsButton').addEventListener('click', showConfigPopup); // assume editThresholdsButton is the ID of the button to show the popup
+function submitThresholdsAndRepaint() {
+    // Get the threshold values from the input fields
+    const blueThreshold = parseInt(document.getElementById('blueThreshold').value, 10);
+    const greenThreshold = parseInt(document.getElementById('greenThreshold').value, 10);
+    const redThreshold = parseInt(document.getElementById('redThreshold').value, 10);
+
+    // Store them in cookies
+    setCookie('blueThreshold', blueThreshold, 365);
+    setCookie('greenThreshold', greenThreshold, 365);
+    setCookie('redThreshold', redThreshold, 365);
+
+    // Repaint the graph
+    repaintGraphsWithNewThresholds(blueThreshold, greenThreshold, redThreshold);
+
+    // Hide the config popup
+    document.getElementById('configPopup').style.display = 'none';
+}
+
+document.getElementById('submitThresholds').addEventListener('click', submitThresholdsAndRepaint);
+function repaintGraphsWithNewThresholds(low, med, high) {
+    // Assume these are the names of three different tables you have
+    lowWindThreshold = low;
+    medWindThreshold = med;
+    highWindThreshold = high;
+
+    const tableIds = ['openmeteo-table', 'icon-table']; // Add other table IDs as needed
+    tableIds.forEach(tableId => {
+        const table = document.getElementById(tableId);
+        if (table.dataset.showing === 'winds') {
+            fillTableWithWindSpeed(table, globalWeatherData[table.dataset.model]);
         }
     });
 }
@@ -618,6 +655,15 @@ function displayRecentSearches() {
 }
 
 window.onload = function() {
+    
+    const blueThreshold = getCookie('blueThreshold');
+    const greenThreshold = getCookie('greenThreshold');
+    const redThreshold = getCookie('redThreshold');
+
+    if (blueThreshold) document.getElementById('blueThreshold').value = blueThreshold;
+    if (greenThreshold) document.getElementById('greenThreshold').value = greenThreshold;
+    if (redThreshold) document.getElementById('redThreshold').value = redThreshold;
+
     displayRecentSearches();
     const recentSearches = getRecentSearches();
     const lastSearch = recentSearches.length > 0 ? recentSearches[0] : '33919';
