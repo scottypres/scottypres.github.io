@@ -609,7 +609,7 @@ function getRecentSearches() {
 }
 
 function saveRecentSearch(zipcode) {
-    const searches = getRecentSearches();
+    let searches = getRecentSearches();
     
     // Remove the zipcode if it's already in the array to prevent duplicates
     const index = searches.indexOf(zipcode);
@@ -622,12 +622,15 @@ function saveRecentSearch(zipcode) {
     
     // Keep only the latest 3 searches
     if (searches.length > 3) {
-        searches.length = 3;
+        searches = searches.slice(0, 3);
     }
     
     // Save the updated searches to the cookie
     setCookie('recentSearches', JSON.stringify(searches), 365);
 }
+
+// Make sure to call `displayRecentSearches` after updating the recent searches cookie
+
 
 function displayRecentSearches() {
     let searches = getRecentSearches();
@@ -645,13 +648,20 @@ function displayRecentSearches() {
     // Handle recent search link clicks
     const recentSearchLinks = recentSearchesDiv.querySelectorAll('.recent-search');
     recentSearchLinks.forEach(link => {
-        link.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent default anchor link behavior
-            const zipcode = this.dataset.zip;
-            document.getElementById('zipcodeInput').value = zipcode;
-            getCoordinatesByZipcode(zipcode); // Fetch the weather details for that zipcode
-        });
+    link.addEventListener('click', function(event) {
+        event.preventDefault(); // Prevent default anchor link behavior
+        const zipcode = this.dataset.zip;
+        document.getElementById('zipcodeInput').value = zipcode;
+        getCoordinatesByZipcode(zipcode) // Fetch the weather details for that zipcode
+            .then(() => { // When fetch is done and succeeded
+                saveRecentSearch(zipcode);
+                displayRecentSearches(); // Update the displayed recent searches
+            })
+            .catch(error => {
+                console.error('Error fetching data for zipcode:', zipcode, error);
+            });
     });
+});
 }
 
 window.onload = function() {
