@@ -287,6 +287,7 @@ th {
     </div>
     <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
     <button id="toggleButton">Toggle Wind/Clouds</button>
+    <button id="toggleHighAltitudeButton">Toggle High Altitude</button>
     <!-- ICON Table -->
     <div id="configPopup" class="config-popup" style="display: none;">
         <div class="config-content">
@@ -320,6 +321,21 @@ th {
 
 
 <script>
+    document.getElementById('toggleHighAltitudeButton').addEventListener('click', toggleHighAltitude);
+    function toggleHighAltitude() {
+    const tables = document.querySelectorAll('table[id$="-table"]');
+    tables.forEach(table => {
+        const rows = table.getElementsByTagName('tr');
+        // Skip the header row by starting the loop at index 1
+        for (let i = 1; i < rows.length; i++) {
+            const altitudeInFeet = rows[i].cells[0].innerText.replace(' ft', '');
+            if (parseInt(altitudeInFeet) > 5000) {
+                // Toggle the visibility of the row
+                rows[i].style.display = rows[i].style.display === 'none' ? '' : 'none';
+            }
+        }
+    });
+}
     let userLocation = {
     latitude: 26.4187,   // Use a default latitude or prompt the user to enter a valid one.
     longitude: 81.4173,  // Use a default longitude or prompt the user to enter a valid one.
@@ -962,11 +978,11 @@ function checkForWindShear(table) {
                 diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
 
                 // Check for shears based on the provided criteria: 10mph speed difference and 90 degree angle difference
-                if (diffSpeed > 15 || diffAngle > 90) {
+                if (diffSpeed > 10 || diffAngle > 90) {
                     // Highlight cells by adding the "shear-detected" class
                     rows[rowIndex].cells[colIndex].classList.add('shear-detected');
                     rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
-                    //console.log('Shear detected between ' + cellCurrentAltitude + 'ft and ' + cellNextAltitude + 'ft.');
+                    console.log('Shear detected between ' + cellCurrentAltitude + 'ft and ' + cellNextAltitude + 'ft.');
                 }
             }
         }
