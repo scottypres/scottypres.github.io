@@ -51,15 +51,24 @@
   #nameInput, #submitBtn {
     margin-top: 20px;
   }
-  
+  #glassesOverlay {
+            width: 20%; /* Customize the size of the glasses overlay */
+            position: absolute;
+            top: 15%; /* Adjust the position to align properly with the image of Bobby */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 9; /* Below the mouth GIF overlay */
+        }
+        
 </style>
 </head>
 <body>
     <h1 class="heading">Bobby Ben PPG Motivator</h1>
     <div class="image-container">
-      <!-- Wrap the image and the GIF in a container -->
-      <img id="motivatorImage" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/bobby.jpeg" alt="Bobby">
-      <img id="gifOverlay" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/mouth.gif" alt="Motivational Gif">
+        <img id="motivatorImage" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/bobby.jpeg" alt="Bobby">
+        <img id="gifOverlay" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/mouth.gif" alt="Motivational GIF">
+        <img id="glassesOverlay" src="https://raw.githubusercontent.com/scottypres/scottypres.github.io/main/fun/bobbyben/glasses.png" alt="Glasses">
     </div>
     <br><br>
     <input type="text" id="nameInput" placeholder="What is your name?">
@@ -167,16 +176,18 @@ submitBtn.addEventListener('click', function() {
   
   // Show the GIF over the image at the specified coordinates
 
-  gifOverlay.style.transform = 'translate(0%, -30%) rotate(5deg) scaleX(-1)'; // Center the gif
-  
-  gifOverlay.style.display = 'block';
-  
-  typeOutMessage(statement);
-
-  setTimeout(() => {
-    gifOverlay.style.display = 'none';
-  }, 6000); // GIF is shown for 6 seconds
-});
+  gifOverlay.style.transform = 'translate(0%, -30%) rotate(5deg) scaleX(-1)'; // Customize as needed
+            glassesOverlay.style.transform = 'translate(-50%, -50%)'; // Center the glasses overlay
+            gifOverlay.style.display = 'block';
+            glassesOverlay.style.display = 'block'; // Show the glasses overlay
+            
+            typeOutMessage(statement);
+      
+            setTimeout(() => {
+                gifOverlay.style.display = 'none';
+                glassesOverlay.style.display = 'none'; // Hide the glasses overlay after 6 seconds
+            }, 6000); // Both overlays are shown for 6 seconds
+        });
 
 function typeOutMessage(message) {
   let index = 0;
