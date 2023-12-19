@@ -12,7 +12,9 @@
     border: 1px solid #d4d4d4;
     z-index: 99;
   }
-
+  .shear-detected {
+    border: 2px solid white;
+}
   #autocomplete-list div {
     padding: 10px;
     cursor: pointer;
@@ -878,23 +880,57 @@ function fillTableWithWindSpeed(table, weatherData) {
                 
                 // Get the background and text color based on the wind speed
                 const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
-                
+                const windArrowUnicode = getWindDirectionArrow(windDirection);
                 // Add wind speed and a Unicode arrow for wind direction with the proper rotation
-                tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">
-                                <div>${roundedWindSpeed}</div>
-                                <div class="${windArrowClass}">&#8593;</div>
-                              </td>`;
-            });
+                tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};" data-wind-angle="${windDirection}">
+                    <div>${roundedWindSpeed}</div>
+                    <div class="${windArrowClass}">${windArrowUnicode}</div>
+                  </td>`;
+                  
+});
 
             // Close the table row
             tableHtml += '</tr>';
         }
     });
-
+    
     // Finally, set the table's HTML to the newly created rows
     table.innerHTML = tableHtml;
+    checkForWindShear(table);
+    
 }
+function checkForWindShear(table) {
+    const rows = table.rows; // Get all the rows in the table
 
+    // Loop through the number of columns (based on headers, assuming row 0 is headers)
+    for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
+        // Loop through each row, excluding the last since it has no next sibling row
+        for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
+            const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
+            const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
+            
+            // Get data-wind-angle attribute of current and next cell
+            const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
+            const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
+
+            // If both speeds and angles are numbers (not NaN), proceed to check
+            if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle)) {
+                // Calculate the difference between the current and next cells' speeds and angles
+                const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
+                let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
+                diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
+
+                // Check for shears based on the provided criteria: 10mph speed difference and 90 degree angle difference
+                if (diffSpeed > 15 && diffAngle > 90) {
+                    // Highlight cells by adding the "shear-detected" class
+                    rows[rowIndex].cells[colIndex].classList.add('shear-detected');
+                    rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
+                    
+                }
+            }
+        }
+    }
+}
 function displayWindDataAtIndex(weatherData, index) {
     // Convert the timestamp to a readable date and day of the week
     const timestamp = weatherData.hourly.time && weatherData.hourly.time.length > index ? weatherData.hourly.time[index] : 'N/A';
