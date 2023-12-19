@@ -298,6 +298,10 @@ th {
             <input type="number" id="redThreshold" value="20" min="2" /><br/>
             <button id="submitThresholds">Submit</button>
         </div>
+        <!-- GFS Table -->
+<table id="gfs-table">
+    <!-- The table will be populated by JavaScript -->
+  </table>
     </div>
 
     <!-- OpenMeteo Table -->
@@ -341,6 +345,8 @@ function getWindArrowClass(degrees) {
 }
 function initialTableSetup() {
     Object.keys(globalWeatherData).forEach(model => {
+        // ... before setting up each table
+        console.log("Check 6: initialTableSetup", new Date().toISOString());
         const tableId = `${model.toLowerCase()}-table`;
         const dataTable = document.getElementById(tableId);
         fillTableWithWindSpeed(dataTable, globalWeatherData[model]); // Show winds data first
@@ -357,19 +363,7 @@ const baseUrls = {
     gfs: 'https://api.open-meteo.com/v1/gfs',
     icon: 'https://api.open-meteo.com/v1/dwd-icon'
 };
-let fetchedModelsCount = 0; // Variable to keep track of the completed fetches
-for (const [model, baseUrl] of Object.entries(baseUrls)) {
-    checkAndFetchData(baseUrl, model).catch(error => {
-        console.error(`Failed to fetch data for model "${model}":`, error);
-    }).finally(() => {
-        // Once each fetch is done, increment the counter
-        ++fetchedModelsCount;
-        // If all fetches are done, call `initialTableSetup`
-        if (fetchedModelsCount === Object.keys(baseUrls).length) {
-            initialTableSetup();
-        }
-    });
-}
+fetchAllModelsData();
 document.getElementById('editThresholdsButton').addEventListener('click', showConfigPopup); // assume editThresholdsButton is the ID of the button to show the popup
 function submitThresholdsAndRepaint() {
     // Get the threshold values from the input fields
@@ -427,21 +421,43 @@ function hPaToFeet(hPa) {
 document.querySelectorAll('table[id$="-table"]').forEach(table => {
     table.dataset.showing = 'winds'; // Start with winds data shown
 });
-document.getElementById('fetchCoordinatesButton').addEventListener('click', function() {
-    const zipcode = document.getElementById('zipcodeInput').value;
-    if (zipcode) {
-        getCoordinatesByZipcode(zipcode);
-    } else {
-        alert('Please enter a valid zipcode.');
+document.getElementById('fetchCoordinatesButton').addEventListener('click', () => {
+       const zipcode = document.getElementById('zipcodeInput').value.trim();
+       if (zipcode) {
+           handleZipcodeFetch(zipcode);
+       } else {
+           alert('Please enter a valid zipcode.');
+       }
+   });
+
+async function fetchAllModelsData() {
+    console.log("Check 5: Inside fetchAllModelsData before Promise.all", new Date().toISOString());
+    try {
+        // Await all fetches to be completed using Promise.all
+        await Promise.all(Object.entries(baseUrls).map(async ([model, baseUrl]) => {
+            console.log(`Check 5a: Fetching data for model "${model}"`, new Date().toISOString());
+            await checkAndFetchData(baseUrl, model);
+        }));
+
+        console.log("Check 7: Inside fetchAllModelsData after Promise.all", new Date().toISOString());
+
+        // Now that we have all data, setup the tables and perform shear checks
+        initialTableSetup();
+        performWindShearChecksAndUpdateTables();
+    } catch (error) {
+        console.error('Error fetching data for all models:', error);
     }
-});
+}
 
-
+// Fetch data for each model by calling the new fetchAllModelsData function
+fetchAllModelsData();
 
 
 
 async function getCoordinatesByZipcode(zipcode) {
+        console.log("Check 10: getCoordinatesByZipcode called", new Date().toISOString());
     const zipApiUrl = `https://api.zippopotam.us/us/${zipcode}`;
+    console.log("Check 3: getCoordinatesByZipcode start", new Date().toISOString());
     try {
         const response = await fetch(zipApiUrl);
         if (!response.ok) {
@@ -454,13 +470,14 @@ async function getCoordinatesByZipcode(zipcode) {
                 latitude: parseFloat(data.places[0].latitude),
                 longitude: parseFloat(data.places[0].longitude)
             };
-            console.log('Coordinates:', userLocation);
+            //console.log('Coordinates:', userLocation);
 
             // Now call the API with these coordinates for each model and update the table with new data
             for (const model of Object.keys(baseUrls)) {
                 await checkAndFetchData(baseUrls[model], model);
             }
             initialTableSetup(); // Refresh the table setup
+            performWindShearChecksAndUpdateTables();
 
         } else {
             alert('No coordinates found for the provided zipcode.');
@@ -470,10 +487,15 @@ async function getCoordinatesByZipcode(zipcode) {
         alert('Failed to get coordinates. Please check the zipcode and try again.');
     }
     saveRecentSearch(zipcode);
-    displayRecentSearches(); // Update the displayed recent searches
-}
+displayRecentSearches();
+console.log("Check 4: getCoordinatesByZipcode end", new Date().toISOString());
+
+    // Fetch and display weather data for the last searched zipcode
+    //refreshWeatherDataAndTables(lastSearch);
+};
 
 async function checkAndFetchData(baseUrl, model) {
+        console.log(`Check 11: checkAndFetchData called for model ${model}`, new Date().toISOString());
     const commonParameters = [
         'temperature_2m','temperature_80m','temperature_180m',
         'weather_code','relative_humidity_2m',
@@ -565,7 +587,7 @@ async function checkAndFetchData(baseUrl, model) {
 
         // Parse the response as JSON data
         const weatherData = await response.json();
-        console.log(`Data fetched successfully for model "${model}":`, weatherData);
+       // console.log(`Data fetched successfully for model "${model}":`, weatherData);
 
         // Populate the respective table with the fetched data
         createTable(`${model.toLowerCase()}-table`, weatherData, model);
@@ -578,7 +600,9 @@ async function checkAndFetchData(baseUrl, model) {
         
         // Optionally, handle the error in the UI, for instance, by displaying an error message to the user
     }
-}
+    
+    console.log(`Check 12: checkAndFetchData finished for model ${model}`, new Date().toISOString());
+    }
 
 
 
@@ -638,35 +662,35 @@ function displayRecentSearches() {
     let searches = getRecentSearches();
     
     if (searches.length === 0) {
-        searches = ['33919', '19144', '60610'];
+        searches = ['33919', '19144', '60610']; // Default values if no recent searches exist
         setCookie('recentSearches', JSON.stringify(searches), 365);
     }
     
+    // Create HTML for recent searches
     const recentSearchesDiv = document.getElementById('recentSearches');
     recentSearchesDiv.innerHTML = searches.map(zipcode => {
         return `<a href="#" class="recent-search" data-zip="${zipcode}">${zipcode}</a>`;
     }).join(' | ');
-
-    // Handle recent search link clicks
-    const recentSearchLinks = recentSearchesDiv.querySelectorAll('.recent-search');
-    recentSearchLinks.forEach(link => {
-    link.addEventListener('click', function(event) {
-        event.preventDefault(); // Prevent default anchor link behavior
-        const zipcode = this.dataset.zip;
-        document.getElementById('zipcodeInput').value = zipcode;
-        getCoordinatesByZipcode(zipcode) // Fetch the weather details for that zipcode
-            .then(() => { // When fetch is done and succeeded
-                saveRecentSearch(zipcode);
-                displayRecentSearches(); // Update the displayed recent searches
-            })
-            .catch(error => {
-                console.error('Error fetching data for zipcode:', zipcode, error);
-            });
-    });
-});
+    
+    // Previously here you might have had individual `.addEventListener` calls for each link
+    // which is now replaced with the event delegation below.
 }
 
+// Use event delegation to handle clicks on recent searches
+// You attach the event listener to the parent '#recentSearches' div once, and it will work for all '.recent-search' links
+document.getElementById('recentSearches').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the browser's default link click behavior
+    const target = event.target; // The actual clicked element inside the '#recentSearches'
+
+    // Check if the clicked element is indeed a recent search link
+    if (target.className === 'recent-search') {
+        const zipcode = target.dataset.zip; // Get the zipcode from the data-zip attribute
+        handleZipcodeFetch(zipcode); // Call the common functionality for fetching the weather data
+    }
+});
+
 window.onload = function() {
+        console.log("Check 9: Window onload triggered", new Date().toISOString());
     
     const blueThreshold = getCookie('blueThreshold');
     const greenThreshold = getCookie('greenThreshold');
@@ -680,9 +704,20 @@ window.onload = function() {
     const recentSearches = getRecentSearches();
     const lastSearch = recentSearches.length > 0 ? recentSearches[0] : '33919';
     document.getElementById('zipcodeInput').value = lastSearch;
-    getCoordinatesByZipcode(lastSearch);
+    //getCoordinatesByZipcode(lastSearch);
+    
 };
-
+async function handleZipcodeFetch(zipcode) {
+       // Disable the button and recent search links to prevent multiple fetches
+       document.getElementById('fetchCoordinatesButton').disabled = true;
+       document.querySelectorAll('.recent-search').forEach(elem => elem.style.pointerEvents = 'none');
+       
+       // Fetch the coordinates and update the tables
+       await getCoordinatesByZipcode(zipcode);
+       // Re-enable the button and the recent search links
+       document.getElementById('fetchCoordinatesButton').disabled = false;
+       document.querySelectorAll('.recent-search').forEach(elem => elem.style.pointerEvents = '');
+   }
 
 
 function createTable(tableId, weatherData, model) {
@@ -754,7 +789,7 @@ function createTable(tableId, weatherData, model) {
    
 
     dataTable.dataset.model = model;
-    console.log(`Listeners added for ${model} model`);
+    //console.log(`Listeners added for ${model} model`);
 }
 document.addEventListener('click', function(event) {
     let target = event.target; // this is the clicked element
@@ -896,9 +931,10 @@ function fillTableWithWindSpeed(table, weatherData) {
     
     // Finally, set the table's HTML to the newly created rows
     table.innerHTML = tableHtml;
-    checkForWindShear(table);
+    
     
 }
+
 function checkForWindShear(table) {
     const rows = table.rows; // Get all the rows in the table
 
@@ -909,27 +945,50 @@ function checkForWindShear(table) {
             const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
             const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
             
+            // Extract feet value from the header cell text
+            const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
+            const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
+            const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
+
             // Get data-wind-angle attribute of current and next cell
             const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
             const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
 
             // If both speeds and angles are numbers (not NaN), proceed to check
-            if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle)) {
+            if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1500) {
                 // Calculate the difference between the current and next cells' speeds and angles
                 const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
                 let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
                 diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
 
                 // Check for shears based on the provided criteria: 10mph speed difference and 90 degree angle difference
-                if (diffSpeed > 15 && diffAngle > 90) {
+                if (diffSpeed > 15 || diffAngle > 90) {
                     // Highlight cells by adding the "shear-detected" class
                     rows[rowIndex].cells[colIndex].classList.add('shear-detected');
                     rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
-                    
+                    //console.log('Shear detected between ' + cellCurrentAltitude + 'ft and ' + cellNextAltitude + 'ft.');
                 }
             }
         }
     }
+}
+async function refreshWeatherDataAndTables(zipcode) {
+    // Fetch coordinates from zipcode
+    await getCoordinatesByZipcode(zipcode);
+    // Fetch weather data
+    await fetchAllModelsData();
+    // Update tables (if necessary)
+    updateWeatherTables();
+    // Perform wind shear checks (if necessary)
+    performWindShearChecksAndUpdateTables();
+}
+function performWindShearChecksAndUpdateTables() {
+    const tables = document.querySelectorAll('table[id$="-table"]');
+    tables.forEach(table => {
+        if (table.dataset.showing === 'winds') { // assuming we want to check for wind shear only on wind data
+            checkForWindShear(table);
+        }
+    });
 }
 function displayWindDataAtIndex(weatherData, index) {
     // Convert the timestamp to a readable date and day of the week
