@@ -15,6 +15,10 @@
   .shear-detected {
     border: 2px solid white;
 }
+.shear-detected-hidden {
+    border: 2px solid transparent !important;
+    background-color: inherit !important; /* Optional: reset any coloring if needed */
+}
   #autocomplete-list div {
     padding: 10px;
     cursor: pointer;
@@ -287,6 +291,7 @@ th {
     <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
     <button id="toggleButton">Toggle Wind/Clouds</button>
     <button id="toggleHighAltitudeButton">Toggle High Altitude</button>
+    <button id="checkWindShearButton">Toggle Wind Shear</button>
     <!-- ICON Table -->
     <div id="configPopup" class="config-popup" style="display: none;">
         <div class="config-content">
@@ -320,6 +325,7 @@ th {
 
 
 <script>
+    document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
     document.getElementById('toggleHighAltitudeButton').addEventListener('click', toggleHighAltitude);
     function toggleHighAltitude() {
     const tables = document.querySelectorAll('table[id$="-table"]');
@@ -344,7 +350,7 @@ th {
  medWindThreshold = 15;
  highWindThreshold = 20;
     // Declare this at the top to store the initial view
-
+let isWindShearChecked = false;
 let globalWeatherData = {};
 
 function getWindArrowClass(degrees) {
@@ -458,7 +464,7 @@ async function fetchAllModelsData() {
 
         // Now that we have all data, setup the tables and perform shear checks
         initialTableSetup();
-        performWindShearChecksAndUpdateTables();
+        //performWindShearChecksAndUpdateTables();
     } catch (error) {
         console.error('Error fetching data for all models:', error);
     }
@@ -492,7 +498,7 @@ async function getCoordinatesByZipcode(zipcode) {
                 await checkAndFetchData(baseUrls[model], model);
             }
             initialTableSetup(); // Refresh the table setup
-            performWindShearChecksAndUpdateTables();
+           // performWindShearChecksAndUpdateTables();
 
         } else {
             alert('No coordinates found for the provided zipcode.');
@@ -679,6 +685,7 @@ function createTable(tableId, weatherData, model) {
     const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
     const timestamps = weatherData.hourly.time;
     const dataTable = document.getElementById(tableId);
+    isWindShearChecked = false;
 
     let tableHtml = `<tr><th>${model.replace('Meteo', '<br>Meteo')}</th>`;
 
@@ -718,7 +725,10 @@ function createTable(tableId, weatherData, model) {
     // Presuming the weatherData variable holds your cloud cover data indexed by hPa, 
     // e.g., `cloud_cover_1000hPa`, `cloud_cover_975hPa`, etc.
     const cloudCoverKey = `cloud_cover_${hPa}hPa`;
-    
+    const allShearCells = document.querySelectorAll('.shear-detected, .shear-detected-hidden');
+        allShearCells.forEach(cell => {
+            cell.classList.remove('shear-detected');
+        });
     // Check if the cloud cover data exists for this altitude level
     if (weatherData.hourly.hasOwnProperty(cloudCoverKey)) {
         // Add a data cell for each time interval
@@ -914,43 +924,7 @@ function fillTableWithWindSpeed(table, weatherData) {
     
 }
 
-function checkForWindShear(table) {
-    const rows = table.rows; // Get all the rows in the table
 
-    // Loop through the number of columns (based on headers, assuming row 0 is headers)
-    for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
-        // Loop through each row, excluding the last since it has no next sibling row
-        for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
-            const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
-            const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
-            
-            // Extract feet value from the header cell text
-            const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
-            const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
-            const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
-
-            // Get data-wind-angle attribute of current and next cell
-            const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
-            const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
-
-            // If both speeds and angles are numbers (not NaN), proceed to check
-            if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1500) {
-                // Calculate the difference between the current and next cells' speeds and angles
-                const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
-                let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
-                diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
-
-                // Check for shears based on the provided criteria: 10mph speed difference and 90 degree angle difference
-                if (diffSpeed > 10 || diffAngle > 90) {
-                    // Highlight cells by adding the "shear-detected" class
-                    rows[rowIndex].cells[colIndex].classList.add('shear-detected');
-                    rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
-                   // console.log('Shear detected between ' + cellCurrentAltitude + 'ft and ' + cellNextAltitude + 'ft.');
-                }
-            }
-        }
-    }
-}
 async function refreshWeatherDataAndTables(zipcode) {
     // Fetch coordinates from zipcode
     await getCoordinatesByZipcode(zipcode);
@@ -961,14 +935,52 @@ async function refreshWeatherDataAndTables(zipcode) {
     // Perform wind shear checks (if necessary)
     performWindShearChecksAndUpdateTables();
 }
-function performWindShearChecksAndUpdateTables() {
-    const tables = document.querySelectorAll('table[id$="-table"]');
-    tables.forEach(table => {
-        if (table.dataset.showing === 'winds') { // assuming we want to check for wind shear only on wind data
-            checkForWindShear(table);
-        }
-    });
-}
+    function performWindShearChecksAndUpdateTables() {
+            const tables = document.querySelectorAll('table[id$="-table"]');
+            isWindShearChecked = !isWindShearChecked; // Toggle the state
+            tables.forEach(table => {
+                if (table.dataset.showing === 'winds') {
+                    const rows = table.rows;
+                    for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
+                        for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
+                            if (isWindShearChecked) {
+                                const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
+                                const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
+
+                                // Extract feet value from the header cell text
+                                const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
+                                const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
+                                const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
+
+                                // Get data-wind-angle attribute of current and next cell
+                                const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
+                                const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
+
+                                // If both speeds and angles are numbers (not NaN), proceed to check
+                                if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1500) {
+                                    // Calculate the difference between the current and next cells' speeds and angles
+                                    const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
+                                    let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
+                                    diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
+
+                                    // Check for shears based on the provided criteria: 10mph speed difference and 90 degree angle difference
+                                    if (diffSpeed > 10 || diffAngle > 90) {
+                                        // Highlight cells by adding the "shear-detected" class
+                                        rows[rowIndex].cells[colIndex].classList.add('shear-detected');
+                                        rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
+                                    }
+                                }
+                                
+                            } else {
+                                // If shear indication is being turned off, remove the 'shear-detected' class
+                                rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
+                                rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
+                            }
+                        }
+                    }
+                }
+            });
+    }
 function displayWindDataAtIndex(weatherData, index) {
     // Convert the timestamp to a readable date and day of the week
     const timestamp = weatherData.hourly.time && weatherData.hourly.time.length > index ? weatherData.hourly.time[index] : 'N/A';
