@@ -361,7 +361,7 @@ function getWindArrowClass(degrees) {
 function initialTableSetup() {
     Object.keys(globalWeatherData).forEach(model => {
         // ... before setting up each table
-        console.log("Check 6: initialTableSetup", new Date().toISOString());
+        console.log("Check initialTableSetup", new Date().toISOString());
         const tableId = `${model.toLowerCase()}-table`;
         const dataTable = document.getElementById(tableId);
         fillTableWithWindSpeed(dataTable, globalWeatherData[model]); // Show winds data first
@@ -378,7 +378,7 @@ const baseUrls = {
     gfs: 'https://api.open-meteo.com/v1/gfs',
     icon: 'https://api.open-meteo.com/v1/dwd-icon'
 };
-fetchAllModelsData();
+//fetchAllModelsData();
 document.getElementById('editThresholdsButton').addEventListener('click', showConfigPopup); // assume editThresholdsButton is the ID of the button to show the popup
 function submitThresholdsAndRepaint() {
     // Get the threshold values from the input fields
@@ -446,15 +446,15 @@ document.getElementById('fetchCoordinatesButton').addEventListener('click', () =
    });
 
 async function fetchAllModelsData() {
-    console.log("Check 5: Inside fetchAllModelsData before Promise.all", new Date().toISOString());
+    console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
     try {
         // Await all fetches to be completed using Promise.all
         await Promise.all(Object.entries(baseUrls).map(async ([model, baseUrl]) => {
-            console.log(`Check 5a: Fetching data for model "${model}"`, new Date().toISOString());
+            console.log(`Fetching data for model "${model}"`, new Date().toISOString());
             await checkAndFetchData(baseUrl, model);
         }));
 
-        console.log("Check 7: Inside fetchAllModelsData after Promise.all", new Date().toISOString());
+        console.log("Inside fetchAllModelsData after Promise.all", new Date().toISOString());
 
         // Now that we have all data, setup the tables and perform shear checks
         initialTableSetup();
@@ -470,9 +470,9 @@ fetchAllModelsData();
 
 
 async function getCoordinatesByZipcode(zipcode) {
-        console.log("Check 10: getCoordinatesByZipcode called", new Date().toISOString());
+        console.log("getCoordinatesByZipcode called", new Date().toISOString());
     const zipApiUrl = `https://api.zippopotam.us/us/${zipcode}`;
-    console.log("Check 3: getCoordinatesByZipcode start", new Date().toISOString());
+    console.log("getCoordinatesByZipcode start", new Date().toISOString());
     try {
         const response = await fetch(zipApiUrl);
         if (!response.ok) {
@@ -502,14 +502,15 @@ async function getCoordinatesByZipcode(zipcode) {
         alert('Failed to get coordinates. Please check the zipcode and try again.');
     }
    
-console.log("Check 4: getCoordinatesByZipcode end", new Date().toISOString());
+console.log("getCoordinatesByZipcode end", new Date().toISOString());
 
     // Fetch and display weather data for the last searched zipcode
     //refreshWeatherDataAndTables(lastSearch);
 };
 
 async function checkAndFetchData(baseUrl, model) {
-        console.log(`Check 11: checkAndFetchData called for model ${model}`, new Date().toISOString());
+       console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
+
     const commonParameters = [
         'temperature_2m','temperature_80m','temperature_180m',
         'weather_code','relative_humidity_2m',
@@ -615,7 +616,7 @@ async function checkAndFetchData(baseUrl, model) {
         // Optionally, handle the error in the UI, for instance, by displaying an error message to the user
     }
     
-    console.log(`Check 12: checkAndFetchData finished for model ${model}`, new Date().toISOString());
+    console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
     }
 
 
@@ -648,7 +649,7 @@ function getCookie(name) {
 
 
 window.onload = function() {
-        console.log("Check 9: Window onload triggered", new Date().toISOString());
+        console.log("Window onload triggered", new Date().toISOString());
     
     const blueThreshold = getCookie('blueThreshold');
     const greenThreshold = getCookie('greenThreshold');
@@ -763,23 +764,23 @@ document.addEventListener('click', function(event) {
     }
 });
 function displayDataAtIndex(weatherData, index) {
-    console.log('Index:', index);
-    console.log('weatherData at Index:', weatherData.hourly.time[index]);
-    console.log('Total Cloud Cover:', weatherData.hourly.cloud_cover[index]);
-    console.log('Low Cloud Cover:', weatherData.hourly.cloud_cover_low[index]);
+    //console.log('Index:', index);
+    //console.log('weatherData at Index:', weatherData.hourly.time[index]);
+    //console.log('Total Cloud Cover:', weatherData.hourly.cloud_cover[index]);
+    //console.log('Low Cloud Cover:', weatherData.hourly.cloud_cover_low[index]);
     
     // Assuming these are the next properties you are trying to log
-    console.log('Mid Cloud Cover:', weatherData.hourly.cloud_cover_mid ? weatherData.hourly.cloud_cover_mid[index] : 'None');
-    console.log('High Cloud Cover:', weatherData.hourly.cloud_cover_high ? weatherData.hourly.cloud_cover_high[index] : 'None');
-    console.log('Temperature:', weatherData.hourly.temperature_2m ? weatherData.hourly.temperature_2m[index] : 'None');
-    console.log('Dewpoint:', weatherData.hourly.dew_point_2m ? weatherData.hourly.dew_point_2m[index] : 'None');
+    //console.log('Mid Cloud Cover:', weatherData.hourly.cloud_cover_mid ? weatherData.hourly.cloud_cover_mid[index] : 'None');
+    //console.log('High Cloud Cover:', weatherData.hourly.cloud_cover_high ? weatherData.hourly.cloud_cover_high[index] : 'None');
+    //console.log('Temperature:', weatherData.hourly.temperature_2m ? weatherData.hourly.temperature_2m[index] : 'None');
+    //console.log('Dewpoint:', weatherData.hourly.dew_point_2m ? weatherData.hourly.dew_point_2m[index] : 'None');
     
 
     // Now we handle any remaining code with access to the possibly undefined properties
     const tempDewpointSpread = (weatherData.hourly.temperature_2m && weatherData.hourly.dew_point_2m)
         ? (weatherData.hourly.temperature_2m[index] - weatherData.hourly.dew_point_2m[index])
         : 'N/A';
-    console.log('Temp-Dewpoint Spread:', tempDewpointSpread);
+    //console.log('Temp-Dewpoint Spread:', tempDewpointSpread);
     // Add similar lines for cloud_cover_mid, cloud_cover_high, temperature_2m, dew_point_2m, visibility
     const dataForTimestamp = {
         totalCloudCover: weatherData.hourly.cloud_cover[index],
