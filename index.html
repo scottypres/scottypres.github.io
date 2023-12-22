@@ -319,14 +319,14 @@
         <!-- ... existing HTML ... -->
 
         <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
-        <button id="toggleButton">Toggle Wind/Clouds</button>
-        <button id="toggleHighAltitudeButton">Toggle High Altitude</button>
-        <button id="checkWindShearButton">Toggle Wind Shear</button>
+        <button id="toggleButton">Wind/Clouds</button>
+        <button id="toggleHighAltitudeButton">High Altitude</button>
+        <button id="checkWindShearButton">Wind Shear</button>
         <button id="bestDaysButton" disabled>Best Days</button>
 
         <div id="bestDaysPopup" class="config-popup" style="display: none;">
             <div class="config-content">
-                <label for="bestWindSpeed">Best Wind Speed (mph)</label>
+                <label for="bestWindSpeed">Max Wind Speed</label>
                 <input type="number" id="bestWindSpeed" value="15" min="0" /><br />
                 <button id="applyBestDaysButton">Apply</button>
                 
@@ -402,8 +402,27 @@
         let bestWindSpeedThreshold = 15;
 
         document.getElementById('bestDaysButton').addEventListener('click', function () {
-            document.getElementById('bestDaysPopup').style.display = 'flex'; // Show the popup
-        });
+                const buttonText = this.textContent;
+                if (buttonText === 'Best Days') {
+                    // The button text is "Best Days", so show the popup
+                    document.getElementById('bestDaysPopup').style.display = 'flex';
+                } else {
+                    // The button text is "Reset", so reset the tables by creating them again
+                    resetTables();
+                    // Change the button text back to "Best Days"
+                    this.textContent = 'Best Days';
+                }
+            });
+            function resetTables() {
+                    // Loop over each model to create the tables again using the stored data
+                    Object.keys(globalWeatherData).forEach(model => {
+                        const tableId = `${model.toLowerCase()}-table`;
+                        createTable(tableId, globalWeatherData[model], model);
+                    });
+                    // After resetting the tables, update the toggle button text to reflect the content shown in the tables
+                    updateToggleButton();
+                    initialTableSetup();
+                }
 
         // Event listener to handle when the user clicks the "Apply" button in the Best Days popup
         document.getElementById('applyBestDaysButton').addEventListener('click', function () {
@@ -413,7 +432,7 @@
 
     // Get the value from the input field for the best wind speed threshold
     bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
-
+    setCookie('bestWindSpeed', bestWindSpeedThreshold, 365);
     // Perform the filtering operation asynchronously to allow the UI to show the loading state
     setTimeout(() => {
         filterBestDaysColumns();
@@ -517,7 +536,7 @@ function filterBestDaysColumns() {
         // Fetch data for each model
         const baseUrls = {
             openMeteo: 'https://api.open-meteo.com/v1/forecast',
-            gfs: 'https://api.open-meteo.com/v1/gfs',
+            //gfs: 'https://api.open-meteo.com/v1/gfs',
             icon: 'https://api.open-meteo.com/v1/dwd-icon'
         };
         //fetchAllModelsData();
@@ -820,6 +839,18 @@ function filterBestDaysColumns() {
                     fetchButton.click();
                 }, 0);
             }
+            const savedBestWindSpeed = getCookie('bestWindSpeed');
+
+            if (savedBestWindSpeed) {
+                // If we have a saved value, use it as the best wind speed threshold
+                bestWindSpeedThreshold = parseFloat(savedBestWindSpeed);
+            } else {
+                // If no value is saved, use default value
+                bestWindSpeedThreshold = 15;
+            }
+
+            // Update the value in the input field
+            document.getElementById('bestWindSpeed').value = bestWindSpeedThreshold;
         };
         async function handleZipcodeFetch(zipcode) {
             // Disable the button and recent search links to prevent multiple fetches
@@ -1089,51 +1120,65 @@ function filterBestDaysColumns() {
             performWindShearChecksAndUpdateTables();
         }
         function performWindShearChecksAndUpdateTables() {
-            const tables = document.querySelectorAll('table[id$="-table"]');
-            isWindShearChecked = !isWindShearChecked; // Toggle the state
-            tables.forEach(table => {
-                if (table.dataset.showing === 'winds') {
-                    const rows = table.rows;
-                    for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
-                        for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
-                            if (isWindShearChecked) {
-                                const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
-                                const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
+                // Get reference to the Wind Shear button
+                const windShearButton = document.getElementById('checkWindShearButton');
+                // Change the button text to show "Loading..."
+                windShearButton.textContent = 'Loading...';
+                windShearButton.disabled = true; // Disable the button during processing
 
-                                // Extract feet value from the header cell text
-                                const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
-                                const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
-                                const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
+                // Process in the next tick to let the UI update
+                setTimeout(() => {
+                    const tables = document.querySelectorAll('table[id$="-table"]');
+                    isWindShearChecked = !isWindShearChecked; // Toggle the state
 
-                                // Get data-wind-angle attribute of current and next cell
-                                const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
-                                const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
+                    tables.forEach(table => {
+                        if (table.dataset.showing === 'winds') {
+                            const rows = table.rows;
+                            for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
+                                for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
+                                    const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
+                                    const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
 
-                                // If both speeds and angles are numbers (not NaN), proceed to check
-                                if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1500) {
-                                    // Calculate the difference between the current and next cells' speeds and angles
-                                    const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
-                                    let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
-                                    diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
+                                    const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
+                                    const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
+                                    const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
 
-                                    // Check for shears based on the provided criteria: 10mph speed difference and 90 degree angle difference
-                                    if (diffSpeed > 10 || diffAngle > 90) {
-                                        // Highlight cells by adding the "shear-detected" class
-                                        rows[rowIndex].cells[colIndex].classList.add('shear-detected');
-                                        rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
+                                    const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
+                                    const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
+
+                                    if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1500) {
+                                        const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
+                                        let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
+                                        diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
+
+                                        if (diffSpeed > 10 || diffAngle > 90) { // Adjust your speed and angle thresholds as needed
+                                            rows[rowIndex].cells[colIndex].classList.toggle('shear-detected', isWindShearChecked);
+                                            rows[rowIndex + 1].cells[colIndex].classList.toggle('shear-detected', isWindShearChecked);
+                                        } else {
+                                            rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
+                                            rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
+                                        }
+                                    } else {
+                                        // If the cell represents a high altitude, above the threshold, skip it
+                                        if (altitudeDifference >= 1500) {
+                                            continue;
+                                        }
+                                        rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
+                                        rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
                                     }
                                 }
-
-                            } else {
-                                // If shear indication is being turned off, remove the 'shear-detected' class
-                                rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
-                                rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
                             }
                         }
-                    }
-                }
-            });
-        }
+                    });
+
+                    // Once done, update the button text to reflect the toggled state
+                    windShearButton.textContent = isWindShearChecked ? 'Hide Wind Shear' : 'Show Wind Shear';
+                    windShearButton.disabled = false; // Re-enable the button after processing
+                }, 0);
+            }
+
+            // Attach the event handler to the button
+            document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
         function displayWindDataAtIndex(weatherData, index) {
             // Convert the timestamp to a readable date and day of the week
             const timestamp = weatherData.hourly.time && weatherData.hourly.time.length > index ? weatherData.hourly.time[index] : 'N/A';
