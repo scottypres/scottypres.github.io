@@ -492,7 +492,8 @@ async function getCoordinatesByZipcode(zipcode) {
                 longitude: parseFloat(data.places[0].longitude)
             };
             //console.log('Coordinates:', userLocation);
-
+            setCookie('zipcode', zipcode, 365); // Save for 365 days
+            console.log('zip cookie saved');
             // Now call the API with these coordinates for each model and update the table with new data
             for (const model of Object.keys(baseUrls)) {
                 await checkAndFetchData(baseUrls[model], model);
@@ -654,20 +655,36 @@ function getCookie(name) {
 
 
 
-window.onload = function() {
-        console.log("Window onload triggered", new Date().toISOString());
-    
-    const blueThreshold = getCookie('blueThreshold');
-    const greenThreshold = getCookie('greenThreshold');
-    const redThreshold = getCookie('redThreshold');
+    window.onload = function () {
+            console.log("Window onload triggered", new Date().toISOString());
 
-    if (blueThreshold) document.getElementById('blueThreshold').value = blueThreshold;
-    if (greenThreshold) document.getElementById('greenThreshold').value = greenThreshold;
-    if (redThreshold) document.getElementById('redThreshold').value = redThreshold;
+            // Get threshold values from cookies, if they exist
+            const blueThreshold = getCookie('blueThreshold');
+            const greenThreshold = getCookie('greenThreshold');
+            const redThreshold = getCookie('redThreshold');
 
-    
-    
-};
+            // Update threshold inputs with cookie values
+            if (blueThreshold) document.getElementById('blueThreshold').value = blueThreshold;
+            if (greenThreshold) document.getElementById('greenThreshold').value = greenThreshold;
+            if (redThreshold) document.getElementById('redThreshold').value = redThreshold;
+
+            // Check for the presence of the zipcode cookie
+            const savedZipcode = getCookie('zipcode');
+
+            if (savedZipcode) {
+                 const zipcodeInput = document.getElementById('zipcodeInput');
+
+            const fetchButton = document.getElementById('fetchCoordinatesButton');
+
+            zipcodeInput.value = savedZipcode;
+                console.log("Zip cookie loaded");
+            // Check if fetchCoordinatesButton has already a click event listener that fetches the weather
+            // If not, manually call the handleZipcodeFetch(zipcode) function after a short delay to ensure any setup logic has completed
+            setTimeout(function () {
+                fetchButton.click();
+            }, 0);
+        }
+    };
 async function handleZipcodeFetch(zipcode) {
        // Disable the button and recent search links to prevent multiple fetches
        document.getElementById('fetchCoordinatesButton').disabled = true;
