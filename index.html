@@ -448,13 +448,7 @@
         
     }, 0);
 });
-    document.getElementById('toggleDaylightButton').addEventListener('click', () => {
-        // Providing the weatherData global variable, or however you have your weather data stored.
-        checkDaylightHours(globalWeatherData);
-    });
-    function checkDaylightHours(weatherData) {
     
-    }
 function filterBestDaysColumns() {
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
@@ -679,7 +673,17 @@ function filterBestDaysColumns() {
 
         async function checkAndFetchData(baseUrl, model) {
            // console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
-
+            const dailyParameters = [
+                'weather_code',
+                'temperature_2m_max',
+                'temperature_2m_min',
+                'apparent_temperature_max',
+                'apparent_temperature_min',
+                'sunrise',
+                'sunset',
+                'uv_index_max',
+                'precipitation_sum'
+            ].join(',');
             const commonParameters = [
                 'temperature_2m', 'temperature_80m', 'temperature_180m',
                 'weather_code', 'relative_humidity_2m',
@@ -779,7 +783,7 @@ function filterBestDaysColumns() {
 
             // Fetch new data if necessary
             if (shouldFetchData) {
-                const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}${units}${additionalParameters}`;
+                 const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
 
                 try {
                     // Request data from the weather API using the assembled URL
@@ -814,7 +818,7 @@ function filterBestDaysColumns() {
                 }
             }
 
-            console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
+           // console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
         }
 
 
@@ -919,9 +923,8 @@ function filterBestDaysColumns() {
                 const hour12 = hour % 12 || 12; // Convert to 12-hour format
                 const ampm = hour >= 12 ? 'PM' : 'AM';
 
-                // Add "daylight" class to header cells of daylight hours
-                const isDaylight = hour >= 6 && hour < 18;
-                const headerClass = isDaylight ? 'daylight' : '';
+               // Define headerClass without applying the "daylight" class
+                const headerClass = '';
 
                 tableHtml += `<th class="column-header ${headerClass}">
                     <span class="smalldate">${month}/${day}</span><br>
