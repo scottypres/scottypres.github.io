@@ -323,6 +323,7 @@
         <button id="toggleHighAltitudeButton">High Altitude</button>
         <button id="checkWindShearButton">Wind Shear</button>
         <button id="bestDaysButton" disabled>Best Days</button>
+        <button id="toggleDaylightButton">Toggle Daylight Hours</button>
 
         <div id="bestDaysPopup" class="config-popup" style="display: none;">
             <div class="config-content">
@@ -447,7 +448,13 @@
         
     }, 0);
 });
-
+    document.getElementById('toggleDaylightButton').addEventListener('click', () => {
+        // Providing the weatherData global variable, or however you have your weather data stored.
+        checkDaylightHours(globalWeatherData);
+    });
+    function checkDaylightHours(weatherData) {
+    
+    }
 function filterBestDaysColumns() {
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
@@ -671,7 +678,7 @@ function filterBestDaysColumns() {
         };
 
         async function checkAndFetchData(baseUrl, model) {
-            console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
+           // console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
 
             const commonParameters = [
                 'temperature_2m', 'temperature_80m', 'temperature_180m',
@@ -750,32 +757,61 @@ function filterBestDaysColumns() {
                 additionalParameters += '&forecast_days=7'; // 7-day forecast for ICON
             }
 
-            // Adjust the API request URL to include the additional parameters for extended forecasts
-            const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}${units}${additionalParameters}`;
+            const zipcode = document.getElementById('zipcodeInput').value.trim();
+            const lastApiCallKey = `lastApiCall_${model}_${zipcode}`;
+            const now = Date.now();
+            const cacheDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
+            const lastApiCallData = localStorage.getItem(lastApiCallKey);
+            let shouldFetchData = true;
 
-            try {
-                // Request data from the weather API using the assembled URL
-                const response = await fetch(requestUrl);
+            // Check if we have cached data for this model and zipcode
+            if (lastApiCallData) {
+                const cachedData = JSON.parse(lastApiCallData);
 
-                // If the response is not okay, throw an error
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                // Check if the cached data is still valid
+                if (cachedData.zipcode === zipcode && now - cachedData.timestamp < cacheDuration) {
+                    console.log(`Using cached data for model "${model}"`, new Date().toISOString());
+                    globalWeatherData[model] = cachedData.data;
+                    createTable(`${model.toLowerCase()}-table`, cachedData.data, model);
+                    shouldFetchData = false;
                 }
+            }
 
-                // Parse the response as JSON data
-                const weatherData = await response.json();
-                // console.log(`Data fetched successfully for model "${model}":`, weatherData);
+            // Fetch new data if necessary
+            if (shouldFetchData) {
+                const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}${units}${additionalParameters}`;
 
-                // Populate the respective table with the fetched data
-                createTable(`${model.toLowerCase()}-table`, weatherData, model);
+                try {
+                    // Request data from the weather API using the assembled URL
+                    const response = await fetch(requestUrl);
 
-                // Store the fetched data using the model as the key
-                globalWeatherData[model] = weatherData;
-            } catch (error) {
-                // Log the error if fetching the data fails
-                console.error(`Failed to fetch data for model "${model}":`, error);
+                    // If the response is not okay, throw an error
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
 
-                // Optionally, handle the error in the UI, for instance, by displaying an error message to the user
+                    // Parse the response as JSON
+                    const weatherData = await response.json();
+
+                    // Cache the new API data
+                    localStorage.setItem(lastApiCallKey, JSON.stringify({
+                        timestamp: now,
+                        data: weatherData,
+                        zipcode: zipcode
+                    }));
+
+                    // Populate the respective table with the fetched data
+                    createTable(`${model.toLowerCase()}-table`, weatherData, model);
+
+                    // Store the fetched data globally
+                    globalWeatherData[model] = weatherData;
+
+                    console.log(`Data fetched successfully for model ${model}`);
+                } catch (error) {
+                    // Log the error if fetching the data fails
+                    console.error(`Failed to fetch data for model ${model}`, error);
+                    // Optionally, handle the error in the UI
+                }
             }
 
             console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
@@ -940,65 +976,7 @@ function filterBestDaysColumns() {
             dataTable.dataset.model = model;
             //console.log(`Listeners added for ${model} model`);
         }
-        document.addEventListener('click', function (event) {
-            let target = event.target; // this is the clicked element
-
-            // Check if the clicked element is a header in any of the tables, and it's not the first header as it represents the model name
-            if (target.nodeName === 'TH' && target.cellIndex > 0) {
-                let tableId = target.closest('table').id;
-                let model = tableId.replace('-table', '');
-
-                // Get the index of the header (ignoring the first header cell of the model name)
-                let index = Array.from(target.parentNode.children).indexOf(target) - 1;
-
-                // Invoke the function to show popup with the corresponding data
-                if (index > -1 && globalWeatherData.hasOwnProperty(model)) {
-                    displayDataAtIndex(globalWeatherData[model], index);
-                }
-            }
-        });
-        function displayDataAtIndex(weatherData, index) {
-            //console.log('Index:', index);
-            //console.log('weatherData at Index:', weatherData.hourly.time[index]);
-            //console.log('Total Cloud Cover:', weatherData.hourly.cloud_cover[index]);
-            //console.log('Low Cloud Cover:', weatherData.hourly.cloud_cover_low[index]);
-
-            // Assuming these are the next properties you are trying to log
-            //console.log('Mid Cloud Cover:', weatherData.hourly.cloud_cover_mid ? weatherData.hourly.cloud_cover_mid[index] : 'None');
-            //console.log('High Cloud Cover:', weatherData.hourly.cloud_cover_high ? weatherData.hourly.cloud_cover_high[index] : 'None');
-            //console.log('Temperature:', weatherData.hourly.temperature_2m ? weatherData.hourly.temperature_2m[index] : 'None');
-            //console.log('Dewpoint:', weatherData.hourly.dew_point_2m ? weatherData.hourly.dew_point_2m[index] : 'None');
-
-
-            // Now we handle any remaining code with access to the possibly undefined properties
-            const tempDewpointSpread = (weatherData.hourly.temperature_2m && weatherData.hourly.dew_point_2m)
-                ? (weatherData.hourly.temperature_2m[index] - weatherData.hourly.dew_point_2m[index])
-                : 'N/A';
-            //console.log('Temp-Dewpoint Spread:', tempDewpointSpread);
-            // Add similar lines for cloud_cover_mid, cloud_cover_high, temperature_2m, dew_point_2m, visibility
-            const dataForTimestamp = {
-                totalCloudCover: weatherData.hourly.cloud_cover[index],
-                lowCloudCover: weatherData.hourly.cloud_cover_low[index],
-                midCloudCover: weatherData.hourly.cloud_cover_mid[index],
-                highCloudCover: weatherData.hourly.cloud_cover_high[index],
-                temperature: weatherData.hourly.temperature_2m[index],
-                dewpoint: weatherData.hourly.dew_point_2m[index],
-
-            };
-
-
-
-            // Display the alert without visibility data for ICON model
-            alert(
-                `Date: ${dateFormatted} (${dayOfWeek})\n` + // Format change here
-                `Conditions: ${weatherDescription}\n` +      // Substituted description here
-                `Temperature: ${temperature}°\n` +
-                `CAPE: ${cape}\n` +
-                `Relative Humidity: ${relativeHumidity}%\n` +
-                `Dewpoint: ${dewpoint}°\n` +
-                `Temp-Dewpoint Spread: ${tempDewpointSpread}°\n`
-            );
-        }
+        
         document.getElementById('toggleButton').addEventListener('click', toggleWindClouds);
         document.getElementById('toggleButton').textContent = 'Show Winds'; // Default text
         function toggleWindClouds() {
@@ -1179,39 +1157,7 @@ function filterBestDaysColumns() {
 
             // Attach the event handler to the button
             document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
-        function displayWindDataAtIndex(weatherData, index) {
-            // Convert the timestamp to a readable date and day of the week
-            const timestamp = weatherData.hourly.time && weatherData.hourly.time.length > index ? weatherData.hourly.time[index] : 'N/A';
-            const date = timestamp !== 'N/A' ? new Date(timestamp) : 'N/A';
-            const dateFormatted = date !== 'N/A' ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
-            const dayOfWeek = date !== 'N/A' ? date.toLocaleDateString('en-US', { weekday: 'long' }) : 'N/A';
-
-            // Retrieve the required data from the weather data object, or show "N/A"
-            const getWeatherDataValue = (key) => {
-                return weatherData.hourly[key] && weatherData.hourly[key].length > index ? weatherData.hourly[key][index] : 'N/A';
-            };
-
-            const weatherCode = getWeatherDataValue('weather_code');
-            const temperature = getWeatherDataValue('temperature_2m');
-            const cape = getWeatherDataValue('cape');
-            const relativeHumidity = getWeatherDataValue('relative_humidity_2m');
-            const dewpoint = getWeatherDataValue('dew_point_2m');
-
-            // Calculate the spread if both temperature and dewpoint are available
-            let tempDewpointSpread = temperature !== 'N/A' && dewpoint !== 'N/A' ? (temperature - dewpoint).toFixed(2) : 'N/A';
-
-            // Display the alert with the collected data
-            alert(
-                `Date: ${dateFormatted}\n` +
-                `Day: ${dayOfWeek}\n` +
-
-                `Temperature: ${temperature}°\n` +
-                `CAPE: ${cape}\n` +
-                `Relative Humidity: ${relativeHumidity}%\n` +
-                `Dewpoint: ${dewpoint}°\n` +
-                `Temp-Dewpoint Spread: ${tempDewpointSpread}°\n`
-            );
-        }
+        
         // Helper function to get the background color based on the wind speed
         function getWindSpeedColor(windSpeed) {
             let backgroundColorRGB;
