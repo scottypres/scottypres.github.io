@@ -455,14 +455,14 @@
             }
         document.getElementById('bestDaysButton').addEventListener('click', function () {
                 const buttonText = this.textContent;
-                if (buttonText === 'Best Days') {
+                if (buttonText === 'Best Hours') {
                     // The button text is "Best Days", so show the popup
                     document.getElementById('bestDaysPopup').style.display = 'flex';
                 } else {
                     // The button text is "Reset", so reset the tables by creating them again
                     resetTables();
                     // Change the button text back to "Best Days"
-                    this.textContent = 'Best Days';
+                    this.textContent = 'Best Hours';
                 }
             });
             function resetTables() {
