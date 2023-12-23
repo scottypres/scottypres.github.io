@@ -323,7 +323,7 @@
         <br>
         Modifiers: 
         <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
-        <button id="checkWindShearButton">Wind Shear</button>
+        <button id="checkWindShearButton">Enable Wind Shear</button>
         <button id="toggleDaylightButton">All Hours</button>
         <br>
         Display: 
@@ -395,18 +395,32 @@
             this.textContent = highAltitudeVisible ? 'Hide High Altitude' : 'Show High Altitude';
             fetchAllModelsData();
         });
-        document.getElementById('checkWindShearButton').addEventListener('click', () => {
-            console.log("Windshear just clicked");
-            windShearEnabled = !windShearEnabled;
-            console.log(windShearEnabled);
-            this.textContent = windShearEnabled ? 'Disable Wind Shear' : 'Enable Wind Shear';
-            
+        document.getElementById('checkWindShearButton').addEventListener('click', function () {
+                console.log("Wind shear button clicked");
+                windShearEnabled = !windShearEnabled;
+                console.log(windShearEnabled);
+                const button = this; // 'this' refers to the button element in a regular function.
 
+                // Always display "Loading..." text and disable the button while processing
+                button.textContent = 'Loading...';
+                button.disabled = true;
 
-            // Log the new state to the console (this line can be removed if not needed).
-            console.log('Wind Shear Enabled:', windShearEnabled);
-            fetchAllModelsData();
-        });
+                if (windShearEnabled) {
+                    console.log('Wind Shear Enabled: Checking...');
+                    checkAndApplyWindShear().then(() => {
+                        // Once completed, set the text to reflect the current state
+                        button.textContent = 'Disable Wind Shear';
+                        button.disabled = false; // Re-enable the button
+                    });
+                } else {
+                    console.log('Wind Shear Disabled: Removing styles...');
+                    removeWindShearStyles();
+                    // Set the button text to "Enable Wind Shear" after the styles have been removed
+                    button.textContent = 'Enable Wind Shear';
+                    button.disabled = false; // Re-enable the button
+                }
+                fetchAllModelsData();
+            });
         function fillTableWithTemperature(table, weatherData) {
                 const model = table.dataset.model; // Use the model attribute to customize the table for different data sources
                 let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>'; // Reuse the header rows for consistency
@@ -469,15 +483,23 @@
                     return { backgroundColor, textColor };
                 }
         function checkAndApplyWindShear() {
+                return new Promise((resolve, reject) => { // Wrap the function body in a new Promise
+                    if (isWindShearCheckInProgress) {
+                        console.log("Wind shear check is already in progress.");
+                        reject("Wind shear check is already in progress."); // Reject the Promise if a check is already in progress
+                        return;
+                    }
                 if (isWindShearCheckInProgress) {
                     console.log("Wind shear check is already in progress.");
                     return; // Abort if a check is already in progress
                 }
+                 
                 isWindShearCheckInProgress = true; // Set flag to indicate processing
                 console.log("Wind shear check starting...");
 
             // Select all tables that end in '-table', such as 'icon-table', 'gfs-table', etc.
-            document.querySelectorAll('table[id$="-table"]').forEach(table => {
+            document.querySelectorAll('#icon-table').forEach(table => {
+                
                 console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
 
                 // Get all the rows (tr elements) of the current table, excluding the header row
@@ -524,7 +546,9 @@
             });
 
              console.log("Wind shear check completed.");
-            isWindShearCheckInProgress = false; // Reset flag when done
+                    isWindShearCheckInProgress = false; // Reset flag when done
+                    resolve(); // Resolve the Promise when everything is done
+                });
         }
 
         function removeWindShearStyles() {
@@ -1406,13 +1430,19 @@
                     tableHtml += '</tr>';
 
                 }
-                if (windShearEnabled && ['icon-table', 'gfs-table'].includes(table.id)) {
-                    checkAndApplyWindShear();
-                
-
+                if (windShearEnabled) {
+                    console.log('Wind Shear Enabled: Checking...');
+                    // Asynchronously call the wind shear check function
+                    checkAndApplyWindShear().then(() => {
+                        // Once completed, set the text to reflect the current state
+                        this.textContent = 'Disable Wind Shear';
+                        this.disabled = false; // Re-enable the button
+                    });
                 } else {
+                    console.log('Wind Shear Disabled: Removing styles...');
                     removeWindShearStyles();
-
+                    this.textContent = 'Enable Wind Shear';
+                    this.disabled = false; // Re-enable the button
                 }
             });
 
