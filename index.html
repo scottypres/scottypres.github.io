@@ -372,6 +372,7 @@
         document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
         document.getElementById('toggleHighAltitudeButton').addEventListener('click', toggleHighAltitude);
         function toggleHighAltitude() {
+            console.log('toggleHighAltitude');
                 const tables = document.querySelectorAll('table[id$="-table"]');
                 tables.forEach(table => {
                     const rows = table.getElementsByTagName('tr');
@@ -442,6 +443,7 @@
             });
             function resetTables() {
                     // Loop over each model to create the tables again using the stored data
+                    console.log('resetTables');
                     Object.keys(globalWeatherData).forEach(model => {
                         const tableId = `${model.toLowerCase()}-table`;
                         createTable(tableId, globalWeatherData[model], model);
@@ -549,6 +551,7 @@ function filterBestDaysColumns() {
             return 'wind-arrow rotate-' + classDegrees;
         }
         function initialTableSetup() {
+            console.log('Initial Table Setup');
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
                     const dataTable = document.getElementById(tableId);
@@ -725,13 +728,9 @@ function filterBestDaysColumns() {
                 'cloud_cover_900hPa',
                 'cloud_cover_850hPa',
                 'cloud_cover_800hPa',
-                'cloud_cover_750hPa',
                 'cloud_cover_700hPa',
-                'cloud_cover_650hPa',
                 'cloud_cover_600hPa',
-                'cloud_cover_550hPa',
                 'cloud_cover_500hPa',
-                'cloud_cover_450hPa',
                 'cloud_cover_400hPa',
                 // Add new variables below
                 'wind_speed_10m',
@@ -956,6 +955,7 @@ function filterBestDaysColumns() {
     }
 
         function createTable(tableId, weatherData, model) {
+            console.log('createTable');
             console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
@@ -1026,6 +1026,8 @@ function filterBestDaysColumns() {
                 } else {
                     // If cloud cover data does not exist for this pressure altitude (hPa), span across all time intervals
                     tableHtml += `<td colspan="${weatherData.hourly.time.length}" class="data-cell">Data not available</td>`;
+                    console.log('cloud cover data does not exist for this pressure');
+                    console.log(cloudCoverKey); 
                 }
 
                 // Close the table row
@@ -1068,6 +1070,7 @@ function filterBestDaysColumns() {
         // Call this function to set the initial state of the button
         
         function fillTableWithWindSpeed(table, weatherData) {
+            console.log('Fill Wind Table Start');
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
             const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
@@ -1146,16 +1149,22 @@ function filterBestDaysColumns() {
 
 
         async function refreshWeatherDataAndTables(zipcode) {
+            console.log('refreshWeatherDataAndTables');
             // Fetch coordinates from zipcode
             await getCoordinatesByZipcode(zipcode);
+            
             // Fetch weather data
             await fetchAllModelsData();
+            
             // Update tables (if necessary)
             updateWeatherTables();
+            
             // Perform wind shear checks (if necessary)
             performWindShearChecksAndUpdateTables();
+            
         }
         function performWindShearChecksAndUpdateTables() {
+            console.log('performWindShearChecksAndUpdateTables');
                 // Get reference to the Wind Shear button
                 const windShearButton = document.getElementById('checkWindShearButton');
                 // Change the button text to show "Loading..."
@@ -1296,6 +1305,7 @@ function filterBestDaysColumns() {
         }
 
         function fillTableWithCloudCover(table, weatherData) {
+            console.log('Fill cloud start');
             const model = table.dataset.model;
             // Update showing attribute here
             table.dataset.showing = 'clouds';
