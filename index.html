@@ -324,6 +324,7 @@
         <button id="checkWindShearButton" style="display: none;">Wind Shear</button>
         <button id="bestDaysButton" disabled>Best Hours</button>
         <button id="toggleDaylightButton">Toggle Daylight Hours</button>
+        <button id="additionalVariablesButton">Enable Additional Variables</button>
 
         <div id="bestDaysPopup" class="config-popup" style="display: none;">
             <div class="config-content">
@@ -419,6 +420,18 @@
             latitude: 26.4187,   // Use a default latitude or prompt the user to enter a valid one.
             longitude: 81.4173,  // Use a default longitude or prompt the user to enter a valid one.
         };
+        let additionalVariablesEnabled = false;
+        document.getElementById('additionalVariablesButton').addEventListener('click', () => {
+                additionalVariablesEnabled = !additionalVariablesEnabled; // Toggle the boolean value
+                console.log("Additional Variables Enabled:", additionalVariablesEnabled);
+
+                // Update button text to reflect the current state
+                document.getElementById('additionalVariablesButton').textContent =
+                    additionalVariablesEnabled ? "Disable Additional Variables" : "Enable Additional Variables";
+fetchAllModelsData();
+                // Add any other code that should run when the toggle occurs
+            });
+
         // Initialize global threshold variables
         lowWindThreshold = 7;
         medWindThreshold = 15;
@@ -427,6 +440,7 @@
         let isWindShearChecked = false;
         let globalWeatherData = {};
         let bestWindSpeedThreshold = 15;
+        
     document.getElementById('toggleDaylightButton').addEventListener('click', function () {
             toggleDaylightHours(); // Call the function to change the visibility of daylight hours in the tables
             daylightHoursShown = !daylightHoursShown; // Toggle the daylightHoursShown state
@@ -1227,6 +1241,7 @@ function filterBestDaysColumns() {
 
             // Finally, set the table's HTML to the newly created rows
             table.innerHTML = tableHtml;
+            
             const windGustsKey = `wind_gusts_10m`;
             if (weatherData.hourly.hasOwnProperty(windGustsKey)) {
                 // Start the gusts table row with a descriptive header
@@ -1249,13 +1264,88 @@ function filterBestDaysColumns() {
                 tableHtml += '</tr>';
                 
             }
+            if (additionalVariablesEnabled) {
+                // Assuming weatherData.hourly['cape'] is an array of CAPE values at hourly intervals
+                if (weatherData.hourly.hasOwnProperty('cape')) {
+                    // Add CAPE row header
+                    tableHtml += `<tr><th class="sticky-header">CAPE</th>`;
 
+                    // Add CAPE data cells for each time interval
+                    weatherData.hourly['cape'].forEach(capeValue => {
+                        const { backgroundColor, textColor } = getCAPEColor(capeValue); // Get colors based on value
+
+                        // Add CAPE data cells with gradient background and contrast text
+                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${capeValue}</td>`;
+                    });
+
+                    // Close the CAPE table row
+                    tableHtml += '</tr>';
+                }
+            }
+            if (additionalVariablesEnabled && (table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
+                // Precipitation probability only exists for certain models
+                if (weatherData.hourly.hasOwnProperty('precipitation_probability')) {
+                    // Add precipitation probability row header
+                    tableHtml += '<tr><th class="sticky-header">Precip %</th>';
+
+                    // Add precipitation probability data cells for each time interval
+                    weatherData.hourly['precipitation_probability'].forEach(precipProbability => {
+                        const { backgroundColor, textColor } = getPrecipitationProbabilityColor(precipProbability);
+
+                        // Add precipitation probability cells with interpolated background color
+                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipProbability}%</td>`;
+                    });
+
+                    // Close the precipitation probability table row
+                    tableHtml += '</tr>';
+                }
+            }
             // Finally, set the table's HTML to the newly created rows
             table.innerHTML = tableHtml;
 toggleHighAltitude();
 toggleDaylightHours();
+
+
+        }
+    function getCAPEColor(capeValue) {
+        let percentage;
+        let backgroundColorRGB;
+        let textColor = 'black'; // Default text color
+
+        if (capeValue >= 2000) {
+            backgroundColorRGB = { r: 255, g: 0, b: 0 }; // Red
+        } else if (capeValue >= 1200) {
+            percentage = (capeValue - 1200) / (2000 - 1200);
+            backgroundColorRGB = interpolateColorRGB('yellow', 'red', percentage);
+        } else if (capeValue >= 800) {
+            percentage = (capeValue - 800) / (1200 - 800);
+            backgroundColorRGB = interpolateColorRGB('green', 'yellow', percentage);
+        } else if (capeValue >= 400) {
+            percentage = (capeValue - 400) / (800 - 400);
+            backgroundColorRGB = interpolateColorRGB('lightblue', 'green', percentage);
+        } else {
+            percentage = capeValue / 400;
+            backgroundColorRGB = interpolateColorRGB('darkblue', 'lightblue', percentage);
         }
 
+        // Set text color to white if background is dark
+        if (isColorDark(backgroundColorRGB.r, backgroundColorRGB.g, backgroundColorRGB.b)) {
+            textColor = 'white';
+        }
+
+        // Return the color in CSS rgb() format
+        const backgroundColor = `rgb(${backgroundColorRGB.r}, ${backgroundColorRGB.g}, ${backgroundColorRGB.b})`;
+        return { backgroundColor, textColor };
+    }
+    const colors = {
+            blue: { r: 0, g: 0, b: 255 },
+            green: { r: 0, g: 255, b: 0 },
+            red: { r: 255, g: 0, b: 0 },
+            yellow: { r: 255, g: 255, b: 0 },
+            white: { r: 255, g: 255, b: 255 }, // Adding white
+            lightblue: { r: 173, g: 216, b: 230 }, // Light blue color
+            darkblue: { r: 0, g: 0, b: 139 } // Dark blue color
+        };
 
         async function refreshWeatherDataAndTables(zipcode) {
             console.log('refreshWeatherDataAndTables');
@@ -1343,6 +1433,13 @@ toggleDaylightHours();
             console.log(isWindShearChecked);
                 fetchAllModelsData();
             });
+             function isColorDark(r, g, b) {
+                    // Calculate the luminance of the color using the approximate formula:
+                    // luminance = 0.299*R + 0.587*G + 0.114*B
+                    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+                    // If luminance is less than 128, we will consider the color to be "dark"
+                    return luminance < 128;
+                }
         // Helper function to get the background color based on the wind speed
         function getWindSpeedColor(windSpeed) {
             let backgroundColorRGB;
@@ -1362,13 +1459,7 @@ toggleDaylightHours();
                 // Interpolating green to red
                 backgroundColorRGB = interpolateColorRGB('green', 'red', (windSpeed - medWindThreshold) / (highWindThreshold - medWindThreshold));
             }
-            function isColorDark(r, g, b) {
-                // Calculate the luminance of the color using the approximate formula:
-                // luminance = 0.299*R + 0.587*G + 0.114*B
-                const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-                // If luminance is less than 128, we will consider the color to be "dark"
-                return luminance < 128;
-            }
+           isColorDark();
             // Set text color to white if background is dark
             if (isColorDark(backgroundColorRGB.r, backgroundColorRGB.g, backgroundColorRGB.b)) {
                 textColor = 'white';
@@ -1378,16 +1469,14 @@ toggleDaylightHours();
             const backgroundColor = `rgb(${backgroundColorRGB.r}, ${backgroundColorRGB.g}, ${backgroundColorRGB.b})`;
             return { backgroundColor, textColor };
         }
-
+    function getPrecipitationProbabilityColor(value) {
+        const backgroundColor = interpolateColorRGB('white', 'darkblue', value / 100);
+        const textColor = isColorDark(backgroundColor.r, backgroundColor.g, backgroundColor.b) ? 'white' : 'black';
+        return { backgroundColor: `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`, textColor };
+    }
         // Modify interpolate to return an object
         function interpolateColorRGB(color1, color2, percentage) {
-            // Predefined colors as rgb values
-            const colors = {
-                blue: { r: 0, g: 0, b: 255 },
-                green: { r: 0, g: 255, b: 0 },
-                red: { r: 255, g: 0, b: 0 }
-            };
-
+            
             // Start and end colors as rgb objects
             const startColor = colors[color1];
             const endColor = colors[color2];
@@ -1406,21 +1495,7 @@ toggleDaylightHours();
             return { r, g, b };
         }
 
-        // Function to interpolate between two colors based on a percentage (0 to 1)
-        function interpolateColor(color1, color2, percentage) {
-            // Function will use basic color interpolation between blue, green, and red
-            const colors = { blue: [0, 0, 255], green: [0, 255, 0], red: [255, 0, 0] };
-            const startColor = colors[color1];
-            const endColor = colors[color2];
-
-            // Interpolate each color channel
-            const r = Math.round(startColor[0] + (endColor[0] - startColor[0]) * percentage);
-            const g = Math.round(startColor[1] + (endColor[1] - startColor[1]) * percentage);
-            const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * percentage);
-
-            // Return the interpolated color in CSS rgb() format
-            return `rgb(${r}, ${g}, ${b})`;
-        }
+        
 
         function fillTableWithCloudCover(table, weatherData) {
             console.log('Fill cloud start');
