@@ -504,9 +504,12 @@
 
                 // Get all the rows (tr elements) of the current table, excluding the header row
                 const rows = table.querySelectorAll('tr:not(:first-child)');
+                const rowCount = rows.length;
 
+                // Ensure only the last 5 rows are considered
+                const startRow = Math.max(rowCount - 9, 0);
                 // Iterate through each row, but not the last row since there's no row below it
-                for (let rowIndex = 0; rowIndex < rows.length - 1; rowIndex++) {
+                 for (let rowIndex = startRow; rowIndex < rows.length - 1; rowIndex++) {
                     const currentRow = rows[rowIndex];
                     const nextRow = rows[rowIndex + 1];
 
@@ -532,7 +535,7 @@
                             // console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
 
                             // Check if the difference between current and next wind speed exceeds the threshold and check wind direction difference
-                            if (Math.abs(currentWindSpeed - nextWindSpeed) > 9 || Math.abs(currentWindDirection - nextWindDirection) > 45) {
+                            if (Math.abs(currentWindSpeed - nextWindSpeed) > 10 || Math.abs(currentWindDirection - nextWindDirection) > 90) {
                                 // Apply the "shear-detected" class to current and corresponding cell in the next row
                                 cell.classList.add('shear-detected');
                                 nextCell.classList.add('shear-detected');
@@ -1414,7 +1417,7 @@
                     weatherData.hourly[windSpeedKey].forEach((windSpeed, idx) => {
                         const windDirection = weatherData.hourly[windDirectionKey][idx];
                         const windArrowClass = getWindArrowClass(windDirection);
-                        const roundedWindSpeed = windSpeed !== null ? Math.round(windSpeed) : 'N/A';
+                        const roundedWindSpeed = windSpeed !== null ? Math.round(windSpeed) : '?';
 
                         // Get the background and text color based on the wind speed
                         const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
@@ -1456,7 +1459,7 @@
 
                 // Add a data cell for each time interval with wind gusts data
                 weatherData.hourly[windGustsKey].forEach((windGust, idx) => {
-                    const roundedWindGust = windGust !== null ? Math.round(windGust) : 'N/A';
+                    const roundedWindGust = windGust !== null ? Math.round(windGust) : '?';
 
                     // Get the background and text color based on the wind gust speed
                     const { backgroundColor, textColor } = getWindSpeedColor(roundedWindGust);
@@ -1480,9 +1483,10 @@
                     // Add CAPE data cells for each time interval
                     weatherData.hourly['cape'].forEach(capeValue => {
                         const { backgroundColor, textColor } = getCAPEColor(capeValue); // Get colors based on value
+                        const shortCapeValue = formatCapeValue(capeValue); // Ensure this line is before its usage
 
                         // Add CAPE data cells with gradient background and contrast text
-                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${capeValue}</td>`;
+                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${shortCapeValue}</td>`;
                     });
 
                     // Close the CAPE table row
@@ -1496,14 +1500,14 @@
                     tableHtml += '<tr><th class="sticky-header">Precip %</th>';
 
                     // Add precipitation probability data cells for each time interval
-                    weatherData.hourly['precipitation_probability'].forEach(precipProbability => {
+                    weatherData.hourly.precipitation_probability.forEach(precipProbability => {
+                        precipProbability = precipProbability !== null ? precipProbability : '?';  // Check for null values
                         const { backgroundColor, textColor } = getPrecipitationProbabilityColor(precipProbability);
 
-                        // Add precipitation probability cells with interpolated background color
-                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipProbability}%</td>`;
+                        // Substitute N/A for missing precipitation_probability values or add cell with the actual value
+                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipProbability !== '?' ? precipProbability + '%' : precipProbability}</td>`;
                     });
 
-                    // Close the precipitation probability table row
                     tableHtml += '</tr>';
                 }
             }
@@ -1514,6 +1518,14 @@
 
 
         }
+        function formatCapeValue(value) {
+                const stringValue = value.toString(); // Convert number to string for easy length check
+                if (stringValue.length > 3) {
+                    const shortenedValue = (value / 1000).toFixed(1); // Reduce to kilo (k) and round to 1 decimal place
+                    return `${shortenedValue}k`; // Add the 'k' character to denote 'kilo'
+                }
+                return stringValue; // Return the original string if it's not too long
+            }
         function getCAPEColor(capeValue) {
             let percentage;
             let backgroundColorRGB;
@@ -1581,7 +1593,7 @@
             let backgroundColorRGB;
             let textColor = 'black'; // Default text color
 
-            if (windSpeed === 'N/A') {
+            if (windSpeed === '?') {
                 backgroundColorRGB = { r: 255, g: 255, b: 255 }; // White background
                 textColor = 'black';
             } else if (windSpeed <= lowWindThreshold) {
@@ -1606,9 +1618,16 @@
             return { backgroundColor, textColor };
         }
         function getPrecipitationProbabilityColor(value) {
+            if (value === '?') {
+                return {
+                    backgroundColor: 'rgb(255, 255, 255)', // White color for N/A values
+                    textColor: 'rgb(0, 0, 0)' // Black text color for better readability
+                };
+            }
             const backgroundColor = interpolateColorRGB('white', 'darkblue', value / 100);
             const textColor = isColorDark(backgroundColor.r, backgroundColor.g, backgroundColor.b) ? 'white' : 'black';
             return { backgroundColor: `rgb(${backgroundColor.r}, ${backgroundColor.g}, ${backgroundColor.b})`, textColor };
+            
         }
         // Modify interpolate to return an object
         function interpolateColorRGB(color1, color2, percentage) {
