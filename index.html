@@ -25,7 +25,7 @@
         }
 
         .shear-detected-hidden {
-            border: 2px solid transparent !important;
+            border: 2px solid tnsparent !important;
             background-color: inherit !important;
             /* Optional: reset any coloring if needed */
         }
@@ -389,6 +389,7 @@
                     }
                 });
             }
+            let daylightHoursShown = true;
         let userLocation = {
             latitude: 26.4187,   // Use a default latitude or prompt the user to enter a valid one.
             longitude: 81.4173,  // Use a default longitude or prompt the user to enter a valid one.
@@ -401,48 +402,32 @@
         let isWindShearChecked = false;
         let globalWeatherData = {};
         let bestWindSpeedThreshold = 15;
-    document.getElementById('toggleDaylightButton').addEventListener('click', function () {
-        const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables that end with '-table'
+    document.getElementById('toggleDaylightButton').addEventListener('click', toggleDaylightHours);
+        
+        function toggleDaylightHours() {
+                const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables that end with '-table'
+                tables.forEach(table => {
+                    const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Select all header cells except the first one
 
-        tables.forEach(table => {
-            const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Select all header cells except the first one
-            let shouldHide = true; // Flag to determine whether to hide columns
-            let firstDaylightSeen = false; // Flag to identify the first daylight cell
-
-            headerCells.forEach((cell, index) => {
-                // Check for the orange border (class 'daylight')
-                if (cell.classList.contains('daylight')) {
-                    // Unhide cells when daylight is found
-                    if (index > 0 && !firstDaylightSeen) {
-                        // Unhide the first column before the first orange cell
-                        headerCells[index - 1].style.display = '';
-                        [...table.querySelectorAll(`td:nth-child(${index})`)].forEach(td => td.style.display = '');
-                    }
-
-                    cell.style.display = ''; // Show the cell
-                    [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = ''); // "+2" accounts for the offset caused by the row header
-
-                    shouldHide = false;
-                    firstDaylightSeen = true;
-                } else {
-                    if (shouldHide) {
-                        // Hide the cell if it's before the first daylight
-                        cell.style.display = 'none';
-                        [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = 'none');
-                    } else {
-                        // If it's past the last daylight, show one "no orange" and start hiding again
-                        if (firstDaylightSeen) {
-                            cell.style.display = ''; // Show the first non-daylight cell
+                    headerCells.forEach((cell, index) => {
+                        // Toggle the display state based on the current flag
+                        if (daylightHoursShown) {
+                            // If daylight hours are currently shown, hide the non-daylight cells (cells without the 'daylight' class)
+                            if (!cell.classList.contains('daylight')) {
+                                cell.style.display = 'none';
+                                [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = 'none');
+                            }
+                        } else {
+                            // If daylight hours are currently hidden, show all cells
+                            cell.style.display = '';
                             [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = '');
-
-                            shouldHide = true; // Hide subsequent cells
-                            firstDaylightSeen = false; // Reset flag as we want to repeat the process for subsequent daylight blocks
                         }
-                    }
-                }
-            });
-        });
-    createTable});
+                    });
+                });
+
+                // Toggle the flag to the opposite state
+                daylightHoursShown = !daylightHoursShown;
+            }
         document.getElementById('bestDaysButton').addEventListener('click', function () {
                 const buttonText = this.textContent;
                 if (buttonText === 'Best Days') {
@@ -542,6 +527,7 @@ function filterBestDaysColumns() {
                     }
                 });
             });
+            
         }
 
         // After tables have been generated, enable the "Best Days" button
@@ -569,7 +555,7 @@ function filterBestDaysColumns() {
                     fillTableWithWindSpeed(dataTable, globalWeatherData[model]); // Show winds data first
                     dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
                 });
-               
+              // toggleDaylightHours();
                 toggleHighAltitude(); // Hide high altitude rows by default
             }
         function showConfigPopup() {
@@ -661,7 +647,7 @@ function filterBestDaysColumns() {
 
                 // Now that we have all data, setup the tables and perform shear checks
                 initialTableSetup();
-                //performWindShearChecksAndUpdateTables();
+                
             } catch (error) {
                 console.error('Error fetching data for all models:', error);
             }
@@ -708,8 +694,7 @@ function filterBestDaysColumns() {
 
             console.log("getCoordinatesByZipcode end", new Date().toISOString());
 
-            // Fetch and display weather data for the last searched zipcode
-            //refreshWeatherDataAndTables(lastSearch);
+            
         };
 
         async function checkAndFetchData(baseUrl, model) {
@@ -889,7 +874,7 @@ function filterBestDaysColumns() {
         }
 
 
-
+    
 
 
         window.onload = function () {
@@ -1197,7 +1182,7 @@ function filterBestDaysColumns() {
                                     const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
                                     const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
 
-                                    if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1500) {
+                                    if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1650) {
                                         const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
                                         let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
                                         diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
@@ -1211,11 +1196,11 @@ function filterBestDaysColumns() {
                                         }
                                     } else {
                                         // If the cell represents a high altitude, above the threshold, skip it
-                                        if (altitudeDifference >= 1500) {
+                                        if (cellCurrentAltitude => 4922){
                                             continue;
-                                        }
+                                        
                                         rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
-                                        rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
+                                        rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');}
                                     }
                                 }
                             }
