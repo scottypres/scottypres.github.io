@@ -317,15 +317,20 @@
     </div>
     <div id="zipcode-section">
         <!-- ... existing HTML ... -->
-
-        <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
+        Tables: 
         <button id="toggleButton">Wind/Clouds</button>
-        <button id="toggleHighAltitudeButton">High Altitude</button>
         <button id="toggleTemperatureButton">Temperature</button>
+        <br>
+        Modifiers: 
+        <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
         <button id="checkWindShearButton">Wind Shear</button>
-        <button id="bestDaysButton" disabled>Best Hours</button>
-        <button id="toggleDaylightButton">Toggle Daylight Hours</button>
+        <button id="toggleDaylightButton">All Hours</button>
+        <br>
+        Display: 
+        <button id="toggleHighAltitudeButton">High Altitude</button>
         <button id="additionalVariablesButton">Enable Additional Variables</button>
+        <br>
+        <button id="bestDaysButton" disabled>Best Hours</button>
 
         <div id="bestDaysPopup" class="config-popup" style="display: none;">
             <div class="config-content">
@@ -585,6 +590,7 @@
         document.getElementById('toggleDaylightButton').addEventListener('click', function () {
             toggleDaylightHours(); // Call the function to change the visibility of daylight hours in the tables
             daylightHoursShown = !daylightHoursShown; // Toggle the daylightHoursShown state
+            this.textContent = daylightHoursShown ? 'All Hours' : 'Daylight';
             // console.log(daylightHoursShown);
             fetchAllModelsData();
         });
