@@ -383,6 +383,7 @@
         let highAltitudeVisible = false;
         let windShearEnabled = false;
     let isWindShearCheckInProgress = false;
+    let additionalVariablesEnabled=true;
         
         const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
 
@@ -593,11 +594,11 @@
             latitude: 26.4187,   // Use a default latitude or prompt the user to enter a valid one.
             longitude: 81.4173,  // Use a default longitude or prompt the user to enter a valid one.
         };
-        let additionalVariablesEnabled = false;
+        
         document.getElementById('additionalVariablesButton').addEventListener('click', () => {
             additionalVariablesEnabled = !additionalVariablesEnabled; // Toggle the boolean value
             // console.log("Additional Variables Enabled:", additionalVariablesEnabled);
-
+            setCookie('additionalVariablesEnabled', additionalVariablesEnabled, 365);
             // Update button text to reflect the current state
             document.getElementById('additionalVariablesButton').textContent =
                 additionalVariablesEnabled ? "Disable Additional Variables" : "Enable Additional Variables";
@@ -1181,7 +1182,17 @@
             const blueThreshold = getCookie('blueThreshold');
             const greenThreshold = getCookie('greenThreshold');
             const redThreshold = getCookie('redThreshold');
-
+            
+            const additionalVariablesCookie = getCookie('additionalVariablesEnabled');
+            if (additionalVariablesCookie) {
+                // If we have a saved value, use it to set the additionalVariablesEnabled flag
+                additionalVariablesEnabled = additionalVariablesCookie === 'true';
+            } else {
+                // If no value is saved, use the default value (true)
+                let additionalVariablesEnabled = true;
+                // Optionally set the cookie with the default value for future visits
+                setCookie('additionalVariablesEnabled', additionalVariablesEnabled, 365);
+            }
             // Update threshold inputs with cookie values
             if (blueThreshold) document.getElementById('blueThreshold').value = blueThreshold;
             if (greenThreshold) document.getElementById('greenThreshold').value = greenThreshold;
@@ -1513,6 +1524,20 @@
             }
             // Finally, set the table's HTML to the newly created rows
             table.innerHTML = tableHtml;
+
+            // New code to add black horizontal border below "33 ft" row
+            const allRows = table.getElementsByTagName('tr');
+            for (let i = 0; i < allRows.length; i++) {
+                // Check if the first cell (header) contains "33 ft"
+                if (allRows[i].cells[0].innerText === '33 ft') {
+                    // If "33 ft" is found, set a black border below this row
+                    // Check if the next row is "Gusts"
+                    if (i < (allRows.length - 1) && allRows[i + 1].cells[0].innerText === 'Gusts') {
+                        allRows[i].style.borderBottom = '4px solid black';
+                        break; // Border applied, no need to continue loop
+                    }
+                }
+            }
             toggleHighAltitude();
             toggleDaylightHours();
 
