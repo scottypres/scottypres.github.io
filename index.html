@@ -424,7 +424,12 @@
         let isWindShearChecked = false;
         let globalWeatherData = {};
         let bestWindSpeedThreshold = 15;
-    document.getElementById('toggleDaylightButton').addEventListener('click', toggleDaylightHours);
+    document.getElementById('toggleDaylightButton').addEventListener('click', function () {
+            toggleDaylightHours(); // Call the function to change the visibility of daylight hours in the tables
+            daylightHoursShown = !daylightHoursShown; // Toggle the daylightHoursShown state
+            console.log(daylightHoursShown);
+            fetchAllModelsData();
+        });
         
         function toggleDaylightHours() {
                 const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables that end with '-table'
@@ -432,23 +437,21 @@
                     const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Select all header cells except the first one
 
                     headerCells.forEach((cell, index) => {
-                        // Toggle the display state based on the current flag
-                        if (daylightHoursShown) {
+                        // Only change the display when the current state does not match the truthy 'daylight' class presence
+                        const isDaylightClassPresent = cell.classList.contains('daylight');
+                        if (daylightHoursShown && !isDaylightClassPresent) {
                             // If daylight hours are currently shown, hide the non-daylight cells (cells without the 'daylight' class)
-                            if (!cell.classList.contains('daylight')) {
-                                cell.style.display = 'none';
-                                [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = 'none');
-                            }
-                        } else {
-                            // If daylight hours are currently hidden, show all cells
+                            cell.style.display = 'none';
+                            [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = 'none');
+                        } else if (!daylightHoursShown && isDaylightClassPresent) {
+                            // If daylight hours are currently hidden, show all cells that are for daylight hours
                             cell.style.display = '';
                             [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = '');
                         }
                     });
                 });
 
-                // Toggle the flag to the opposite state
-                daylightHoursShown = !daylightHoursShown;
+                
             }
         document.getElementById('bestDaysButton').addEventListener('click', function () {
                 const buttonText = this.textContent;
@@ -579,7 +582,7 @@ function filterBestDaysColumns() {
                     fillTableWithWindSpeed(dataTable, globalWeatherData[model]); // Show winds data first
                     dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
                 });
-              // toggleDaylightHours();
+             // toggleDaylightHours();
                
             }
         function showConfigPopup() {
@@ -1165,7 +1168,7 @@ function filterBestDaysColumns() {
             // Finally, set the table's HTML to the newly created rows
             table.innerHTML = tableHtml;
 toggleHighAltitude();
-
+toggleDaylightHours();
         }
 
 
@@ -1332,6 +1335,7 @@ toggleHighAltitude();
             table.dataset.showing = 'clouds';
             createTable(table.id, weatherData, model); // Reuse createTable function
             toggleHighAltitude();
+            toggleDaylightHours();
         }
         // Initialize the tables to display clouds by default
         document.querySelectorAll('table[id$="-table"]').forEach(table => {
