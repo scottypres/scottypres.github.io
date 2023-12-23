@@ -806,9 +806,9 @@ function filterBestDaysColumns() {
 
             // Check the model to determine the correct forecast_days parameter
             if (model.toLowerCase() === 'openmeteo') {
-                additionalParameters += '&forecast_days=3'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
             } else if (model.toLowerCase() === 'icon') {
-                additionalParameters += '&forecast_days=3'; // 7-day forecast for ICON
+                additionalParameters += '&forecast_days=7'; // 7-day forecast for ICON
             }
 
             const zipcode = document.getElementById('zipcodeInput').value.trim();
