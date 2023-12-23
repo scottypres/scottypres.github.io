@@ -21,7 +21,7 @@
         }
 
         .shear-detected {
-            border: 2px solid white;
+            border: 2px solid red;
         }
 
         .shear-detected-hidden {
@@ -321,7 +321,7 @@
         <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
         <button id="toggleButton">Wind/Clouds</button>
         <button id="toggleHighAltitudeButton">High Altitude</button>
-        <button id="checkWindShearButton" style="display: none;">Wind Shear</button>
+        <button id="checkWindShearButton">Wind Shear</button>
         <button id="bestDaysButton" disabled>Best Hours</button>
         <button id="toggleDaylightButton">Toggle Daylight Hours</button>
         <button id="additionalVariablesButton">Enable Additional Variables</button>
@@ -375,9 +375,12 @@
     <script>
 
         let highAltitudeVisible = false;
+        let windShearEnabled = false;
+        
+            let windShearRun = false;
             const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
-    let windShearButton = document.getElementById('checkWindShearButton');
-       // document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
+    
+       
         document.getElementById('toggleHighAltitudeButton').addEventListener('click', function () {
                 // Toggle the flag
                 highAltitudeVisible = !highAltitudeVisible;
@@ -386,9 +389,83 @@
                 this.textContent = highAltitudeVisible ? 'Hide High Altitude' : 'Show High Altitude';
                 fetchAllModelsData();
             });
+            document.getElementById('checkWindShearButton').addEventListener('click', () => {
+                console.log("Windshear just clicked");
+                    windShearEnabled = !windShearEnabled;
+                    console.log(windShearEnabled);
+                    this.textContent = windShearEnabled ? 'Disable Wind Shear' : 'Enable Wind Shear';
+                    if (windShearEnabled) {
+                        checkAndApplyWindShear();
+                        
+                    } else {
+                        removeWindShearStyles();
+                        
+                    }
+                
+
+                    // Log the new state to the console (this line can be removed if not needed).
+                    console.log('Wind Shear Enabled:', windShearEnabled);
+                    fetchAllModelsData();
+                });
+               function checkAndApplyWindShear() {
+                    console.log("Windshear check running");
+
+                    // This flag indicates that the wind shear check has been run
+                    windShearRun = true;
+
+                    // Select all tables that end in '-table', such as 'icon-table', 'gfs-table', etc.
+                    document.querySelectorAll('table[id$="-table"]').forEach(table => {
+                        console.log(`Checking wind shear for table: ${table.id}`);
+                        console.log('icon.table');
+
+                        // Get all the rows (tr elements) of the current table
+                        const rows = table.querySelectorAll('tr');
+
+                        // Iterate through each row, skipping the header row (typically the first row)
+                        rows.forEach((row, rowIndex) => {
+                            if (rowIndex === 0 || row.querySelector('th')) {
+                                // Skip the header or non-data rows
+                                return;
+                            }
+
+                            // Get all cells within the row that contain wind speed data
+                            const windSpeedCells = row.querySelectorAll('td[data-wind-speed]');
+                            windSpeedCells.forEach((cell, cellIndex, cells) => {
+                                // Get the wind speed from the current cell's data attribute
+                                const windSpeed = parseFloat(cell.dataset.windSpeed);
+                                // Only proceed if we have a valid wind speed and a next cell exists
+                                if (!isNaN(windSpeed) && cells[cellIndex + 1]) {
+                                    // Get the wind speed from the next cell's data attribute
+                                    const nextWindSpeed = parseFloat(cells[cellIndex + 1].dataset.windSpeed);
+
+                                    // Log the wind speeds being compared for shear
+                                    console.log(`Row: ${rowIndex + 1}, Cell: ${cellIndex}, Wind Speeds: ${windSpeed}, ${nextWindSpeed}`);
+
+                                    // Check if the difference between current and next wind speed exceeds the threshold (e.g., 9 mph)
+                                    if (Math.abs(windSpeed - nextWindSpeed) > 9) {
+                                        // Apply the "shear-detected" class to current and next cell
+                                        cell.classList.add('shear-detected');
+                                        cells[cellIndex + 1].classList.add('shear-detected');
+
+                                        // Log that wind shear was detected between the two cells
+                                        console.log(`Wind shear detected at row ${rowIndex + 1}: ${windSpeed} to ${nextWindSpeed}`);
+                                    }
+                                }
+                            });
+                        });
+                    });
+
+                    console.log("Windshear check completed");
+                }
+
+                    function removeWindShearStyles() {
+                        document.querySelectorAll('.shear-detected').forEach(cell => {
+                            cell.classList.remove('shear-detected');
+                        });
+                    }
             function toggleHighAltitude() {
                     if (!highAltitudeVisible) {  // Check if the flag indicates altitude should be hidden
-                        console.log('Hiding high altitude rows');
+                       // console.log('Hiding high altitude rows');
                         const tables = document.querySelectorAll('table[id$="-table"]');
                         tables.forEach(table => {
                             const rows = table.getElementsByTagName('tr');
@@ -401,7 +478,7 @@
                             }
                         });
                     } else {
-                        console.log('Showing high altitude rows');
+                       // console.log('Showing high altitude rows');
                         const tables = document.querySelectorAll('table[id$="-table"]');
                         tables.forEach(table => {
                             const rows = table.getElementsByTagName('tr');
@@ -423,7 +500,7 @@
         let additionalVariablesEnabled = false;
         document.getElementById('additionalVariablesButton').addEventListener('click', () => {
                 additionalVariablesEnabled = !additionalVariablesEnabled; // Toggle the boolean value
-                console.log("Additional Variables Enabled:", additionalVariablesEnabled);
+               // console.log("Additional Variables Enabled:", additionalVariablesEnabled);
 
                 // Update button text to reflect the current state
                 document.getElementById('additionalVariablesButton').textContent =
@@ -437,14 +514,14 @@ fetchAllModelsData();
         medWindThreshold = 15;
         highWindThreshold = 20;
         // Declare this at the top to store the initial view
-        let isWindShearChecked = false;
+        
         let globalWeatherData = {};
         let bestWindSpeedThreshold = 15;
         
     document.getElementById('toggleDaylightButton').addEventListener('click', function () {
             toggleDaylightHours(); // Call the function to change the visibility of daylight hours in the tables
             daylightHoursShown = !daylightHoursShown; // Toggle the daylightHoursShown state
-            console.log(daylightHoursShown);
+           // console.log(daylightHoursShown);
             fetchAllModelsData();
         });
         
@@ -484,7 +561,7 @@ fetchAllModelsData();
             });
             function resetTables() {
                     // Loop over each model to create the tables again using the stored data
-                    console.log('resetTables');
+                  //  console.log('resetTables');
                     Object.keys(globalWeatherData).forEach(model => {
                         const tableId = `${model.toLowerCase()}-table`;
                         createTable(tableId, globalWeatherData[model], model);
@@ -593,12 +670,13 @@ function filterBestDaysColumns() {
         }
         function initialTableSetup() {
             console.log('Initial Table Setup');
+                 if (!isUpdatingTables) {
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
                     const dataTable = document.getElementById(tableId);
                     fillTableWithWindSpeed(dataTable, globalWeatherData[model]); // Show winds data first
                     dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
-                });
+                })};
              // toggleDaylightHours();
                submitThresholdsAndRepaint();
             }
@@ -677,8 +755,10 @@ function filterBestDaysColumns() {
                 alert('Please enter a valid zipcode.');
             }
         });
-
+    let isUpdatingTables = false;
         async function fetchAllModelsData() {
+                if (isUpdatingTables) return;
+            isUpdatingTables = true;
             console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
             try {
                 // Await all fetches to be completed using Promise.all
@@ -687,7 +767,7 @@ function filterBestDaysColumns() {
                     await checkAndFetchData(baseUrl, model);
                 }));
 
-                console.log("Inside fetchAllModelsData after Promise.all", new Date().toISOString());
+               // console.log("Inside fetchAllModelsData after Promise.all", new Date().toISOString());
 
                 // Now that we have all data, setup the tables and perform shear checks
                 initialTableSetup();
@@ -695,6 +775,7 @@ function filterBestDaysColumns() {
             } catch (error) {
                 console.error('Error fetching data for all models:', error);
             }
+             isUpdatingTables = false;
         }
 
         // Fetch data for each model by calling the new fetchAllModelsData function
@@ -703,9 +784,9 @@ function filterBestDaysColumns() {
     let commonParameters = [];
 
         async function getCoordinatesByZipcode(zipcode) {
-            console.log("getCoordinatesByZipcode called", new Date().toISOString());
+            //console.log("getCoordinatesByZipcode called", new Date().toISOString());
             const zipApiUrl = `https://api.zippopotam.us/us/${zipcode}`;
-            console.log("getCoordinatesByZipcode start", new Date().toISOString());
+           // console.log("getCoordinatesByZipcode start", new Date().toISOString());
             try {
                 const response = await fetch(zipApiUrl);
                 if (!response.ok) {
@@ -720,13 +801,13 @@ function filterBestDaysColumns() {
                     };
                     //console.log('Coordinates:', userLocation);
                     setCookie('zipcode', zipcode, 365); // Save for 365 days
-                    console.log('zip cookie saved');
+                   // console.log('zip cookie saved');
                     // Now call the API with these coordinates for each model and update the table with new data
                     for (const model of Object.keys(baseUrls)) {
                         await checkAndFetchData(baseUrls[model], model);
                     }
                     initialTableSetup(); // Refresh the table setup
-                    // performWindShearChecksAndUpdateTables();
+                    
 
                 } else {
                     alert('No coordinates found for the provided zipcode.');
@@ -783,7 +864,7 @@ function filterBestDaysColumns() {
 
                 // Check if the cached data is still valid
                 if (cachedData.zipcode === zipcode && now - cachedData.timestamp < cacheDuration) {
-                    console.log(`Using cached data for model "${model}"`, new Date().toISOString());
+                   // console.log(`Using cached data for model "${model}"`, new Date().toISOString());
                     globalWeatherData[model] = cachedData.data;
                     createTable(`${model.toLowerCase()}-table`, cachedData.data, model);
                     shouldFetchData = false;
@@ -995,7 +1076,7 @@ function filterBestDaysColumns() {
 
 
         window.onload = function () {
-            console.log("Window onload triggered", new Date().toISOString());
+            //console.log("Window onload triggered", new Date().toISOString());
 
             // Get threshold values from cookies, if they exist
             const blueThreshold = getCookie('blueThreshold');
@@ -1016,7 +1097,7 @@ function filterBestDaysColumns() {
                 const fetchButton = document.getElementById('fetchCoordinatesButton');
 
                 zipcodeInput.value = savedZipcode;
-                console.log("Zip cookie loaded");
+             //   console.log("Zip cookie loaded");
                 // Check if fetchCoordinatesButton has already a click event listener that fetches the weather
                 // If not, manually call the handleZipcodeFetch(zipcode) function after a short delay to ensure any setup logic has completed
                 setTimeout(function () {
@@ -1074,12 +1155,12 @@ function filterBestDaysColumns() {
     }
 
         function createTable(tableId, weatherData, model) {
-            console.log('createTable');
+           // console.log('createTable');
             console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
             const dataTable = document.getElementById(tableId);
-           // isWindShearChecked = false;
+          
 
             let tableHtml = `<tr><th>${model.replace('Meteo', '<br>Meteo')}</th>`;
             let currentDay = null; // Variable to store the current day as you loop through the timestamps
@@ -1087,7 +1168,7 @@ function filterBestDaysColumns() {
             let isDayArray = weatherData.hourly.is_day;
             
             // Add date headers
-            console.log(isDayArray);
+            //console.log(isDayArray);
             timestamps.forEach((timestamp, index) => {
                 const date = new Date(timestamp);
                 const day = date.getDate();
@@ -1233,8 +1314,7 @@ function filterBestDaysColumns() {
 
                     // Close the table row
                     tableHtml += '</tr>';
-                    console.log(isWindShearChecked);
-                    performWindShearChecksAndUpdateTables();
+               
                 }
                 
             });
@@ -1358,81 +1438,9 @@ toggleDaylightHours();
             // Update tables (if necessary)
             updateWeatherTables();
             
-            // Perform wind shear checks (if necessary)
-            performWindShearChecksAndUpdateTables();
             
         }
-        function performWindShearChecksAndUpdateTables() {
-                console.log('performWindShearChecksAndUpdateTables');
-
-                // Exit the function if wind shear checks should not happen (i.e., showing 'clouds')
-                if (!isWindShearChecked) {
-                    console.log('Wind shear check is not enabled, or tables are not showing wind data.');
-                    return; // Abort function since wind shear check is not enabled
-                }
-
-                // Process each table to check for wind shear indications and apply/remove classes as needed
-                const tables = document.querySelectorAll('table[id$="-table"]');
-                tables.forEach(table => {
-                    if (table.dataset.showing === 'winds') {
-                        console.log(table.dataset.showing);
-                        const rows = table.rows;
-                        for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
-                            for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
-                                const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
-                                const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
-
-                                const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
-                                const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
-                                const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
-
-                                const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
-                                const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
-
-                                if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1650) {
-                                    const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
-                                    let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
-                                    diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
-
-                                    if (diffSpeed > 10 || diffAngle > 90) { // Adjust your speed and angle thresholds as needed
-                                        rows[rowIndex].cells[colIndex].classList.add('shear-detected');
-                                        rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
-                                    } else {
-                                        rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
-                                        rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
-                                    }
-                                } else {
-                                    rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
-                                    rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
-                                }
-                            }
-                        }
-                    } else {
-                        // If the table is showing clouds, clear any existing wind shear indications
-                        //clearWindShearIndications(table);
-                    }
-                });
-            
-                    // Once done, update the button text to reflect the toggled state
-                    windShearButton.textContent = 'Hide Wind Shear'; // Since isWindShearChecked must be true, the text should reflect that
-                    windShearButton.disabled = false; // Re-enable the button after processing
-                ;
-            }
-    function clearWindShearIndications(table) {
-        const shearCellsInTable = table.querySelectorAll('.shear-detected');
-        shearCellsInTable.forEach(cell => {
-            cell.classList.remove('shear-detected');
-        });
-    }
         
-        document.getElementById('checkWindShearButton').addEventListener('click', () => {
-            console.log('Before shear check');   
-            console.log(isWindShearChecked);
-            isWindShearChecked = !isWindShearChecked; // Toggle the boolean state.
-             console.log('After shear check');
-            console.log(isWindShearChecked);
-                fetchAllModelsData();
-            });
              function isColorDark(r, g, b) {
                     // Calculate the luminance of the color using the approximate formula:
                     // luminance = 0.299*R + 0.587*G + 0.114*B
