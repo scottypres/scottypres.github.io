@@ -401,7 +401,48 @@
         let isWindShearChecked = false;
         let globalWeatherData = {};
         let bestWindSpeedThreshold = 15;
+    document.getElementById('toggleDaylightButton').addEventListener('click', function () {
+        const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables that end with '-table'
 
+        tables.forEach(table => {
+            const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Select all header cells except the first one
+            let shouldHide = true; // Flag to determine whether to hide columns
+            let firstDaylightSeen = false; // Flag to identify the first daylight cell
+
+            headerCells.forEach((cell, index) => {
+                // Check for the orange border (class 'daylight')
+                if (cell.classList.contains('daylight')) {
+                    // Unhide cells when daylight is found
+                    if (index > 0 && !firstDaylightSeen) {
+                        // Unhide the first column before the first orange cell
+                        headerCells[index - 1].style.display = '';
+                        [...table.querySelectorAll(`td:nth-child(${index})`)].forEach(td => td.style.display = '');
+                    }
+
+                    cell.style.display = ''; // Show the cell
+                    [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = ''); // "+2" accounts for the offset caused by the row header
+
+                    shouldHide = false;
+                    firstDaylightSeen = true;
+                } else {
+                    if (shouldHide) {
+                        // Hide the cell if it's before the first daylight
+                        cell.style.display = 'none';
+                        [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = 'none');
+                    } else {
+                        // If it's past the last daylight, show one "no orange" and start hiding again
+                        if (firstDaylightSeen) {
+                            cell.style.display = ''; // Show the first non-daylight cell
+                            [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = '');
+
+                            shouldHide = true; // Hide subsequent cells
+                            firstDaylightSeen = false; // Reset flag as we want to repeat the process for subsequent daylight blocks
+                        }
+                    }
+                }
+            });
+        });
+    createTable});
         document.getElementById('bestDaysButton').addEventListener('click', function () {
                 const buttonText = this.textContent;
                 if (buttonText === 'Best Days') {
@@ -421,7 +462,7 @@
                         createTable(tableId, globalWeatherData[model], model);
                     });
                     // After resetting the tables, update the toggle button text to reflect the content shown in the tables
-                    updateToggleButton();
+                    
                     initialTableSetup();
                 }
 
@@ -528,7 +569,7 @@ function filterBestDaysColumns() {
                     fillTableWithWindSpeed(dataTable, globalWeatherData[model]); // Show winds data first
                     dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
                 });
-                updateToggleButton(); // Ensure the toggle button text is set correctly
+               
                 toggleHighAltitude(); // Hide high altitude rows by default
             }
         function showConfigPopup() {
@@ -747,7 +788,8 @@ function filterBestDaysColumns() {
                 'winddirection_600hPa',
                 'winddirection_500hPa',
                 'winddirection_400hPa',
-                'cape'
+                'cape',
+                'is_day'
             ].join(',');
 
 
@@ -903,9 +945,33 @@ function filterBestDaysColumns() {
             document.getElementById('fetchCoordinatesButton').disabled = false;
             document.querySelectorAll('.recent-search').forEach(elem => elem.style.pointerEvents = '');
         }
+    function expandDaylightHours(isDayArray) {
+        let foundFirstOne = false; // Flag that becomes true when we encounter the first '1'
+        let lastZeroBeforeOneIndex = -1; // Store the index of the last '0' before the sequence of '1's
 
+        // Iterate over the array
+        for (let i = 0; i < isDayArray.length; i++) {
+            if (isDayArray[i] === 1) {
+                foundFirstOne = true;
+                // If this is the first '1', change the previous '0' to '1'
+                if (lastZeroBeforeOneIndex !== -1) {
+                    isDayArray[lastZeroBeforeOneIndex] = 1;
+                    lastZeroBeforeOneIndex = -1; // Reset the index
+                }
+            } else if (foundFirstOne) {
+                // If we found the sequence of '1's and now we encountered a '0', change it to '1' and reset flags
+                isDayArray[i] = 1;
+                foundFirstOne = false; // Reset the flag until we find another '1'
+            } else {
+                // If we have not encountered the first '1' yet, store the index
+                lastZeroBeforeOneIndex = i;
+            }
+        }
+        return isDayArray;
+    }
 
         function createTable(tableId, weatherData, model) {
+            console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
             const dataTable = document.getElementById(tableId);
@@ -913,7 +979,11 @@ function filterBestDaysColumns() {
 
             let tableHtml = `<tr><th>${model.replace('Meteo', '<br>Meteo')}</th>`;
             let currentDay = null; // Variable to store the current day as you loop through the timestamps
+             // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
+            let isDayArray = weatherData.hourly.is_day;
+            
             // Add date headers
+            console.log(isDayArray);
             timestamps.forEach((timestamp, index) => {
                 const date = new Date(timestamp);
                 const day = date.getDate();
@@ -922,11 +992,17 @@ function filterBestDaysColumns() {
                 const hour = date.getHours();
                 const hour12 = hour % 12 || 12; // Convert to 12-hour format
                 const ampm = hour >= 12 ? 'PM' : 'AM';
+                // Determine if the timestamp corresponds to daylight using is_day array
+                const isDaylight = isDayArray[index] === 1;
+                const daylightClass = isDaylight ? 'daylight' : '';
 
-               // Define headerClass without applying the "daylight" class
-                const headerClass = '';
+              
+                // Add "daylight" class to header cells of daylight hours
+                //const isDaylight = hour >= 6 && hour < 18;
+               // const headerClass = isDaylight ? 'daylight' : '';
 
-                tableHtml += `<th class="column-header ${headerClass}">
+               headerClass = '';
+                tableHtml += `<th class="column-header ${daylightClass}">
                     <span class="smalldate">${month}/${day}</span><br>
                     <span class="small-font">${dayOfWeek}</span><br>
                     <span class="small-font">${hour12}</span><br><span class="small-font">${ampm}</span>
@@ -981,7 +1057,7 @@ function filterBestDaysColumns() {
         }
         
         document.getElementById('toggleButton').addEventListener('click', toggleWindClouds);
-        document.getElementById('toggleButton').textContent = 'Show Winds'; // Default text
+        document.getElementById('toggleButton').textContent = 'Winds/Clouds'; // Default text
         function toggleWindClouds() {
             Object.keys(globalWeatherData).forEach(model => {
                 const tableId = `${model.toLowerCase()}-table`;
@@ -999,19 +1075,13 @@ function filterBestDaysColumns() {
                 }
             });
 
-            updateToggleButton();
+            
         }
 
-        function updateToggleButton() {
-            // Assuming if one table shows winds, they all do
-            const table = document.querySelector('table[id$="-table"]');
-            const isShowingWinds = table.dataset.showing === 'winds';
-            // Set the button text based on whether winds or clouds are currently being shown
-            document.getElementById('toggleButton').textContent = isShowingWinds ? 'Show Clouds' : 'Show Winds';
-        }
+        
 
         // Call this function to set the initial state of the button
-        updateToggleButton();
+        
         function fillTableWithWindSpeed(table, weatherData) {
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
             const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
@@ -1286,9 +1356,7 @@ function filterBestDaysColumns() {
             }
             return ''; // Return empty string if the direction does not fall within known ranges
         }
-        // Update the button text at the initial setup section of your script:
-        document.getElementById('toggleButton').textContent = 'Toggle Clouds';
-        updateToggleButton();
+        
 
     </script>
 
