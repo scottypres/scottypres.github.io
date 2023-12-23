@@ -621,7 +621,7 @@ function filterBestDaysColumns() {
             medWindThreshold = med;
             highWindThreshold = high;
 
-            const tableIds = ['openmeteo-table', 'icon-table', 'gfs-table']; // Add other table IDs as needed
+            const tableIds = ['icon-table', 'gfs-table']; // Add other table IDs as needed
             tableIds.forEach(tableId => {
                 const table = document.getElementById(tableId);
                 if (table.dataset.showing === 'winds') {
@@ -943,6 +943,7 @@ function filterBestDaysColumns() {
 
             // Update the value in the input field
             document.getElementById('bestWindSpeed').value = bestWindSpeedThreshold;
+            
         };
         async function handleZipcodeFetch(zipcode) {
             // Disable the button and recent search links to prevent multiple fetches
@@ -1168,6 +1169,7 @@ function filterBestDaysColumns() {
 
                 // Close the gusts table row
                 tableHtml += '</tr>';
+                
             }
 
             // Finally, set the table's HTML to the newly created rows
