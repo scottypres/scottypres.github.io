@@ -321,6 +321,7 @@
         <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
         <button id="toggleButton">Wind/Clouds</button>
         <button id="toggleHighAltitudeButton">High Altitude</button>
+        <button id="toggleTemperatureButton">Temperature</button>
         <button id="checkWindShearButton">Wind Shear</button>
         <button id="bestDaysButton" disabled>Best Hours</button>
         <button id="toggleDaylightButton">Toggle Daylight Hours</button>
@@ -401,6 +402,67 @@
             console.log('Wind Shear Enabled:', windShearEnabled);
             fetchAllModelsData();
         });
+        function fillTableWithTemperature(table, weatherData) {
+                const model = table.dataset.model; // Use the model attribute to customize the table for different data sources
+                let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>'; // Reuse the header rows for consistency
+
+                const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Should match your data's altitude levels
+
+                // Use the weatherData object to fill temperature data
+                altitudeLevels.forEach(hPa => {
+                    const temperatureKey = `temperature_${hPa}hPa`; // Must match the key used in your weatherData object for temperatures at different altitudes
+
+                    if (weatherData.hourly.hasOwnProperty(temperatureKey)) {
+                        // Convert hPa to feet for display
+                        const displayAltitude = `${hPaToFeet(hPa)} ft`;
+
+                        tableHtml += `<tr><th class="sticky-header">${displayAltitude}</th>`;
+
+                        // Add temperature data cells
+                        weatherData.hourly[temperatureKey].forEach(temp => {
+                            const { backgroundColor, textColor } = getTemperatureColor(temp); // Get the color based on the temperature
+                            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${Math.round(temp)}&deg;</td>`; // Display temperature with Fahrenheit symbol and gradient color
+                        });
+
+                        tableHtml += '</tr>';
+                    }
+                });
+
+                table.innerHTML = tableHtml; // Update the table's HTML with the new rows
+                table.dataset.showing = 'temperature'; // Update data attribute to indicate current data being shown
+            }
+            function getTemperatureColor(temperature) {
+                    let percentage;
+                    let backgroundColorRGB;
+                    let textColor = 'black'; // Default text color
+
+                    if (temperature >= 100) {
+                        backgroundColorRGB = colors.maroon;
+                    } else if (temperature >= 85) {
+                        percentage = (temperature - 85) / (100 - 85);
+                        backgroundColorRGB = interpolateColorRGB('red', 'maroon', percentage);
+                    } else if (temperature >= 70) {
+                        percentage = (temperature - 70) / (85 - 70);
+                        backgroundColorRGB = interpolateColorRGB('blue', 'red', percentage);
+                    } else if (temperature >= 40) {
+                        percentage = (temperature - 40) / (70 - 40);
+                        backgroundColorRGB = interpolateColorRGB('lightblue', 'blue', percentage);
+                    } else if (temperature <= 32) {
+                        backgroundColorRGB = colors.white;
+                    } else { // Temperatures between 32 and 40
+                        percentage = (temperature - 32) / (40 - 32);
+                        backgroundColorRGB = interpolateColorRGB('white', 'lightblue', percentage);
+                    }
+
+                    // Set text color to white if background is dark
+                    if (isColorDark(backgroundColorRGB.r, backgroundColorRGB.g, backgroundColorRGB.b)) {
+                        textColor = 'white';
+                    }
+
+                    // Return the color in CSS rgb() format
+                    const backgroundColor = `rgb(${backgroundColorRGB.r}, ${backgroundColorRGB.g}, ${backgroundColorRGB.b})`;
+                    return { backgroundColor, textColor };
+                }
         function checkAndApplyWindShear() {
                 if (isWindShearCheckInProgress) {
                     console.log("Wind shear check is already in progress.");
@@ -1120,8 +1182,27 @@
 
             // Update the value in the input field
             document.getElementById('bestWindSpeed').value = bestWindSpeedThreshold;
-
+            document.getElementById('toggleTemperatureButton').addEventListener('click', () => {
+                toggleTemperatureTables();
+            });
         };
+        function toggleTemperatureTables() {
+                Object.keys(globalWeatherData).forEach(model => {
+                    const tableId = `${model.toLowerCase()}-table`;
+                    const dataTable = document.getElementById(tableId);
+
+                    // Check the current state and toggle accordingly
+                     if (dataTable.dataset.showing !== 'temperature') {
+                        // Currently showing something other than temperature, switch to temperature
+                        fillTableWithTemperature(dataTable, globalWeatherData[model]);
+                        dataTable.dataset.showing = 'temperature'; // Indicate that temperature is being shown
+                    } else {
+                        // Currently showing temperature, switch to wind speed
+                        fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
+                        dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
+                    }
+                });
+            }
         async function handleZipcodeFetch(zipcode) {
             // Disable the button and recent search links to prevent multiple fetches
             document.getElementById('fetchCoordinatesButton').disabled = true;
@@ -1428,6 +1509,7 @@
             return { backgroundColor, textColor };
         }
         const colors = {
+             maroon: { r: 128, g: 0, b: 0 }, // Maroon color
             blue: { r: 0, g: 0, b: 255 },
             green: { r: 0, g: 255, b: 0 },
             red: { r: 255, g: 0, b: 0 },
