@@ -369,27 +369,48 @@
 
 
     <script>
+
+        let highAltitudeVisible = false;
+            const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
+
         document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
-        document.getElementById('toggleHighAltitudeButton').addEventListener('click', toggleHighAltitude);
-        function toggleHighAltitude() {
-            console.log('toggleHighAltitude');
-                const tables = document.querySelectorAll('table[id$="-table"]');
-                tables.forEach(table => {
-                    const rows = table.getElementsByTagName('tr');
-                    // Skip the header row by starting the loop at index 1
-                    for (let i = 1; i < rows.length; i++) {
-                        const altitudeInFeet = rows[i].cells[0].innerText.replace(' ft', '');
-                        if (parseInt(altitudeInFeet) > 5000) {
-                            // Toggle the visibility of the row based on the current display state
-                            if (rows[i].style.display !== 'none') {
-                                rows[i].style.display = 'none';
-                            } else {
-                                rows[i].style.display = '';
+        document.getElementById('toggleHighAltitudeButton').addEventListener('click', function () {
+                // Toggle the flag
+                highAltitudeVisible = !highAltitudeVisible;
+
+                // Optionally, update button text or styling to reflect the state
+                this.textContent = highAltitudeVisible ? 'Hide High Altitude' : 'Show High Altitude';
+                fetchAllModelsData();
+            });
+            function toggleHighAltitude() {
+                    if (!highAltitudeVisible) {  // Check if the flag indicates altitude should be hidden
+                        console.log('Hiding high altitude rows');
+                        const tables = document.querySelectorAll('table[id$="-table"]');
+                        tables.forEach(table => {
+                            const rows = table.getElementsByTagName('tr');
+                            // Skip the header row by starting the loop at index 1
+                            for (let i = 1; i < rows.length; i++) {
+                                const altitudeInFeet = rows[i].cells[0].innerText.replace(' ft', '');
+                                if (parseInt(altitudeInFeet) > 5000) {
+                                    rows[i].style.display = 'none'; // Hide the row
+                                }
                             }
-                        }
+                        });
+                    } else {
+                        console.log('Showing high altitude rows');
+                        const tables = document.querySelectorAll('table[id$="-table"]');
+                        tables.forEach(table => {
+                            const rows = table.getElementsByTagName('tr');
+                            // Skip the header row by starting the loop at index 1
+                            for (let i = 1; i < rows.length; i++) {
+                                const altitudeInFeet = rows[i].cells[0].innerText.replace(' ft', '');
+                                if (parseInt(altitudeInFeet) > 5000) {
+                                    rows[i].style.display = ''; // Show the row
+                                }
+                            }
+                        });
                     }
-                });
-            }
+                }
             let daylightHoursShown = true;
         let userLocation = {
             latitude: 26.4187,   // Use a default latitude or prompt the user to enter a valid one.
@@ -559,7 +580,7 @@ function filterBestDaysColumns() {
                     dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
                 });
               // toggleDaylightHours();
-                toggleHighAltitude(); // Hide high altitude rows by default
+               
             }
         function showConfigPopup() {
             document.getElementById('configPopup').style.display = 'flex';
@@ -782,9 +803,9 @@ function filterBestDaysColumns() {
 
             // Check the model to determine the correct forecast_days parameter
             if (model.toLowerCase() === 'openmeteo') {
-                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=3'; // 14-day forecast for OpenMeteo
             } else if (model.toLowerCase() === 'icon') {
-                additionalParameters += '&forecast_days=7'; // 7-day forecast for ICON
+                additionalParameters += '&forecast_days=3'; // 7-day forecast for ICON
             }
 
             const zipcode = document.getElementById('zipcodeInput').value.trim();
@@ -1143,7 +1164,7 @@ function filterBestDaysColumns() {
 
             // Finally, set the table's HTML to the newly created rows
             table.innerHTML = tableHtml;
-
+toggleHighAltitude();
 
         }
 
@@ -1310,6 +1331,7 @@ function filterBestDaysColumns() {
             // Update showing attribute here
             table.dataset.showing = 'clouds';
             createTable(table.id, weatherData, model); // Reuse createTable function
+            toggleHighAltitude();
         }
         // Initialize the tables to display clouds by default
         document.querySelectorAll('table[id$="-table"]').forEach(table => {
