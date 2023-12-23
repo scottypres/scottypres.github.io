@@ -408,15 +408,11 @@
                     fetchAllModelsData();
                 });
                function checkAndApplyWindShear() {
-                    console.log("Windshear check running");
-
-                    // This flag indicates that the wind shear check has been run
-                    windShearRun = true;
+                    console.log("Wind shear check starting...");
 
                     // Select all tables that end in '-table', such as 'icon-table', 'gfs-table', etc.
                     document.querySelectorAll('table[id$="-table"]').forEach(table => {
-                        console.log(`Checking wind shear for table: ${table.id}`);
-                        console.log('icon.table');
+                        console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
 
                         // Get all the rows (tr elements) of the current table
                         const rows = table.querySelectorAll('tr');
@@ -439,7 +435,7 @@
                                     const nextWindSpeed = parseFloat(cells[cellIndex + 1].dataset.windSpeed);
 
                                     // Log the wind speeds being compared for shear
-                                    console.log(`Row: ${rowIndex + 1}, Cell: ${cellIndex}, Wind Speeds: ${windSpeed}, ${nextWindSpeed}`);
+                                    console.log(`Row: ${rowIndex + 1}, Cell: ${cellIndex + 1}, Current Wind Speed: ${windSpeed}, Next Wind Speed: ${nextWindSpeed}`);
 
                                     // Check if the difference between current and next wind speed exceeds the threshold (e.g., 9 mph)
                                     if (Math.abs(windSpeed - nextWindSpeed) > 9) {
@@ -448,14 +444,14 @@
                                         cells[cellIndex + 1].classList.add('shear-detected');
 
                                         // Log that wind shear was detected between the two cells
-                                        console.log(`Wind shear detected at row ${rowIndex + 1}: ${windSpeed} to ${nextWindSpeed}`);
+                                        console.log(`Wind shear detected at Row: ${rowIndex + 1}, Cell: ${cellIndex + 1}`);
                                     }
                                 }
                             });
                         });
                     });
 
-                    console.log("Windshear check completed");
+                    console.log("Wind shear check completed.");
                 }
 
                     function removeWindShearStyles() {
@@ -1305,14 +1301,13 @@ function filterBestDaysColumns() {
                         const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
                         const windArrowUnicode = getWindDirectionArrow(windDirection);
                         // Add wind speed and a Unicode arrow for wind direction with the proper rotation
-                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};" data-wind-angle="${windDirection}">
+                         tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};"
+                    data-wind-speed="${roundedWindSpeed}" data-wind-direction="${windDirection}">
                     <div>${roundedWindSpeed}</div>
                     <div class="${windArrowClass}">${windArrowUnicode}</div>
-                  </td>`;
-
+                </td>`;
                     });
 
-                    // Close the table row
                     tableHtml += '</tr>';
                
                 }
