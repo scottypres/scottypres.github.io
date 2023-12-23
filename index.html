@@ -372,8 +372,8 @@
 
         let highAltitudeVisible = false;
             const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
-
-        document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
+    let windShearButton = document.getElementById('checkWindShearButton');
+       // document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
         document.getElementById('toggleHighAltitudeButton').addEventListener('click', function () {
                 // Toggle the flag
                 highAltitudeVisible = !highAltitudeVisible;
@@ -984,7 +984,7 @@ function filterBestDaysColumns() {
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
             const dataTable = document.getElementById(tableId);
-            isWindShearChecked = false;
+           // isWindShearChecked = false;
 
             let tableHtml = `<tr><th>${model.replace('Meteo', '<br>Meteo')}</th>`;
             let currentDay = null; // Variable to store the current day as you loop through the timestamps
@@ -1138,7 +1138,10 @@ function filterBestDaysColumns() {
 
                     // Close the table row
                     tableHtml += '</tr>';
+                    console.log(isWindShearChecked);
+                    performWindShearChecksAndUpdateTables();
                 }
+                
             });
 
             // Finally, set the table's HTML to the newly created rows
@@ -1188,67 +1191,75 @@ toggleDaylightHours();
             
         }
         function performWindShearChecksAndUpdateTables() {
-            console.log('performWindShearChecksAndUpdateTables');
-                // Get reference to the Wind Shear button
-                const windShearButton = document.getElementById('checkWindShearButton');
-                // Change the button text to show "Loading..."
-                windShearButton.textContent = 'Loading...';
-                windShearButton.disabled = true; // Disable the button during processing
+                console.log('performWindShearChecksAndUpdateTables');
 
-                // Process in the next tick to let the UI update
-                setTimeout(() => {
-                    const tables = document.querySelectorAll('table[id$="-table"]');
-                    isWindShearChecked = !isWindShearChecked; // Toggle the state
+                // Exit the function if wind shear checks should not happen (i.e., showing 'clouds')
+                if (!isWindShearChecked) {
+                    console.log('Wind shear check is not enabled, or tables are not showing wind data.');
+                    return; // Abort function since wind shear check is not enabled
+                }
 
-                    tables.forEach(table => {
-                        if (table.dataset.showing === 'winds') {
-                            const rows = table.rows;
-                            for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
-                                for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
-                                    const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
-                                    const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
+                // Process each table to check for wind shear indications and apply/remove classes as needed
+                const tables = document.querySelectorAll('table[id$="-table"]');
+                tables.forEach(table => {
+                    if (table.dataset.showing === 'winds') {
+                        const rows = table.rows;
+                        for (let colIndex = 1; colIndex < rows[0].cells.length; colIndex++) {
+                            for (let rowIndex = 1; rowIndex < rows.length - 1; rowIndex++) {
+                                const cellCurrentSpeed = parseFloat(rows[rowIndex].cells[colIndex].innerText.trim());
+                                const cellNextSpeed = parseFloat(rows[rowIndex + 1].cells[colIndex].innerText.trim());
 
-                                    const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
-                                    const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
-                                    const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
+                                const cellCurrentAltitude = parseInt(rows[rowIndex].cells[0].innerText.replace(' ft', ''));
+                                const cellNextAltitude = parseInt(rows[rowIndex + 1].cells[0].innerText.replace(' ft', ''));
+                                const altitudeDifference = Math.abs(cellCurrentAltitude - cellNextAltitude);
 
-                                    const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
-                                    const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
+                                const cellCurrentAngle = parseFloat(rows[rowIndex].cells[colIndex].dataset.windAngle);
+                                const cellNextAngle = parseFloat(rows[rowIndex + 1].cells[colIndex].dataset.windAngle);
 
-                                    if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1650) {
-                                        const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
-                                        let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
-                                        diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
+                                if (!isNaN(cellCurrentSpeed) && !isNaN(cellNextSpeed) && !isNaN(cellCurrentAngle) && !isNaN(cellNextAngle) && altitudeDifference < 1650) {
+                                    const diffSpeed = Math.abs(cellCurrentSpeed - cellNextSpeed);
+                                    let diffAngle = Math.abs(cellCurrentAngle - cellNextAngle) % 360;
+                                    diffAngle = diffAngle > 180 ? 360 - diffAngle : diffAngle; // Normalize angle difference to range [0, 180]
 
-                                        if (diffSpeed > 10 || diffAngle > 90) { // Adjust your speed and angle thresholds as needed
-                                            rows[rowIndex].cells[colIndex].classList.toggle('shear-detected', isWindShearChecked);
-                                            rows[rowIndex + 1].cells[colIndex].classList.toggle('shear-detected', isWindShearChecked);
-                                        } else {
-                                            rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
-                                            rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
-                                        }
+                                    if (diffSpeed > 10 || diffAngle > 90) { // Adjust your speed and angle thresholds as needed
+                                        rows[rowIndex].cells[colIndex].classList.add('shear-detected');
+                                        rows[rowIndex + 1].cells[colIndex].classList.add('shear-detected');
                                     } else {
-                                        // If the cell represents a high altitude, above the threshold, skip it
-                                        if (cellCurrentAltitude => 4922){
-                                            continue;
-                                        
                                         rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
-                                        rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');}
+                                        rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
                                     }
+                                } else {
+                                    rows[rowIndex].cells[colIndex].classList.remove('shear-detected');
+                                    rows[rowIndex + 1].cells[colIndex].classList.remove('shear-detected');
                                 }
                             }
                         }
-                    });
-
+                    } else {
+                        // If the table is showing clouds, clear any existing wind shear indications
+                        clearWindShearIndications(table);
+                    }
+                });
+            
                     // Once done, update the button text to reflect the toggled state
-                    windShearButton.textContent = isWindShearChecked ? 'Hide Wind Shear' : 'Show Wind Shear';
+                    windShearButton.textContent = 'Hide Wind Shear'; // Since isWindShearChecked must be true, the text should reflect that
                     windShearButton.disabled = false; // Re-enable the button after processing
-                }, 0);
+                ;
             }
-
-            // Attach the event handler to the button
-            document.getElementById('checkWindShearButton').addEventListener('click', performWindShearChecksAndUpdateTables);
+    function clearWindShearIndications(table) {
+        const shearCellsInTable = table.querySelectorAll('.shear-detected');
+        shearCellsInTable.forEach(cell => {
+            cell.classList.remove('shear-detected');
+        });
+    }
         
+        document.getElementById('checkWindShearButton').addEventListener('click', () => {
+            console.log('Before shear check');   
+            console.log(isWindShearChecked);
+            isWindShearChecked = !isWindShearChecked; // Toggle the boolean state.
+             console.log('After shear check');
+            console.log(isWindShearChecked);
+                fetchAllModelsData();
+            });
         // Helper function to get the background color based on the wind speed
         function getWindSpeedColor(windSpeed) {
             let backgroundColorRGB;
@@ -1336,6 +1347,7 @@ toggleDaylightHours();
             createTable(table.id, weatherData, model); // Reuse createTable function
             toggleHighAltitude();
             toggleDaylightHours();
+            
         }
         // Initialize the tables to display clouds by default
         document.querySelectorAll('table[id$="-table"]').forEach(table => {
