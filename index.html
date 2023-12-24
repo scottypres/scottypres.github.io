@@ -502,7 +502,7 @@
                 const model = table.dataset.model; // Use the model attribute to customize the table for different data sources
                 let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>'; // Reuse the header rows for consistency
 
-                const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Should match your data's altitude levels
+                const altitudeLevels = [2, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Should match your data's altitude levels
 
                 // Use the weatherData object to fill temperature data
                 altitudeLevels.forEach(hPa => {
@@ -1142,6 +1142,7 @@
                         'temperature_600hPa',
                         'temperature_500hPa',
                         'temperature_400hPa',
+
                         'windspeed_1000hPa',
                         'windspeed_975hPa',
                         'windspeed_950hPa',
@@ -1917,7 +1918,44 @@
                 }
                 return ''; // Return empty string if the direction does not fall within known ranges
             }
+    document.addEventListener('DOMContentLoaded', () => {
+        const collapseButton = document.getElementById('editButton');
 
+        function clickCollapseButton() {
+            // Check if the collapse button text is "Collapse" and click it
+            if (collapseButton.textContent.trim() === 'Collapse') {
+                collapseButton.click();
+            }
+        }
+
+        // Array of button IDs that should trigger the collapse button click
+        const buttonIdsToTriggerCollapse = [
+            // Add all the button IDs that need to trigger the collapse
+            'toggleButton', // Wind/Clouds button ID
+            'toggleTemperatureButton', // Temperature button ID
+            'submitThresholds', // Submit button ID (from config popup)
+            'applyBestDaysButton', // Apply button ID (from best days popup)
+            'checkWindShearButton', // Enable Wind Shear button ID
+            'toggleDaylightButton', // All Hours/Daylight button ID
+            'toggleHighAltitudeButton', // High Altitude button ID
+            'additionalVariablesButton' // Toggle Additional Variables button ID
+        ];
+
+        buttonIdsToTriggerCollapse.forEach(buttonId => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.addEventListener('click', () => {
+                    // Perform the button's original action here if necessary...
+
+                    // Then trigger the collapse button click after the action
+                    clickCollapseButton();
+                });
+            }
+        });
+
+        // If there are more buttons with similar functionality that are not captured by ID,
+        // you can assign them a common class and add event listeners based on that.
+    });
 
     </script>
 
