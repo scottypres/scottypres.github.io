@@ -7,6 +7,14 @@
     <title>Data Collection</title>
     <style>
         /* Add a general header class to apply common header styles across tables */
+        .sticky-container {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+    padding: 10px 0; /* Padding for visual spacing */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Optional: adds a shadow */
+}
         #autocomplete-list {
             position: absolute;
             background: #fff;
@@ -305,54 +313,97 @@
             /* Max grey level 75% */
             background-color: rgba(0, 0, 0, 0.75);
         }
+        /* Additional CSS for rows and columns */
+.button-row {
+    display: flex; /* Align items horizontally */
+    flex-direction: column; /* Align items vertically */
+    align-items: flex-start; /* Align items to the start */
+    margin-bottom: 10px; /* Spacing between rows */
+}
+
+.button-column {
+    display: flex;
+    flex-direction: column; /* Stack the header and buttons vertically */
+    margin-right: 15px; /* Spacing between columns */
+}
+
+.column-header {
+    margin-bottom: 10px; /* Spacing between header and buttons */
+    font-weight: bold; /* Optional: make it bold */
+}
+#editButton {
+    position: fixed; /* Fixed position relative to the viewport */
+    top: 0px;      /* Set a top offset */
+    left: 0px;    /* Set a right offset */
+    z-index: 100;   /* Higher z-index to ensure it's above other content */
+}
     </style>
 </head>
 
 <body>
+<!-- Sticky Container -->
 
-    <div id="zipcode-section">
-        <label for="zipcodeInput">Enter Zipcode:</label>
-        <input type="text" id="zipcodeInput" placeholder="Enter zipcode">
-        <button id="fetchCoordinatesButton">Get Weather</button>
-    </div>
-    <div id="zipcode-section">
-        <!-- ... existing HTML ... -->
-        Tables: 
-        <button id="toggleButton">Wind/Clouds</button>
-        <button id="toggleTemperatureButton">Temperature</button>
+    
+    <div class="sticky-container">
+    <!-- Rest of the button rows are initially hidden -->
+    <div id="buttonSections" style="display: none;">
+    
+    
         <br>
-        Modifiers: 
-        <button id="editThresholdsButton">Edit Wind Speed Thresholds</button>
-        <button id="checkWindShearButton">Enable Wind Shear</button>
-        <button id="toggleDaylightButton">All Hours</button>
+        <div id="zipcode-section" class="button-row">
+            <label for="zipcodeInput">Enter Zipcode:</label>
+            <input type="text" id="zipcodeInput" placeholder="Enter zipcode" class="button-column">
+            <button id="fetchCoordinatesButton" class="button-column">Get Weather</button>
+        </div>
+    
+        
+        <div class="button-row">
+            <div class="button-column">
+                <div class="column-header">Table Display/Config:</div>
+                <button id="toggleButton" class="button">Wind/Clouds</button>
+                <button id="toggleTemperatureButton" class="button">Temperature</button>
+                <button id="editThresholdsButton" class="button">Edit Wind Speed Thresholds</button>
+            </div>
         <br>
-        Display: 
-        <button id="toggleHighAltitudeButton">High Altitude</button>
-        <button id="additionalVariablesButton">Enable Additional Variables</button>
-        <br>
-        <button id="bestDaysButton" disabled>Best Hours</button>
-
+            <div class="button-column">
+                <div class="column-header">View/Analysis Options:</div>
+                <button id="checkWindShearButton" class="button">Enable Wind Shear</button>
+                <button id="toggleDaylightButton" class="button">All Hours</button>
+                <button id="toggleHighAltitudeButton" class="button">High Altitude</button>
+                <button id="additionalVariablesButton" class="button">Toggle Additional Variables</button>
+                <button id="bestDaysButton" class="button" disabled>Best Hours</button>
+            </div>
+            <div id="configPopup" class="config-popup" style="display: none;">
+                <div class="config-content">
+                    <label for="blueThreshold">Blue Threshold (mph)</label>
+                    <input type="number" id="blueThreshold" value="4" min="0" /><br />
+                    <label for="greenThreshold">Green Threshold (mph)</label>
+                    <input type="number" id="greenThreshold" value="12" min="1" /><br />
+                    <label for="redThreshold">Red Threshold (mph)</label>
+                    <input type="number" id="redThreshold" value="20" min="2" /><br />
+                    <button id="submitThresholds">Submit</button>
+                </div>
+        </div>
         <div id="bestDaysPopup" class="config-popup" style="display: none;">
             <div class="config-content">
                 <label for="bestWindSpeed">Max Wind Speed</label>
                 <input type="number" id="bestWindSpeed" value="15" min="0" /><br />
                 <button id="applyBestDaysButton">Apply</button>
-
+        
             </div>
         </div>
+    </div>
+        <!-- Rest of the HTML content... -->
+    
+    </div></div>
 
+        
+        <!-- Edit Button (New) -->
+        <button id="editButton" class="button-column">Edit</button>
+</div>
 
         <!-- ICON Table -->
-        <div id="configPopup" class="config-popup" style="display: none;">
-            <div class="config-content">
-                <label for="blueThreshold">Blue Threshold (mph)</label>
-                <input type="number" id="blueThreshold" value="4" min="0" /><br />
-                <label for="greenThreshold">Green Threshold (mph)</label>
-                <input type="number" id="greenThreshold" value="12" min="1" /><br />
-                <label for="redThreshold">Red Threshold (mph)</label>
-                <input type="number" id="redThreshold" value="20" min="2" /><br />
-                <button id="submitThresholds">Submit</button>
-            </div>
+        
 
 
 
@@ -387,7 +438,21 @@
         
         const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
 
+    const editButton = document.getElementById('editButton');
+    const buttonSections = document.getElementById('buttonSections');
 
+    
+    // Listen for click events on the "Edit" button
+    editButton.addEventListener('click', function () {
+            // Toggle visibility state
+            if (buttonSections.style.display === 'none') {
+                buttonSections.style.display = 'block';    // Show the buttons
+                editButton.textContent = 'Collapse';       // Update the button text to "Collapse"
+            } else {
+                buttonSections.style.display = 'none';     // Hide the buttons
+                editButton.textContent = 'Edit';           // Reset the button text to "Edit"
+            }
+        });
         document.getElementById('toggleHighAltitudeButton').addEventListener('click', function () {
             // Toggle the flag
             highAltitudeVisible = !highAltitudeVisible;
@@ -603,7 +668,7 @@
             setCookie('additionalVariablesEnabled', additionalVariablesEnabled, 365);
             // Update button text to reflect the current state
             document.getElementById('additionalVariablesButton').textContent =
-                additionalVariablesEnabled ? "Disable Additional Variables" : "Enable Additional Variables";
+                additionalVariablesEnabled ? "Toggle Additional Variables" : "Toggle Additional Variables";
             fetchAllModelsData();
             // Add any other code that should run when the toggle occurs
         });
@@ -648,17 +713,16 @@
 
         }
         document.getElementById('bestDaysButton').addEventListener('click', function () {
-            const buttonText = this.textContent;
-            if (buttonText === 'Best Hours') {
-                // The button text is "Best Days", so show the popup
-                document.getElementById('bestDaysPopup').style.display = 'flex';
-            } else {
-                // The button text is "Reset", so reset the tables by creating them again
-                resetTables();
-                // Change the button text back to "Best Days"
-                this.textContent = 'Best Hours';
-            }
-        });
+                const isPopupVisible = document.getElementById('bestDaysPopup').style.display === 'flex';
+                if (isPopupVisible) {
+                    closeBestDaysPopup();
+                } else {
+                    // Show the popup
+                    document.getElementById('bestDaysPopup').style.display = 'flex';
+                    // Disable buttons other than 'applyBestDaysButton' and 'fetchCoordinatesButton'
+                    toggleButtonsDisabledState(true, ['applyBestDaysButton', 'editButton']);
+                }
+            });
         function resetTables() {
             // Loop over each model to create the tables again using the stored data
             //  console.log('resetTables');
@@ -673,27 +737,43 @@
 
         // Event listener to handle when the user clicks the "Apply" button in the Best Days popup
         document.getElementById('applyBestDaysButton').addEventListener('click', function () {
-            // Show "Loading..." and disable the button to prevent additional clicks during processing
-            this.textContent = 'Loading...';
-            this.disabled = true;
+                const bestDaysPopup = document.getElementById('bestDaysPopup');
+                const isPopupVisible = bestDaysPopup.style.display === 'flex';
 
-            // Get the value from the input field for the best wind speed threshold
-            bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
-            setCookie('bestWindSpeed', bestWindSpeedThreshold, 365);
-            // Perform the filtering operation asynchronously to allow the UI to show the loading state
-            setTimeout(() => {
-                filterBestDaysColumns();
-                // After completing the filter operation, reset the Apply button and update the UI
-                this.textContent = 'Apply';
-                this.disabled = false;
-                // Hide the best days filter popup
-                document.getElementById('bestDaysPopup').style.display = 'none';
-                // Change the Best Days button to Reset
-                document.getElementById('bestDaysButton').textContent = 'Reset';
-                // Show the Reset button
+                // Toggling popup visibility
+                if (!isPopupVisible) {
+                    // Show the popup
+                    bestDaysPopup.style.display = 'flex';
 
-            }, 0);
-        });
+                    // Disable buttons other than 'applyBestDaysButton' and 'fetchCoordinatesButton' when the popup is visible
+                    toggleButtonsDisabledState(true, ['applyBestDaysButton', 'fetchCoordinatesButton']);
+                } else {
+                    // The popup is open and the user clicks 'Apply' to filter the best days columns
+                    this.textContent = 'Loading...';
+                    this.disabled = true;
+
+                    // Fetch the best wind speed threshold value from the input field
+                    bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
+                    setCookie('bestWindSpeed', bestWindSpeedThreshold, 365);
+
+                    // Perform the asynchronous filtering operation
+                    setTimeout(() => {
+                        // Assuming the 'filterBestDaysColumns' is a function that filters the columns based on threshold
+                        filterBestDaysColumns();
+
+                        // Reset the Apply button and close the popup after the operation is done
+                        this.textContent = 'Apply';
+                        this.disabled = false;
+                        bestDaysPopup.style.display = 'none';
+
+                        // Change the Best Days button text to indicate the reset state
+                        document.getElementById('bestDaysButton').textContent = 'Reset Best Hours';
+
+                        // Re-enable buttons now that the filtering operation is complete
+                        toggleButtonsDisabledState(false);
+                    }, 0);
+                }
+            });
 
         function filterBestDaysColumns() {
             // Threshold in mph
@@ -782,8 +862,12 @@
             submitThresholdsAndRepaint();
         }
         function showConfigPopup() {
-            document.getElementById('configPopup').style.display = 'flex';
-        }
+                document.getElementById('configPopup').style.display = 'flex';
+
+                // Now, include the 'editButton' ID in the list of buttons to be excluded from disabling
+                toggleButtonsDisabledState(true, ['submitThresholds', 'fetchCoordinatesButton', 'editButton']);
+            }
+            
         // Fetch data for each model
         const baseUrls = {
             //openMeteo: 'https://api.open-meteo.com/v1/forecast',
@@ -808,9 +892,27 @@
 
             // Hide the config popup
             document.getElementById('configPopup').style.display = 'none';
+            
+         toggleButtonsDisabledState(false, ['editButton']);
         }
+    function toggleButtonsDisabledState(disable, excludeIds = []) {
+        const allButtons = document.querySelectorAll('button');
+        allButtons.forEach(button => {
+            if (!excludeIds.includes(button.id)) {
+                button.disabled = disable; // Disable or enable buttons based on the 'disable' boolean
+                button.style.opacity = disable ? '0.5' : '1'; // Toggle opacity
+            }
+        });
+    }
 
-        document.getElementById('submitThresholds').addEventListener('click', submitThresholdsAndRepaint);
+    function showConfigPopup() {
+        document.getElementById('configPopup').style.display = 'flex';
+
+        // Disable buttons other than 'submitThresholds' and 'fetchCoordinatesButton'
+        toggleButtonsDisabledState(true, ['submitThresholds', 'editButton']);
+    }
+
+    document.getElementById('submitThresholds').addEventListener('click', submitThresholdsAndRepaint);
         function repaintGraphsWithNewThresholds(low, med, high) {
             // Assume these are the names of three different tables you have
             lowWindThreshold = low;
@@ -1703,7 +1805,7 @@
             function disableButtonsExcept(buttonIds) {
                     const allButtons = document.querySelectorAll('button');
                     allButtons.forEach(button => {
-                        if (!buttonIds.includes(button.id)) {
+                        if (!buttonIds.includes(button.id) && button.id !== 'editButton') { // Exclude the edit button from being disabled
                             button.disabled = true; // Disable the button
                             button.style.opacity = 0.5; // Gray out the button visually
                         } else {
