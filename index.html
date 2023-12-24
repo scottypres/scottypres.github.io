@@ -830,8 +830,15 @@
                         });
                     }
                 });
+                  headers.forEach((header, columnIndex) => {
+                    if (!header.classList.contains('daylight')) {
+                        header.style.display = 'none'; // Hide header cell with no 'daylight' class
+                        rows.forEach(row => {
+                            row.cells[columnIndex + 1].style.display = 'none'; // Hide associated data cells
+                        });
+                    }
+                });
             });
-
         }
 
         // After tables have been generated, enable the "Best Days" button
