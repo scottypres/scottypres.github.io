@@ -517,7 +517,7 @@
                         // Add temperature data cells
                         weatherData.hourly[temperatureKey].forEach(temp => {
                             const { backgroundColor, textColor } = getTemperatureColor(temp); // Get the color based on the temperature
-                            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${Math.round(temp)}&deg;</td>`; // Display temperature with Fahrenheit symbol and gradient color
+                            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${Math.round(temp)}</td>`; // Display temperature with Fahrenheit symbol and gradient color
                         });
 
                         tableHtml += '</tr>';
@@ -527,6 +527,8 @@
                 table.innerHTML = tableHtml; // Update the table's HTML with the new rows
                 table.dataset.showing = 'temperature'; // Update data attribute to indicate current data being shown
                 // Disable all buttons except "Wind/Clouds" and "Temperature"
+                toggleHighAltitude();
+            toggleDaylightHours();
             disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
         }
             function getTemperatureColor(temperature) {
