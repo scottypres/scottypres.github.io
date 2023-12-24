@@ -1295,7 +1295,11 @@
 
 
         window.onload = function () {
-            
+            // Automatically click the edit button when the page loads for the first time
+    const editButton = document.getElementById('editButton');
+    if (editButton) {
+        editButton.click();
+    }
 
             // Check for saved wind shear enabled state
             const savedWindShearEnabled = localStorage.getItem('windShearEnabled');
