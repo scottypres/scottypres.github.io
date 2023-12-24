@@ -966,13 +966,17 @@
             table.dataset.showing = 'winds'; // Start with winds data shown
         });
         document.getElementById('fetchCoordinatesButton').addEventListener('click', () => {
-            const zipcode = document.getElementById('zipcodeInput').value.trim();
-            if (zipcode) {
-                handleZipcodeFetch(zipcode);
-            } else {
-                alert('Please enter a valid zipcode.');
-            }
-        });
+                const zipcode = document.getElementById('zipcodeInput').value.trim();
+                if (zipcode) {
+                    handleZipcodeFetch(zipcode);
+
+                    // Collapse the button sections after initiating the fetch
+                    buttonSections.style.display = 'none'; // Hide the buttons
+                    editButton.textContent = 'Edit'; // Reset the button text to "Edit"
+                } else {
+                    alert('Please enter a valid zipcode.');
+                }
+            });
         let isUpdatingTables = false;
         async function fetchAllModelsData() {
             if (isUpdatingTables) return;
