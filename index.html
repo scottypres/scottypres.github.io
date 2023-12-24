@@ -17,6 +17,12 @@
     display: inline-block; /* Change to inline-block */
     box-sizing: border-box; /* Padding inside the width */
 }
+.small-text-cell {
+    font-size: 12px; /* Adjust to your preferred size */
+}
+.cape-cell {
+    font-size: 12px; /* Adjust to whatever size you prefer for the CAPE cell text */
+}
         #autocomplete-list {
             position: absolute;
             background: #fff;
@@ -1386,6 +1392,25 @@
                     }
                 });
             }
+            document.getElementById('zipcodeInput').addEventListener('keyup', function (event) {
+                    if (event.key === 'Enter' || event.keyCode === 13) {
+                        // Call the function that fetches coordinates and updates the weather data
+                        handleZipcodeSubmit();
+                    }
+                });
+
+                function handleZipcodeSubmit() {
+                    const zipcode = document.getElementById('zipcodeInput').value.trim();
+                    if (zipcode) {
+                        handleZipcodeFetch(zipcode);
+
+                        // Collapse the button sections after initiating the fetch
+                        buttonSections.style.display = 'none'; // Hide the buttons
+                        editButton.textContent = 'Edit'; // Reset the button text to "Edit"
+                    } else {
+                        alert('Please enter a valid zipcode.');
+                    }
+                }
         async function handleZipcodeFetch(zipcode) {
             // Disable the button and recent search links to prevent multiple fetches
             document.getElementById('fetchCoordinatesButton').disabled = true;
@@ -1636,7 +1661,8 @@
                         const shortCapeValue = formatCapeValue(capeValue); // Ensure this line is before its usage
 
                         // Add CAPE data cells with gradient background and contrast text
-                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${shortCapeValue}</td>`;
+                        tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${shortCapeValue}</td>`;
+                    
                     });
 
                     // Close the CAPE table row
@@ -1655,7 +1681,7 @@
                         const { backgroundColor, textColor } = getPrecipitationProbabilityColor(precipProbability);
 
                         // Substitute N/A for missing precipitation_probability values or add cell with the actual value
-                        tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipProbability !== '?' ? precipProbability + '%' : precipProbability}</td>`;
+                        tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipProbability !== '?' ? precipProbability: precipProbability}</td>`;
                     });
 
                     tableHtml += '</tr>';
