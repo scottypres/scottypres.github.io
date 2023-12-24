@@ -575,7 +575,7 @@
                 const rowCount = rows.length;
 
                 // Ensure only the last 5 rows are considered
-                const startRow = Math.max(rowCount - 9, 0);
+                const startRow = Math.max(rowCount - 12, 0);
                 // Iterate through each row, but not the last row since there's no row below it
                  for (let rowIndex = startRow; rowIndex < rows.length - 1; rowIndex++) {
                     const currentRow = rows[rowIndex];
@@ -603,7 +603,7 @@
                             // console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
 
                             // Check if the difference between current and next wind speed exceeds the threshold and check wind direction difference
-                            if (Math.abs(currentWindSpeed - nextWindSpeed) > 10 || Math.abs(currentWindDirection - nextWindDirection) > 90) {
+                            if (Math.abs(currentWindSpeed - nextWindSpeed) > 9 || Math.abs(currentWindDirection - nextWindDirection) > 90) {
                                 // Apply the "shear-detected" class to current and corresponding cell in the next row
                                 cell.classList.add('shear-detected');
                                 nextCell.classList.add('shear-detected');
