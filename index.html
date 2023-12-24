@@ -290,7 +290,7 @@
         }
 
         @for $i from 0 through 348 {
-            $degrees: $i * 11.25;
+            $degrees: $i * 22.5;
 
             .wind-arrow.rotate-#{$degrees} {
                 transform: rotate(#{$degrees}deg);
@@ -865,7 +865,7 @@
             // Normalize the degrees to ensure it is between 0 and 360
             degrees = (degrees + 180) % 360; // Add 180 degrees to flip the arrow direction
             // Round the degrees to the nearest 11.25 increment
-            const roundedDegrees = Math.round(degrees / 11.25) * 11.25;
+            const roundedDegrees = Math.round(degrees / 22.5) * 22.5;
             // Replace dot with a dash for CSS class compatibility
             const classDegrees = roundedDegrees.toFixed(2).replace('.', '-');
             // Return the CSS class for the wind arrow rotation
@@ -1915,6 +1915,7 @@
                     if ((degrees >= range[0] && degrees < range[1]) || (rangeStart && degrees >= rangeStart[0] && degrees < rangeStart[1])) {
                         return arrows[direction]; // Return the Unicode arrow character for the direction
                     }
+                 
                 }
                 return ''; // Return empty string if the direction does not fall within known ranges
             }
