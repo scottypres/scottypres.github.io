@@ -464,6 +464,8 @@
         document.getElementById('checkWindShearButton').addEventListener('click', function () {
                 console.log("Wind shear button clicked");
                 windShearEnabled = !windShearEnabled;
+                localStorage.setItem('windShearEnabled', windShearEnabled);
+
                 console.log(windShearEnabled);
                 const button = this; // 'this' refers to the button element in a regular function.
 
@@ -1280,8 +1282,20 @@
 
 
         window.onload = function () {
-            //console.log("Window onload triggered", new Date().toISOString());
+            
 
+            // Check for saved wind shear enabled state
+            const savedWindShearEnabled = localStorage.getItem('windShearEnabled');
+            if (savedWindShearEnabled !== null) {
+                // If we have a saved value, use it to set the windShearEnabled flag
+                windShearEnabled = (savedWindShearEnabled === 'true');
+            } else {
+                // Initialize with a default value (e.g., false) and save it to localStorage
+                windShearEnabled = false;
+                localStorage.setItem('windShearEnabled', windShearEnabled);
+            }
+             document.getElementById('checkWindShearButton').textContent =
+                windShearEnabled ? 'Disable Wind Shear' : 'Enable Wind Shear';
             // Get threshold values from cookies, if they exist
             const blueThreshold = getCookie('blueThreshold');
             const greenThreshold = getCookie('greenThreshold');
