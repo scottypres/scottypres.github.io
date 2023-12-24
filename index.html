@@ -68,137 +68,73 @@
         }
 
         /* Add a general data cell class to apply common data cell styles */
-        wind-arrow.rotate-0 {
-            transform: rotate(0deg);
-        }
+        .wind-arrow.rotate-0 {
+    transform: rotate(0deg);
+}
 
-        .wind-arrow.rotate-11-25 {
-            transform: rotate(11.25deg);
-        }
+.wind-arrow.rotate-22-5 {
+    transform: rotate(22.5deg);
+}
 
-        .wind-arrow.rotate-22-50 {
-            transform: rotate(22.50deg);
-        }
+.wind-arrow.rotate-45 {
+    transform: rotate(45deg);
+}
 
-        .wind-arrow.rotate-33-75 {
-            transform: rotate(33.75deg);
-        }
+.wind-arrow.rotate-67-5 {
+    transform: rotate(67.5deg);
+}
 
-        .wind-arrow.rotate-45 {
-            transform: rotate(45deg);
-        }
+.wind-arrow.rotate-90 {
+    transform: rotate(90deg);
+}
 
-        .wind-arrow.rotate-56-25 {
-            transform: rotate(56.25deg);
-        }
+.wind-arrow.rotate-112-5 {
+    transform: rotate(112.5deg);
+}
 
-        .wind-arrow.rotate-67-50 {
-            transform: rotate(67.50deg);
-        }
+.wind-arrow.rotate-135 {
+    transform: rotate(135deg);
+}
 
-        .wind-arrow.rotate-78-75 {
-            transform: rotate(78.75deg);
-        }
+.wind-arrow.rotate-157-5 {
+    transform: rotate(157.5deg);
+}
 
-        .wind-arrow.rotate-90 {
-            transform: rotate(90deg);
-        }
+.wind-arrow.rotate-180 {
+    transform: rotate(180deg);
+}
 
-        .wind-arrow.rotate-101-25 {
-            transform: rotate(101.25deg);
-        }
+.wind-arrow.rotate-202-5 {
+    transform: rotate(202.5deg);
+}
 
-        .wind-arrow.rotate-112-50 {
-            transform: rotate(112.50deg);
-        }
+.wind-arrow.rotate-225 {
+    transform: rotate(225deg);
+}
 
-        .wind-arrow.rotate-123-75 {
-            transform: rotate(123.75deg);
-        }
+.wind-arrow.rotate-247-5 {
+    transform: rotate(247.5deg);
+}
 
-        .wind-arrow.rotate-135 {
-            transform: rotate(135deg);
-        }
+.wind-arrow.rotate-270 {
+    transform: rotate(270deg);
+}
 
-        .wind-arrow.rotate-146-25 {
-            transform: rotate(146.25deg);
-        }
+.wind-arrow.rotate-292-5 {
+    transform: rotate(292.5deg);
+}
 
-        .wind-arrow.rotate-157-50 {
-            transform: rotate(157.50deg);
-        }
+.wind-arrow.rotate-315 {
+    transform: rotate(315deg);
+}
 
-        .wind-arrow.rotate-168-75 {
-            transform: rotate(168.75deg);
-        }
+.wind-arrow.rotate-337-5 {
+    transform: rotate(337.5deg);
+}
 
-        .wind-arrow.rotate-180 {
-            transform: rotate(180deg);
-        }
-
-        .wind-arrow.rotate-191-25 {
-            transform: rotate(191.25deg);
-        }
-
-        .wind-arrow.rotate-202-50 {
-            transform: rotate(202.50deg);
-        }
-
-        .wind-arrow.rotate-213-75 {
-            transform: rotate(213.75deg);
-        }
-
-        .wind-arrow.rotate-225 {
-            transform: rotate(225deg);
-        }
-
-        .wind-arrow.rotate-236-25 {
-            transform: rotate(236.25deg);
-        }
-
-        .wind-arrow.rotate-247-50 {
-            transform: rotate(247.50deg);
-        }
-
-        .wind-arrow.rotate-258-75 {
-            transform: rotate(258.75deg);
-        }
-
-        .wind-arrow.rotate-270 {
-            transform: rotate(270deg);
-        }
-
-        .wind-arrow.rotate-281-25 {
-            transform: rotate(281.25deg);
-        }
-
-        .wind-arrow.rotate-292-50 {
-            transform: rotate(292.50deg);
-        }
-
-        .wind-arrow.rotate-303-75 {
-            transform: rotate(303.75deg);
-        }
-
-        .wind-arrow.rotate-315 {
-            transform: rotate(315deg);
-        }
-
-        .wind-arrow.rotate-326-25 {
-            transform: rotate(326.25deg);
-        }
-
-        .wind-arrow.rotate-337-50 {
-            transform: rotate(337.50deg);
-        }
-
-        .wind-arrow.rotate-348-75 {
-            transform: rotate(348.75deg);
-        }
-
-        .wind-arrow.rotate-360 {
-            transform: rotate(360deg);
-        }
+.wind-arrow.rotate-360 {
+    transform: rotate(360deg);
+}
 
         .data-cell {
             text-align: center;
@@ -859,8 +795,8 @@
        function getWindArrowClass(degrees) {
             // Ensure degrees are within 0-359 and add 180 degrees to flip the arrow
             degrees = (degrees + 180) % 360;
-            // Get the nearest multiple of 11.25
-            const closestMultiple = Math.round(degrees / 11.25) * 11.25;
+            // Get the nearest multiple of 22.5
+            const closestMultiple = Math.round(degrees / 22.5) * 22.5;
             // Create the class name by replacing '.' with '-' to match CSS class naming
             const classNameDegrees = closestMultiple.toString().replace('.', '-');
             return 'wind-arrow rotate-' + classNameDegrees;
