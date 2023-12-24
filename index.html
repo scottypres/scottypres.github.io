@@ -450,7 +450,9 @@
 
                 table.innerHTML = tableHtml; // Update the table's HTML with the new rows
                 table.dataset.showing = 'temperature'; // Update data attribute to indicate current data being shown
-            }
+                // Disable all buttons except "Wind/Clouds" and "Temperature"
+            disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
+        }
             function getTemperatureColor(temperature) {
                     let percentage;
                     let backgroundColorRGB;
@@ -1541,8 +1543,16 @@
             toggleHighAltitude();
             toggleDaylightHours();
 
-
+            enableAllButtons();
         }
+
+        function enableAllButtons() {
+                const allButtons = document.querySelectorAll('button');
+                allButtons.forEach(button => {
+                    button.disabled = false; // Enable the button
+                    button.style.opacity = 1; // Ensure full opacity for enabled buttons
+                });
+            }
         function formatCapeValue(value) {
                 const stringValue = value.toString(); // Convert number to string for easy length check
                 if (stringValue.length > 3) {
@@ -1678,15 +1688,30 @@
 
 
         function fillTableWithCloudCover(table, weatherData) {
-            console.log('Fill cloud start');
-            const model = table.dataset.model;
-            // Update showing attribute here
-            table.dataset.showing = 'clouds';
-            createTable(table.id, weatherData, model); // Reuse createTable function
-            toggleHighAltitude();
-            toggleDaylightHours();
+                console.log('Fill cloud start');
+                const model = table.dataset.model;
+                // Update showing attribute here
+                table.dataset.showing = 'clouds';
+                createTable(table.id, weatherData, model); // Reuse createTable function
+                toggleHighAltitude();
+                toggleDaylightHours();
 
-        }
+                // Disable all buttons except "Wind/Clouds" and "Temperature"
+                disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
+            }
+
+            function disableButtonsExcept(buttonIds) {
+                    const allButtons = document.querySelectorAll('button');
+                    allButtons.forEach(button => {
+                        if (!buttonIds.includes(button.id)) {
+                            button.disabled = true; // Disable the button
+                            button.style.opacity = 0.5; // Gray out the button visually
+                        } else {
+                            button.disabled = false; // Enable specified buttons
+                            button.style.opacity = 1; // Ensure full opacity for enabled buttons
+                        }
+                    });
+                }
         // Initialize the tables to display clouds by default
         document.querySelectorAll('table[id$="-table"]').forEach(table => {
             table.dataset.showing = 'clouds'; // Default view
