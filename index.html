@@ -55,12 +55,23 @@
             background-color: #e9e9e9;
         }
 
-        .wind-arrow {
-            display: inline-block;
-            transform-origin: center;
-            font-size: 14px;
-            /* Additional styling here if needed */
-        }
+        .wind-arrow.rotate-0 { transform: rotate(0deg); }
+.wind-arrow.rotate-22-5 { transform: rotate(22.5deg); }
+.wind-arrow.rotate-45 { transform: rotate(45deg); }
+.wind-arrow.rotate-67-5 { transform: rotate(67.5deg); }
+.wind-arrow.rotate-90 { transform: rotate(90deg); }
+.wind-arrow.rotate-112-5 { transform: rotate(112.5deg); }
+.wind-arrow.rotate-135 { transform: rotate(135deg); }
+.wind-arrow.rotate-157-5 { transform: rotate(157.5deg); }
+.wind-arrow.rotate-180 { transform: rotate(180deg); }
+.wind-arrow.rotate-202-5 { transform: rotate(202.5deg); }
+.wind-arrow.rotate-225 { transform: rotate(225deg); }
+.wind-arrow.rotate-247-5 { transform: rotate(247.5deg); }
+.wind-arrow.rotate-270 { transform: rotate(270deg); }
+.wind-arrow.rotate-292-5 { transform: rotate(292.5deg); }
+.wind-arrow.rotate-315 { transform: rotate(315deg); }
+.wind-arrow.rotate-337-5 { transform: rotate(337.5deg); }
+
 
         .column-header {
             white-space: nowrap;
@@ -861,16 +872,14 @@
             }
         }
         function getWindArrowClass(degrees) {
-
-            // Normalize the degrees to ensure it is between 0 and 360
-            degrees = (degrees + 180) % 360; // Add 180 degrees to flip the arrow direction
-            // Round the degrees to the nearest 11.25 increment
-            const roundedDegrees = Math.round(degrees / 22.5) * 22.5;
-            // Replace dot with a dash for CSS class compatibility
-            const classDegrees = roundedDegrees.toFixed(2).replace('.', '-');
-            // Return the CSS class for the wind arrow rotation
-            return 'wind-arrow rotate-' + classDegrees;
-        }
+                // Normalize the degrees to ensure it is 0-359
+                degrees = degrees % 360;
+                // Get the nearest multiple of 22.5
+                const closestMultiple = Math.round(degrees / 22.5) * 22.5;
+                // Creating class name by replacing '.' with '-' to match the CSS classes
+                const classNameDegrees = closestMultiple.toString().replace('.', '-');
+                return 'wind-arrow rotate-' + classNameDegrees;
+            }
         function initialTableSetup() {
             console.log('Initial Table Setup');
             if (!isUpdatingTables) {
@@ -1599,14 +1608,18 @@
 
                         // Get the background and text color based on the wind speed
                         const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
-                        const windArrowUnicode = getWindDirectionArrow(windDirection);
+
+                        // We're using the upwards arrow Unicode symbol and rotating it using CSS
+                        const windArrowUnicode = '&#x2191;&#xFE0E;'; // Upwards arrow (we'll rotate it using CSS)
+
                         // Add wind speed and a Unicode arrow for wind direction with the proper rotation
                         tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};"
-                    data-wind-speed="${roundedWindSpeed}" data-wind-direction="${windDirection}">
-                    <div>${roundedWindSpeed}</div>
-                    <div class="${windArrowClass}">${windArrowUnicode}</div>
-                </td>`;
+        data-wind-speed="${roundedWindSpeed}" data-wind-direction="${windDirection}">
+        <div>${roundedWindSpeed}</div>
+        <div class="${windArrowClass}">${windArrowUnicode}</div>
+    </td>`;
                     });
+                    
 
                     tableHtml += '</tr>';
 
