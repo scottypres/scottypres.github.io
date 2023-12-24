@@ -1883,40 +1883,40 @@
         });
         // Function to convert degrees to Unicode arrows with text-style rendering
         function getWindDirectionArrow(degrees) {
-            if (typeof degrees === 'undefined' || degrees === null) {
-                return ''; // Return empty string if the direction is undefined or null
-            }
-            const arrows = {
-                N: '&#x2191;&#xFE0E;', // Upwards arrow
-                NE: '&#x2197;&#xFE0E;', // North East arrow
-                E: '&#x2192;&#xFE0E;', // Rightwards arrow
-                SE: '&#x2198;&#xFE0E;', // South East arrow
-                S: '&#x2193;&#xFE0E;', // Downwards arrow
-                SW: '&#x2199;&#xFE0E;', // South West arrow
-                W: '&#x2190;&#xFE0E;', // Leftwards arrow
-                NW: '&#x2196;&#xFE0E;'  // North West arrow
-            };
-
-            // Convert the degrees to an arrow string with the given mapping
-            const directions = [
-                { direction: 'N', range: [337.5, 360], rangeStart: [0, 22.5] },
-                { direction: 'NE', range: [22.5, 67.5] },
-                { direction: 'E', range: [67.5, 112.5] },
-                { direction: 'SE', range: [112.5, 157.5] },
-                { direction: 'S', range: [157.5, 202.5] },
-                { direction: 'SW', range: [202.5, 247.5] },
-                { direction: 'W', range: [247.5, 292.5] },
-                { direction: 'NW', range: [292.5, 337.5] }
-            ];
-
-            for (let i = 0; i < directions.length; i++) {
-                const { direction, range, rangeStart } = directions[i];
-                if ((degrees >= range[0] && degrees < range[1]) || (rangeStart && degrees >= rangeStart[0] && degrees < rangeStart[1])) {
-                    return arrows[direction]; // Return the Unicode arrow character for the direction
+                if (typeof degrees === 'undefined' || degrees === null) {
+                    return ''; // Return empty string if the direction is undefined or null
                 }
+                const arrows = {
+                    S: '&#x2191;&#xFE0E;', // Upwards arrow (used to be North, now South)
+                    SW: '&#x2197;&#xFE0E;', // North East arrow (used to be NE, now SW)
+                    W: '&#x2192;&#xFE0E;', // Rightwards arrow (used to be East, now West)
+                    NW: '&#x2198;&#xFE0E;', // South East arrow (used to be SE, now NW)
+                    N: '&#x2193;&#xFE0E;', // Downwards arrow (used to be South, now North)
+                    NE: '&#x2199;&#xFE0E;', // South West arrow (used to be SW, now NE)
+                    E: '&#x2190;&#xFE0E;', // Leftwards arrow (used to be West, now East)
+                    SE: '&#x2196;&#xFE0E;'  // North West arrow (used to be NW, now SE)
+                };
+
+                // Convert the degrees to an arrow string with the given mapping
+                const directions = [
+                    { direction: 'N', range: [337.5, 360], rangeStart: [0, 22.5] },
+                    { direction: 'NE', range: [22.5, 67.5] },
+                    { direction: 'E', range: [67.5, 112.5] },
+                    { direction: 'SE', range: [112.5, 157.5] },
+                    { direction: 'S', range: [157.5, 202.5] },
+                    { direction: 'SW', range: [202.5, 247.5] },
+                    { direction: 'W', range: [247.5, 292.5] },
+                    { direction: 'NW', range: [292.5, 337.5] }
+                ];
+
+                for (let i = 0; i < directions.length; i++) {
+                    const { direction, range, rangeStart } = directions[i];
+                    if ((degrees >= range[0] && degrees < range[1]) || (rangeStart && degrees >= rangeStart[0] && degrees < rangeStart[1])) {
+                        return arrows[direction]; // Return the Unicode arrow character for the direction
+                    }
+                }
+                return ''; // Return empty string if the direction does not fall within known ranges
             }
-            return ''; // Return empty string if the direction does not fall within known ranges
-        }
 
 
     </script>
