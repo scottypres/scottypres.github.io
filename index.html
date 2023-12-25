@@ -340,7 +340,7 @@
 
         
         <!-- Edit Button (New) -->
-        <button id="editButton" class="button-column">Edit</button>
+        <button id="editButton" class="button-column">Toolbar</button>
 </div>
 
         <!-- ICON Table -->
@@ -391,7 +391,7 @@
                 editButton.textContent = 'Collapse';       // Update the button text to "Collapse"
             } else {
                 buttonSections.style.display = 'none';     // Hide the buttons
-                editButton.textContent = 'Edit';           // Reset the button text to "Edit"
+                editButton.textContent = 'Toolbar';           // Reset the button text to "Edit"
             }
         });
         document.getElementById('toggleHighAltitudeButton').addEventListener('click', function () {
@@ -674,17 +674,21 @@
 
     });
 }
-        document.getElementById('bestDaysButton').addEventListener('click', function () {
-                const isPopupVisible = document.getElementById('bestDaysPopup').style.display === 'flex';
-                if (isPopupVisible) {
-                    closeBestDaysPopup();
-                } else {
-                    // Show the popup
-                    document.getElementById('bestDaysPopup').style.display = 'flex';
-                    // Disable buttons other than 'applyBestDaysButton' and 'fetchCoordinatesButton'
-                    toggleButtonsDisabledState(true, ['applyBestDaysButton', 'editButton']);
-                }
-            });
+
+
+    document.getElementById('bestDaysButton').addEventListener('click', function () {
+        const isPopupVisible = document.getElementById('bestDaysPopup').style.display === 'flex';
+      
+            // Show the popup
+            document.getElementById('bestDaysPopup').style.display = 'flex';
+            // Disable buttons other than 'applyBestDaysButton' and 'fetchCoordinatesButton'
+            toggleButtonsDisabledState(true, ['applyBestDaysButton', 'editButton']);
+        }
+    );
+
+    
+    let showingBestHours = false;
+       ;
         function resetTables() {
             // Loop over each model to create the tables again using the stored data
             //  console.log('resetTables');
@@ -700,43 +704,33 @@
         // Event listener to handle when the user clicks the "Apply" button in the Best Days popup
         document.getElementById('applyBestDaysButton').addEventListener('click', function () {
                 const bestDaysPopup = document.getElementById('bestDaysPopup');
-                const isPopupVisible = bestDaysPopup.style.display === 'flex';
+                const applyBestDaysButton = this; // "this" refers to the 'applyBestDaysButton'
+                const bestDaysButton = document.getElementById('bestDaysButton'); // Assuming this is the ID of your "Best Days/Reset Best Hours" button
 
-                // Toggling popup visibility
-                if (!isPopupVisible) {
+                if (!bestDaysPopup.style.display || bestDaysPopup.style.display === 'none') {
                     // Show the popup
                     bestDaysPopup.style.display = 'flex';
-
-                    // Disable buttons other than 'applyBestDaysButton' and 'fetchCoordinatesButton' when the popup is visible
-                    toggleButtonsDisabledState(true, ['applyBestDaysButton', 'fetchCoordinatesButton']);
                 } else {
-                    // The popup is open and the user clicks 'Apply' to filter the best days columns
-                    this.textContent = 'Loading...';
-                    this.disabled = true;
-
-                    // Fetch the best wind speed threshold value from the input field
-                    bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
-                    setCookie('bestWindSpeed', bestWindSpeedThreshold, 365);
-
-                    // Perform the asynchronous filtering operation
-                    setTimeout(() => {
-                        // Assuming the 'filterBestDaysColumns' is a function that filters the columns based on threshold
-                        filterBestDaysColumns();
-
-                        // Reset the Apply button and close the popup after the operation is done
-                        this.textContent = 'Apply';
-                        this.disabled = false;
-                        bestDaysPopup.style.display = 'none';
-
-                        // Change the Best Days button text to indicate the reset state
-                        document.getElementById('bestDaysButton').textContent = 'Reset Best Hours';
-
-                        // Re-enable buttons now that the filtering operation is complete
-                        toggleButtonsDisabledState(false);
-                    }, 0);
+                    // Since the popup is visible, apply the filter
+                    filterBestDaysColumns();
+                    applyBestDaysButton.textContent = 'Apply';
+                    bestDaysButton.textContent = 'Reset Best Hours'; // Change the button text to 'Reset Best Hours'
+                    bestDaysPopup.style.display = 'none';
                 }
+                toggleButtonsDisabledState(false, ['editButton']);
             });
+    document.getElementById('bestDaysButton').addEventListener('click', function () {
+    if (this.textContent === 'Reset Best Hours') {
+        // Reset the tables
+        resetTables();
 
+        // Change the button text back to 'Best Hours'
+        this.textContent = 'Best Hours';
+
+        // Hide the popup if it's visible
+        document.getElementById('bestDaysPopup').style.display = 'none';
+    }
+});
         function filterBestDaysColumns() {
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
@@ -893,6 +887,7 @@
                     fillTableWithWindSpeed(table, globalWeatherData[table.dataset.model]);
                 }
             });
+            fetchAllModelsData();
         }
         function hPaToFeet(hPa) {
             const conversionTable = {
@@ -1763,7 +1758,7 @@
             await fetchAllModelsData();
 
             // Update tables (if necessary)
-            updateWeatherTables();
+            resetTables();
 
 
         }
