@@ -36,11 +36,7 @@
             border: 3px solid white;
         }
 
-        .shear-detected-hidden {
-            border: 2px solid tnsparent !important;
-            background-color: inherit !important;
-            /* Optional: reset any coloring if needed */
-        }
+        
 
         #autocomplete-list div {
             padding: 10px;
@@ -374,7 +370,7 @@
 
         let highAltitudeVisible = false;
         let windShearEnabled = false;
-    let isWindShearCheckInProgress = false;
+    
     let additionalVariablesEnabled=true;
         
         const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
@@ -412,25 +408,16 @@
 
                 // Always display "Loading..." text and disable the button while processing
                 button.textContent = 'Loading...';
-                button.disabled = true;
+            
 
-                if (windShearEnabled) {
-                    console.log('Wind Shear Enabled: Checking...');
-                    checkAndApplyWindShear().then(() => {
-                        // Once completed, set the text to reflect the current state
-                        button.textContent = 'Disable Wind Shear';
-                        button.disabled = false; // Re-enable the button
-                    });
-                } else {
-                    console.log('Wind Shear Disabled: Removing styles...');
-                    removeWindShearStyles();
-                    // Set the button text to "Enable Wind Shear" after the styles have been removed
-                    button.textContent = 'Enable Wind Shear';
-                    button.disabled = false; // Re-enable the button
-                }
+            
                 fetchAllModelsData();
+                if (windShearEnabled == true) { button.textContent = 'Disable Wind Shear'; }
+                else (button.textContent = 'Enable Wind Shear' )
+            
             });
         function fillTableWithTemperature(table, weatherData) {
+                console.log('fillTableWithTemperature');
                 const model = table.dataset.model; // Use the model attribute to customize the table for different data sources
                 let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>'; // Reuse the header rows for consistency
 
@@ -464,6 +451,7 @@
             disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
         }
             function getTemperatureColor(temperature) {
+                console.log('getTemperatureColor');
                     let percentage;
                     let backgroundColorRGB;
                     let textColor = 'black'; // Default text color
@@ -498,28 +486,22 @@
                 document.getElementById('instructionsButton').addEventListener('click', function () {
                         window.open('https://scottypres.github.io/instructions.html', '_blank');
                     });
-        function checkAndApplyWindShear() {
-                return new Promise((resolve, reject) => { // Wrap the function body in a new Promise
-                    if (isWindShearCheckInProgress) {
-                        console.log("Wind shear check is already in progress.");
-                        reject("Wind shear check is already in progress."); // Reject the Promise if a check is already in progress
-                        return;
-                    }
-                if (isWindShearCheckInProgress) {
-                    console.log("Wind shear check is already in progress.");
-                    return; // Abort if a check is already in progress
-                }
-                 
-                isWindShearCheckInProgress = true; // Set flag to indicate processing
-                console.log("Wind shear check starting...");
+        function displaywindshear() {
+             console.log('checkwindshear');
+                
+        
+                
 
             // Select all tables that end in '-table', such as 'icon-table', 'gfs-table', etc.
-            document.querySelectorAll('#icon-table').forEach(table => {
+            console.log("Wind shear check starting...");
+            const tables = document.querySelectorAll('table[id$="-table"]');
+                    tables.forEach(table => {
                 
                 console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
 
                 // Get all the rows (tr elements) of the current table, excluding the header row
                 const rows = table.querySelectorAll('tr:not(:first-child)');
+                console.log(`${table.id} has ${rows.length} data rows available for wind shear detection.`);
                 const rowCount = rows.length;
 
                 // Ensure only the last 5 rows are considered
@@ -555,7 +537,7 @@
                                 // Apply the "shear-detected" class to current and corresponding cell in the next row
                                 cell.classList.add('shear-detected');
                                 nextCell.classList.add('shear-detected');
-
+                                //console.log(`SHEAR DETECTED ${table.id} Column: ${cellIndex + 1}`);
                                 // Log that wind shear was detected between the two cells
                                 // console.log(`Wind shear detected at Row: ${rowIndex + 1}, Column: ${cellIndex + 1}`);
                             }
@@ -565,17 +547,19 @@
             });
 
              console.log("Wind shear check completed.");
-                    isWindShearCheckInProgress = false; // Reset flag when done
-                    resolve(); // Resolve the Promise when everything is done
-                });
+                    
+                    
+                
         }
 
         function removeWindShearStyles() {
+            console.log('removeWindShearStyles');
             document.querySelectorAll('.shear-detected').forEach(cell => {
                 cell.classList.remove('shear-detected');
             });
         }
         function toggleHighAltitude() {
+            console.log('toggleHighAltitude');
             if (!highAltitudeVisible) {  // Check if the flag indicates altitude should be hidden
                 // console.log('Hiding high altitude rows');
                 const tables = document.querySelectorAll('table[id$="-table"]');
@@ -639,10 +623,12 @@
         });
 
         function toggleDaylightHours() {
+            console.log('toggleDaylightHours');
                 const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables
 
                 // Iterate over each table
                 tables.forEach(table => {
+                    console.log(table.id); // Log the table id to the console
                     const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Header cells, excluding the first sticky column
 
                     // Convert NodeList to an Array to work with indices during removal
@@ -690,6 +676,7 @@
     let showingBestHours = false;
        ;
         function resetTables() {
+            console.log('resetTables');
             // Loop over each model to create the tables again using the stored data
             //  console.log('resetTables');
             Object.keys(globalWeatherData).forEach(model => {
@@ -732,6 +719,7 @@
     }
 });
         function filterBestDaysColumns() {
+            console.log('filterBestDaysColumns');
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
 
@@ -936,7 +924,7 @@
                     await checkAndFetchData(baseUrl, model);
                 }));
 
-                // console.log("Inside fetchAllModelsData after Promise.all", new Date().toISOString());
+                
 
                 // Now that we have all data, setup the tables and perform shear checks
                 initialTableSetup();
@@ -953,6 +941,8 @@
         let commonParameters = [];
 
         async function getCoordinatesByZipcode(zipcode) {
+            console.log("getCoordinatesByZipcode");
+            
             //console.log("getCoordinatesByZipcode called", new Date().toISOString());
             const zipApiUrl = `https://api.zippopotam.us/us/${zipcode}`;
             // console.log("getCoordinatesByZipcode start", new Date().toISOString());
@@ -992,6 +982,7 @@
         };
 
         async function checkAndFetchData(baseUrl, model) {
+            console.log("checkAndFetchData");
             // console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
             const dailyParameters = [
                 'weather_code',
@@ -1247,6 +1238,7 @@
 
 
         window.onload = function () {
+            console.log("window.onload");
             // Automatically click the edit button when the page loads for the first time
     const editButton = document.getElementById('editButton');
     if (editButton) {
@@ -1318,6 +1310,7 @@
             });
         };
         function toggleTemperatureTables() {
+            console.log("toggleTemperatureTables");
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
                     const dataTable = document.getElementById(tableId);
@@ -1366,6 +1359,7 @@
         }
         
     function addVerticalBordersBetweenDays() {
+        console.log("addVerticalBordersBetweenDays");
         // Select all tables that you want to apply the border to
         const tables = document.querySelectorAll('table');
 
@@ -1397,7 +1391,7 @@
         });
     }
         function createTable(tableId, weatherData, model) {
-            // console.log('createTable');
+            console.log('createTable');
             console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
@@ -1450,7 +1444,7 @@
                 // Presuming the weatherData variable holds your cloud cover data indexed by hPa, 
                 // e.g., `cloud_cover_1000hPa`, `cloud_cover_975hPa`, etc.
                 const cloudCoverKey = `cloud_cover_${hPa}hPa`;
-                const allShearCells = document.querySelectorAll('.shear-detected, .shear-detected-hidden');
+                const allShearCells = document.querySelectorAll('.shear-detected');
                 allShearCells.forEach(cell => {
                     cell.classList.remove('shear-detected');
                 });
@@ -1509,6 +1503,7 @@
 
 
         function extendDaylightHours(isDayArray) {
+            console.log('extendDaylightHours');
                 const transitions = [];
 
                 // Step 1: Identify all transition indices
@@ -1537,7 +1532,7 @@
 
 
         function fillTableWithWindSpeed(table, weatherData) {
-            console.log('Fill Wind Table Start');
+            console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
             const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
@@ -1586,21 +1581,10 @@
                     tableHtml += '</tr>';
 
                 }
-                if (windShearEnabled) {
-                    console.log('Wind Shear Enabled: Checking...');
-                    // Asynchronously call the wind shear check function
-                    checkAndApplyWindShear().then(() => {
-                        // Once completed, set the text to reflect the current state
-                        this.textContent = 'Disable Wind Shear';
-                        this.disabled = false; // Re-enable the button
-                    });
-                } else {
-                    console.log('Wind Shear Disabled: Removing styles...');
-                    removeWindShearStyles();
-                    this.textContent = 'Enable Wind Shear';
-                    this.disabled = false; // Re-enable the button
-                }
-            });
+                
+                }) ;
+            
+        
 
             // Finally, set the table's HTML to the newly created rows
             table.innerHTML = tableHtml;
@@ -1684,7 +1668,14 @@
             toggleHighAltitude();
             
             toggleDaylightHours();
-            
+            if (windShearEnabled) {
+                console.log('Wind Shear Enabled: Checking...');
+                // Asynchronously call the wind shear check function
+                displaywindshear()
+                // Once completed, set the text to reflect the current state
+                this.textContent = 'Disable Wind Shear';
+                this.disabled = false; // Re-enable the button
+            };
             enableAllButtons();
             addVerticalBordersBetweenDays();
             
@@ -1835,7 +1826,7 @@
 
 
         function fillTableWithCloudCover(table, weatherData) {
-                console.log('Fill cloud start');
+                console.log('fillTableWithCloudCover');
                 const model = table.dataset.model;
                 // Update showing attribute here
                 table.dataset.showing = 'clouds';
