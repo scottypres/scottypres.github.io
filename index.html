@@ -301,7 +301,7 @@
             <div class="button-column">
                 <div class="column-header">View Options:</div>
                 
-                <button id="toggleDaylightButton" class="button">All Hours</button>
+                <button id="toggleDaylightButton" class="button">Daylight Hours</button>
                 <button id="toggleHighAltitudeButton" class="button">High Altitude</button>
                 <button id="additionalVariablesButton" class="button">Additional Variables</button>
 <br>
@@ -615,51 +615,44 @@
         let bestWindSpeedThreshold = 15;
 
         document.getElementById('toggleDaylightButton').addEventListener('click', function () {
-            toggleDaylightHours(); // Call the function to change the visibility of daylight hours in the tables
+            
             daylightHoursShown = !daylightHoursShown; // Toggle the daylightHoursShown state
-            this.textContent = daylightHoursShown ? 'All Hours' : 'Daylight';
+            this.textContent = daylightHoursShown ? 'Daylight' : 'Show All Hours';
+            
             // console.log(daylightHoursShown);
             fetchAllModelsData();
         });
 
         function toggleDaylightHours() {
-            console.log('toggleDaylightHours');
                 const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables
 
                 // Iterate over each table
                 tables.forEach(table => {
-                    console.log(table.id); // Log the table id to the console
                     const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Header cells, excluding the first sticky column
 
-                    // Convert NodeList to an Array to work with indices during removal
-                    const headerCellsArray = Array.from(headerCells);
-
-                    headerCellsArray.forEach((cell, index) => {
+                    headerCells.forEach((cell, index) => {
                         // Check if the header cell has the 'daylight' class
                         const isDaylight = cell.classList.contains('daylight');
 
-                        // If we want daylight hours but the class isn't present, or vice versa, remove the cell and corresponding data cells
-                        if ((daylightHoursShown && !isDaylight)) {
-                            cell.remove(); // Remove header cell
-
-                            // Calculate the actual cell index after previous removals
-                            const actualCellIndex = index + 1 - headerCellsArray.slice(0, index).filter(th => th.removed).length;
-
-                            // Remove data cells corresponding to this header cell
-                            table.querySelectorAll(`tr:not(:first-child)`).forEach(row => {
-                                const cellToRemove = row.querySelector(`td:nth-child(${actualCellIndex + 1})`); // +1 to account for zero-based index of querySelector
-                                if (cellToRemove) {
-                                    cellToRemove.remove();
-                                }
-                            });
-
-                            // Mark removed cells (for correct indexing on next iterations)
-                            cell.removed = true;
+                        // Instead of removing cells, we toggle their visibility
+                        if (daylightHoursShown && !isDaylight) {
+                            // If daylight hours should be shown but the cell is not marked as daylight, hide it
+                            cell.style.display = 'none';
+                        } else {
+                            // Otherwise, show the cell
+                            cell.style.display = '';
                         }
-                    });
 
-    });
-}
+                        // Apply the same display style to the corresponding data cells in each row
+                        table.querySelectorAll(`tr:not(:first-child) td:nth-child(${index + 2})`).forEach(dataCell => {
+                            dataCell.style.display = cell.style.display; // Match the display style of the header cell
+                        });
+                    });
+                });
+
+                // Toggle daylightHoursShown state for the next call
+                daylightHoursShown = !daylightHoursShown;
+            }
 
 
     document.getElementById('bestDaysButton').addEventListener('click', function () {
@@ -875,7 +868,7 @@
                     fillTableWithWindSpeed(table, globalWeatherData[table.dataset.model]);
                 }
             });
-            fetchAllModelsData();
+            
         }
         function hPaToFeet(hPa) {
             const conversionTable = {
@@ -1004,12 +997,12 @@
 
             // Check the model to determine the correct forecast_days parameter
             if (model.toLowerCase() === 'openmeteo') {
-                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=2'; // 14-day forecast for OpenMeteo
             } else if (model.toLowerCase() === 'icon') {
-                additionalParameters += '&forecast_days=7'; // 7-day forecast for ICON
+                additionalParameters += '&forecast_days=2'; // 7-day forecast for ICON
             }
             if (model.toLowerCase() === 'gfs') {
-                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=2'; // 14-day forecast for OpenMeteo
             }
             const zipcode = document.getElementById('zipcodeInput').value.trim();
             const lastApiCallKey = `lastApiCall_${model}_${zipcode}`;
@@ -1532,7 +1525,7 @@
 
 
         function fillTableWithWindSpeed(table, weatherData) {
-            console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
+            //console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
             const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
@@ -1671,13 +1664,13 @@
             if (windShearEnabled) {
                 console.log('Wind Shear Enabled: Checking...');
                 // Asynchronously call the wind shear check function
-                displaywindshear()
+                displaywindshear();
                 // Once completed, set the text to reflect the current state
                 this.textContent = 'Disable Wind Shear';
                 this.disabled = false; // Re-enable the button
             };
             enableAllButtons();
-            addVerticalBordersBetweenDays();
+            //addVerticalBordersBetweenDays();
             
         }
 
