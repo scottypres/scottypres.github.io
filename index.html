@@ -30,11 +30,7 @@
             z-index: 99;
         }
 
-        .day-divider {
-            border-right: 1px solid black;
-            width: 0;
-            /* No actual width, just the border */
-        }
+        
 
         .shear-detected {
             border: 3px solid white;
@@ -221,13 +217,7 @@
             transform-origin: 50% 50%;
         }
 
-        @for $i from 0 through 348 {
-            $degrees: $i * 22.5;
-
-            .wind-arrow.rotate-#{$degrees} {
-                transform: rotate(#{$degrees}deg);
-            }
-        }
+        
 
         /* Updated CSS rule for first-column cells under `tbody` to inherit the width */
         td:first-child {
@@ -639,27 +629,41 @@
         });
 
         function toggleDaylightHours() {
-            const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables that end with '-table'
-            tables.forEach(table => {
-                const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Select all header cells except the first one
+                const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables
 
-                headerCells.forEach((cell, index) => {
-                    // Only change the display when the current state does not match the truthy 'daylight' class presence
-                    const isDaylightClassPresent = cell.classList.contains('daylight');
-                    if (daylightHoursShown && !isDaylightClassPresent) {
-                        // If daylight hours are currently shown, hide the non-daylight cells (cells without the 'daylight' class)
-                        cell.style.display = 'none';
-                        [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = 'none');
-                    } else if (!daylightHoursShown && isDaylightClassPresent) {
-                        // If daylight hours are currently hidden, show all cells that are for daylight hours
-                        cell.style.display = '';
-                        [...table.querySelectorAll(`td:nth-child(${index + 2})`)].forEach(td => td.style.display = '');
-                    }
-                });
-            });
+                // Iterate over each table
+                tables.forEach(table => {
+                    const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Header cells, excluding the first sticky column
 
+                    // Convert NodeList to an Array to work with indices during removal
+                    const headerCellsArray = Array.from(headerCells);
 
-        }
+                    headerCellsArray.forEach((cell, index) => {
+                        // Check if the header cell has the 'daylight' class
+                        const isDaylight = cell.classList.contains('daylight');
+
+                        // If we want daylight hours but the class isn't present, or vice versa, remove the cell and corresponding data cells
+                        if ((daylightHoursShown && !isDaylight)) {
+                            cell.remove(); // Remove header cell
+
+                            // Calculate the actual cell index after previous removals
+                            const actualCellIndex = index + 1 - headerCellsArray.slice(0, index).filter(th => th.removed).length;
+
+                            // Remove data cells corresponding to this header cell
+                            table.querySelectorAll(`tr:not(:first-child)`).forEach(row => {
+                                const cellToRemove = row.querySelector(`td:nth-child(${actualCellIndex + 1})`); // +1 to account for zero-based index of querySelector
+                                if (cellToRemove) {
+                                    cellToRemove.remove();
+                                }
+                            });
+
+                            // Mark removed cells (for correct indexing on next iterations)
+                            cell.removed = true;
+                        }
+                    });
+
+    });
+}
         document.getElementById('bestDaysButton').addEventListener('click', function () {
                 const isPopupVisible = document.getElementById('bestDaysPopup').style.display === 'flex';
                 if (isPopupVisible) {
@@ -1355,31 +1359,38 @@
             document.getElementById('fetchCoordinatesButton').disabled = false;
             document.querySelectorAll('.recent-search').forEach(elem => elem.style.pointerEvents = '');
         }
-        function expandDaylightHours(isDayArray) {
-            let foundFirstOne = false; // Flag that becomes true when we encounter the first '1'
-            let lastZeroBeforeOneIndex = -1; // Store the index of the last '0' before the sequence of '1's
+        
+    function addVerticalBordersBetweenDays() {
+        // Select all tables that you want to apply the border to
+        const tables = document.querySelectorAll('table');
 
-            // Iterate over the array
-            for (let i = 0; i < isDayArray.length; i++) {
-                if (isDayArray[i] === 1) {
-                    foundFirstOne = true;
-                    // If this is the first '1', change the previous '0' to '1'
-                    if (lastZeroBeforeOneIndex !== -1) {
-                        isDayArray[lastZeroBeforeOneIndex] = 1;
-                        lastZeroBeforeOneIndex = -1; // Reset the index
-                    }
-                } else if (foundFirstOne) {
-                    // If we found the sequence of '1's and now we encountered a '0', change it to '1' and reset flags
-                    isDayArray[i] = 1;
-                    foundFirstOne = false; // Reset the flag until we find another '1'
-                } else {
-                    // If we have not encountered the first '1' yet, store the index
-                    lastZeroBeforeOneIndex = i;
+        // Iterate over each table
+        tables.forEach(table => {
+            // Get all header cells in the first row that have 'data-day' attribute, excluding the very first cell
+            const dayHeaders = table.querySelectorAll('tr:first-child th[data-day]:not(:first-child)');
+
+            // Initialize variable to store the previous day
+            let previousDay = null;
+
+            // Iterate through headers to find day transitions
+            dayHeaders.forEach((headerCell, index) => {
+                const currentDay = headerCell.getAttribute('data-day');
+
+                // Add border if the current day is different from the previous day and not the first cell
+                if (previousDay && currentDay !== previousDay) {
+                    // Add a vertical border to the left side of the current header cell
+                    headerCell.style.borderLeft = '3px solid black';
+                    // Also apply the border to all cells in the same column below the header
+                    table.querySelectorAll(`tr td:nth-child(${index + 2})`).forEach(cell => {
+                        cell.style.borderLeft = '3px solid black';
+                    });
                 }
-            }
-            return isDayArray;
-        }
 
+                // Update previousDay to the current day for the next iteration
+                previousDay = currentDay;
+            });
+        });
+    }
         function createTable(tableId, weatherData, model) {
             // console.log('createTable');
             console.log(globalWeatherData);
@@ -1392,9 +1403,10 @@
             let currentDay = null; // Variable to store the current day as you loop through the timestamps
             // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
             let isDayArray = weatherData.hourly.is_day;
-
-            // Add date headers
-            //console.log(isDayArray);
+            console.log(isDayArray);
+            isDayArray = extendDaylightHours(isDayArray);
+            console.log(isDayArray);
+            
             timestamps.forEach((timestamp, index) => {
                 const date = new Date(timestamp);
                 const day = date.getDate();
@@ -1406,18 +1418,16 @@
                 // Determine if the timestamp corresponds to daylight using is_day array
                 const isDaylight = isDayArray[index] === 1;
                 const daylightClass = isDaylight ? 'daylight' : '';
+                
 
-
-                // Add "daylight" class to header cells of daylight hours
-                //const isDaylight = hour >= 6 && hour < 18;
-                // const headerClass = isDaylight ? 'daylight' : '';
+                
 
                 headerClass = '';
-                tableHtml += `<th class="column-header ${daylightClass}">
+                    tableHtml += `<th class="column-header ${daylightClass}" data-day="${day}">
                     <span class="smalldate">${month}/${day}</span><br>
                     <span class="small-font">${dayOfWeek}</span><br>
                     <span class="small-font">${hour12}</span><br><span class="small-font">${ampm}</span>
-                  </th>`;
+                 </th>`;
                 enableBestDaysButton();
             });
 
@@ -1493,7 +1503,33 @@
 
 
 
-        // Call this function to set the initial state of the button
+        function extendDaylightHours(isDayArray) {
+                const transitions = [];
+
+                // Step 1: Identify all transition indices
+                for (let i = 1; i < isDayArray.length; i++) {
+                    if (isDayArray[i] !== isDayArray[i - 1]) {
+                        transitions.push(i);
+                    }
+                }
+
+                // Step 2: Extend daylight by modifying the array at the transition points
+                transitions.forEach(index => {
+                    if (isDayArray[index] === 1) {
+                        // Extend the daylight by setting the previous hour to 1 (morning transition)
+                        isDayArray[index - 1] = 1;
+                    } else {
+                        // Extend the daylight by setting the next hour to 1 (evening transition)
+                        // Check if the index is not the last element of the array
+                        if (index < isDayArray.length) {
+                            isDayArray[index] = 1;
+                        }
+                    }
+                });
+
+                return isDayArray;
+            }
+
 
         function fillTableWithWindSpeed(table, weatherData) {
             console.log('Fill Wind Table Start');
@@ -1641,10 +1677,16 @@
                 }
             }
             toggleHighAltitude();
+            
             toggleDaylightHours();
-
+            
             enableAllButtons();
+            addVerticalBordersBetweenDays();
+            
         }
+
+
+        
 
         function enableAllButtons() {
                 const allButtons = document.querySelectorAll('button');
@@ -1795,9 +1837,10 @@
                 createTable(table.id, weatherData, model); // Reuse createTable function
                 toggleHighAltitude();
                 toggleDaylightHours();
-
+            addVerticalBordersBetweenDays();
                 // Disable all buttons except "Wind/Clouds" and "Temperature"
                 disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
+                
             }
 
             function disableButtonsExcept(buttonIds) {

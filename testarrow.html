@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotated Arrows</title>
+<style>
+  .arrow-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+  .arrow {
+    transform-origin: center;
+    display: inline-block;
+    margin: 5px;
+  }
+</style>
+</head>
+<body>
+<div class="arrow-container">
+  <!-- Arrows will be inserted here by the JavaScript code -->
+</div>
+<script>
+  const container = document.querySelector('.arrow-container');
+  let html = '';
+  for (let i = 0; i < 64; i++) { // There are 360/5.625 = 64 intervals in a full circle
+    html += `<span class="arrow" style="transform: rotate(${5.625 * i}deg);">&#x2191;&#xFE0E;</span>`;
+  }
+  container.innerHTML = html;
+</script>
+</body>
+</html>
