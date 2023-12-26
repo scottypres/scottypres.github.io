@@ -1696,6 +1696,22 @@
                     tableHtml += '</tr>';
                 }
             }
+            if (additionalVariablesEnabled && weatherData.hourly.hasOwnProperty('cloud_cover')) {
+                // Add cloud cover row header
+                tableHtml += `<tr><th class="sticky-header">Clouds</th>`;
+
+                // Add cloud cover data cells for each time interval
+                weatherData.hourly['cloud_cover'].forEach(cloudCover => {
+                    const maxDarkness = 0.70; // Maximum darkness for cloud cover (70%)
+                    const opacity = cloudCover * maxDarkness / 100;
+                    const bgColor = `rgba(0, 0, 0, ${opacity})`; // Calculate background color based on cloud cover percentage
+
+                    // Determine text color based on the darkness of the background
+                    // If opacity is more than 0.5 (halfway to max darkness), use light text color
+                    const textColor = (opacity > 0.5) ? 'white' : 'black';
+
+                    tableHtml += `<td class="data-cell small-text-cell grey-bg" style="background-color: ${bgColor}; color: ${textColor};">${cloudCover}</td>`;
+                });}
             // Finally, set the table's HTML to the newly created rows
             table.innerHTML = tableHtml;
 
