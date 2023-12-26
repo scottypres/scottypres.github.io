@@ -9,7 +9,7 @@
         /* Add a general header class to apply common header styles across tables */
         .sticky-container {
     position: fixed;
-    bottom: 15px;
+    top: 5px;
     background-color: white;
     z-index: 10;
     padding: 10px; /* Adjust padding as needed */
@@ -260,7 +260,7 @@
 
 #editButton {
     position: fixed; /* Fixed position relative to the viewport */
-    bottom: 0px;      /* Set a top offset */
+    top: 0px;      /* Set a top offset */
     left: 0px;    /* Set a right offset */
     z-index: 100;   /* Higher z-index to ensure it's above other content */
     width: 65px;   /* Set a fixed width */
@@ -1249,7 +1249,7 @@
                 windShearEnabled = (savedWindShearEnabled === 'true');
             } else {
                 // Initialize with a default value (e.g., false) and save it to localStorage
-                windShearEnabled = false;
+                windShearEnabled = true;
                 localStorage.setItem('windShearEnabled', windShearEnabled);
             }
              document.getElementById('checkWindShearButton').textContent =
