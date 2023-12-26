@@ -615,13 +615,11 @@
         let bestWindSpeedThreshold = 15;
 
         document.getElementById('toggleDaylightButton').addEventListener('click', function () {
-            
-            daylightHoursShown = !daylightHoursShown; // Toggle the daylightHoursShown state
-            this.textContent = daylightHoursShown ? 'Daylight' : 'Show All Hours';
-            
-            // console.log(daylightHoursShown);
-            fetchAllModelsData();
-        });
+                daylightHoursShown = !daylightHoursShown;
+                this.textContent = daylightHoursShown ? 'Daylight' : 'Show All Hours';
+                setCookie('daylightHoursShown', daylightHoursShown ? 'true' : 'false', 365); // Save the state in a cookie
+                fetchAllModelsData();
+            });
 
         function toggleDaylightHours() {
                 const tables = document.querySelectorAll('table[id$="-table"]'); // Select all tables
@@ -1304,6 +1302,15 @@
             document.getElementById('toggleTemperatureButton').addEventListener('click', () => {
                 toggleTemperatureTables();
             });
+            const daylightHoursCookie = getCookie('daylightHoursShown');
+            if (daylightHoursCookie !== "") {
+                daylightHoursShown = (daylightHoursCookie === 'true');
+            } else {
+                // If the cookie does not exist, use your initial default value
+                daylightHoursShown = true;
+            }
+            // Set the initial button text
+            document.getElementById('toggleDaylightButton').textContent = daylightHoursShown ? 'Daylight' : 'Show All Hours';
         };
         function toggleTemperatureTables() {
             console.log("toggleTemperatureTables");
