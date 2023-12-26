@@ -9,7 +9,7 @@
         /* Add a general header class to apply common header styles across tables */
         .sticky-container {
     position: fixed;
-    top: 0;
+    bottom: 15px;
     background-color: white;
     z-index: 10;
     padding: 10px; /* Adjust padding as needed */
@@ -260,15 +260,18 @@
 
 #editButton {
     position: fixed; /* Fixed position relative to the viewport */
-    top: 0px;      /* Set a top offset */
+    bottom: 0px;      /* Set a top offset */
     left: 0px;    /* Set a right offset */
     z-index: 100;   /* Higher z-index to ensure it's above other content */
     width: 65px;   /* Set a fixed width */
     height: 28px;   /* Set a fixed height */
     padding: 5px 5px; /* Optional: Adjust padding to match desired appearance */
-    font-size: 12px; /* Optional: Adjust font size as needed */
+    font-size: 14px; /* Optional: Adjust font size as needed */
     line-height: 1; /* Optional: Adjust line spacing for better readability */
-    /* Additional styles (background, border, etc.) can be specified here */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    zoom: 1;
 }
     </style>
 </head>
@@ -357,7 +360,7 @@
             <!-- The table will be populated by JavaScript -->
         </table>
         <!-- OpenMeteo Table -->
-
+<br><br>
 
 
 
@@ -369,7 +372,7 @@
     <script>
 
         let highAltitudeVisible = false;
-        let windShearEnabled = false;
+        let windShearEnabled = true;
     
     let additionalVariablesEnabled=true;
         
@@ -901,7 +904,7 @@
 
                     // Collapse the button sections after initiating the fetch
                     buttonSections.style.display = 'none'; // Hide the buttons
-                    editButton.textContent = 'Edit'; // Reset the button text to "Edit"
+                    editButton.textContent = 'Toolbar'; // Reset the button text to "Edit"
                 } else {
                     alert('Please enter a valid zipcode.');
                 }
@@ -998,12 +1001,12 @@
 
             // Check the model to determine the correct forecast_days parameter
             if (model.toLowerCase() === 'openmeteo') {
-                additionalParameters += '&forecast_days=3'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
             } else if (model.toLowerCase() === 'icon') {
-                additionalParameters += '&forecast_days=3'; // 7-day forecast for ICON
+                additionalParameters += '&forecast_days=7' ; // 7-day forecast for ICON
             }
             if (model.toLowerCase() === 'gfs') {
-                additionalParameters += '&forecast_days=3'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
             }
             const zipcode = document.getElementById('zipcodeInput').value.trim();
             const lastApiCallKey = `lastApiCall_${model}_${zipcode}`;
