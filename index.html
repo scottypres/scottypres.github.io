@@ -402,11 +402,11 @@
             fetchAllModelsData();
         });
         document.getElementById('checkWindShearButton').addEventListener('click', function () {
-                console.log("Wind shear button clicked");
+                //console.log("Wind shear button clicked");
                 windShearEnabled = !windShearEnabled;
                 localStorage.setItem('windShearEnabled', windShearEnabled);
 
-                console.log(windShearEnabled);
+                //console.log(windShearEnabled);
                 const button = this; // 'this' refers to the button element in a regular function.
 
                 // Always display "Loading..." text and disable the button while processing
@@ -420,7 +420,7 @@
             
             });
         function fillTableWithTemperature(table, weatherData) {
-                console.log('fillTableWithTemperature');
+                //console.log('fillTableWithTemperature');
                 const model = table.dataset.model; // Use the model attribute to customize the table for different data sources
                 let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>'; // Reuse the header rows for consistency
 
@@ -454,7 +454,7 @@
             disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
         }
             function getTemperatureColor(temperature) {
-                console.log('getTemperatureColor');
+                //console.log('getTemperatureColor');
                     let percentage;
                     let backgroundColorRGB;
                     let textColor = 'black'; // Default text color
@@ -490,21 +490,21 @@
                         window.open('https://scottypres.github.io/instructions.html', '_blank');
                     });
         function displaywindshear() {
-             console.log('checkwindshear');
+             //console.log('checkwindshear');
                 
         
                 
 
             // Select all tables that end in '-table', such as 'icon-table', 'gfs-table', etc.
-            console.log("Wind shear check starting...");
+            //console.log("Wind shear check starting...");
             const tables = document.querySelectorAll('table[id$="-table"]');
                     tables.forEach(table => {
                 
-                console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
+                //console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
 
                 // Get all the rows (tr elements) of the current table, excluding the header row
                 const rows = table.querySelectorAll('tr:not(:first-child)');
-                console.log(`${table.id} has ${rows.length} data rows available for wind shear detection.`);
+                //console.log(`${table.id} has ${rows.length} data rows available for wind shear detection.`);
                 const rowCount = rows.length;
 
                 // Ensure only the last 5 rows are considered
@@ -532,39 +532,39 @@
                             const nextWindDirection = parseFloat(nextCell.dataset.windDirection);
 
                             // Log the wind speeds and directions being compared for shear
-                            //console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Speed: ${currentWindSpeed}, Next Wind Speed: ${nextWindSpeed}`);
-                            // console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
+                            ////console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Speed: ${currentWindSpeed}, Next Wind Speed: ${nextWindSpeed}`);
+                            // //console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
 
                             // Check if the difference between current and next wind speed exceeds the threshold and check wind direction difference
                             if (Math.abs(currentWindSpeed - nextWindSpeed) > 9 || Math.abs(currentWindDirection - nextWindDirection) > 90) {
                                 // Apply the "shear-detected" class to current and corresponding cell in the next row
                                 cell.classList.add('shear-detected');
                                 nextCell.classList.add('shear-detected');
-                                //console.log(`SHEAR DETECTED ${table.id} Column: ${cellIndex + 1}`);
+                                ////console.log(`SHEAR DETECTED ${table.id} Column: ${cellIndex + 1}`);
                                 // Log that wind shear was detected between the two cells
-                                // console.log(`Wind shear detected at Row: ${rowIndex + 1}, Column: ${cellIndex + 1}`);
+                                // //console.log(`Wind shear detected at Row: ${rowIndex + 1}, Column: ${cellIndex + 1}`);
                             }
                         });
                     }
                 }
             });
 
-             console.log("Wind shear check completed.");
+             //console.log("Wind shear check completed.");
                     
                     
                 
         }
 
         function removeWindShearStyles() {
-            console.log('removeWindShearStyles');
+            //console.log('removeWindShearStyles');
             document.querySelectorAll('.shear-detected').forEach(cell => {
                 cell.classList.remove('shear-detected');
             });
         }
         function toggleHighAltitude() {
-            console.log('toggleHighAltitude');
+            //console.log('toggleHighAltitude');
             if (!highAltitudeVisible) {  // Check if the flag indicates altitude should be hidden
-                // console.log('Hiding high altitude rows');
+                // //console.log('Hiding high altitude rows');
                 const tables = document.querySelectorAll('table[id$="-table"]');
                 tables.forEach(table => {
                     const rows = table.getElementsByTagName('tr');
@@ -577,7 +577,7 @@
                     }
                 });
             } else {
-                // console.log('Showing high altitude rows');
+                // //console.log('Showing high altitude rows');
                 const tables = document.querySelectorAll('table[id$="-table"]');
                 tables.forEach(table => {
                     const rows = table.getElementsByTagName('tr');
@@ -599,7 +599,7 @@
         
         document.getElementById('additionalVariablesButton').addEventListener('click', () => {
             additionalVariablesEnabled = !additionalVariablesEnabled; // Toggle the boolean value
-            // console.log("Additional Variables Enabled:", additionalVariablesEnabled);
+            // //console.log("Additional Variables Enabled:", additionalVariablesEnabled);
             setCookie('additionalVariablesEnabled', additionalVariablesEnabled, 365);
             // Update button text to reflect the current state
             document.getElementById('additionalVariablesButton').textContent =
@@ -630,7 +630,7 @@
                 // Iterate over each table
                 tables.forEach(table => {
                     const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Header cells, excluding the first sticky column
-                    console.log('daylight hours shown');
+                    //console.log('daylight hours shown');
                 
                     headerCells.forEach((cell, index) => {
                         // Check if the header cell has the 'daylight' class
@@ -650,7 +650,7 @@
                             dataCell.style.display = cell.style.display; // Match the display style of the header cell
                         });
                     });
-                    console.log(daylightHoursShown);
+                    //console.log(daylightHoursShown);
                 });
 
                 
@@ -672,9 +672,9 @@
     let showingBestHours = false;
        ;
         function resetTables() {
-            console.log('resetTables');
+            //console.log('resetTables');
             // Loop over each model to create the tables again using the stored data
-            //  console.log('resetTables');
+            //  //console.log('resetTables');
             Object.keys(globalWeatherData).forEach(model => {
                 const tableId = `${model.toLowerCase()}-table`;
                 createTable(tableId, globalWeatherData[model], model);
@@ -716,7 +716,7 @@
     }
 });
         function filterBestDaysColumns() {
-            console.log('filterBestDaysColumns');
+            //console.log('filterBestDaysColumns');
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
 
@@ -795,7 +795,7 @@
             return 'wind-arrow rotate-' + classNameDegrees;
         }
         function initialTableSetup() {
-            console.log('Initial Table Setup');
+            //console.log('Initial Table Setup');
             if (!isUpdatingTables) {
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
@@ -913,11 +913,11 @@
         async function fetchAllModelsData() {
             if (isUpdatingTables) return;
             isUpdatingTables = true;
-            console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
+            //console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
             try {
                 // Await all fetches to be completed using Promise.all
                 await Promise.all(Object.entries(baseUrls).map(async ([model, baseUrl]) => {
-                    console.log(`Fetching data for model "${model}"`, new Date().toISOString());
+                    //console.log(`Fetching data for model "${model}"`, new Date().toISOString());
                     await checkAndFetchData(baseUrl, model);
                 }));
 
@@ -938,11 +938,11 @@
         let commonParameters = [];
 
         async function getCoordinatesByZipcode(zipcode) {
-            console.log("getCoordinatesByZipcode");
+            //console.log("getCoordinatesByZipcode");
             
-            //console.log("getCoordinatesByZipcode called", new Date().toISOString());
+            ////console.log("getCoordinatesByZipcode called", new Date().toISOString());
             const zipApiUrl = `https://api.zippopotam.us/us/${zipcode}`;
-            // console.log("getCoordinatesByZipcode start", new Date().toISOString());
+            // //console.log("getCoordinatesByZipcode start", new Date().toISOString());
             try {
                 const response = await fetch(zipApiUrl);
                 if (!response.ok) {
@@ -955,9 +955,9 @@
                         latitude: parseFloat(data.places[0].latitude),
                         longitude: parseFloat(data.places[0].longitude)
                     };
-                    //console.log('Coordinates:', userLocation);
+                    ////console.log('Coordinates:', userLocation);
                     setCookie('zipcode', zipcode, 365); // Save for 365 days
-                    // console.log('zip cookie saved');
+                    // //console.log('zip cookie saved');
                     // Now call the API with these coordinates for each model and update the table with new data
                     for (const model of Object.keys(baseUrls)) {
                         await checkAndFetchData(baseUrls[model], model);
@@ -973,14 +973,14 @@
                 alert('Failed to get coordinates. Please check the zipcode and try again.');
             }
 
-            console.log("getCoordinatesByZipcode end", new Date().toISOString());
+            //console.log("getCoordinatesByZipcode end", new Date().toISOString());
 
 
         };
 
         async function checkAndFetchData(baseUrl, model) {
-            console.log("checkAndFetchData");
-            // console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
+            //console.log("checkAndFetchData");
+            // //console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
             const dailyParameters = [
                 'weather_code',
                 'temperature_2m_max',
@@ -1021,7 +1021,7 @@
 
                 // Check if the cached data is still valid
                 if (cachedData.zipcode === zipcode && now - cachedData.timestamp < cacheDuration) {
-                    // console.log(`Using cached data for model "${model}"`, new Date().toISOString());
+                    // //console.log(`Using cached data for model "${model}"`, new Date().toISOString());
                     globalWeatherData[model] = cachedData.data;
                     createTable(`${model.toLowerCase()}-table`, cachedData.data, model);
                     shouldFetchData = false;
@@ -1169,7 +1169,7 @@
                 const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
 
                 try {
-                    console.log('fetching new data');
+                    //console.log('fetching new data');
                     // Request data from the weather API using the assembled URL
                     const response = await fetch(requestUrl);
 
@@ -1194,7 +1194,7 @@
                     // Store the fetched data globally
                     globalWeatherData[model] = weatherData;
 
-                    console.log(`Data fetched successfully for model ${model}`);
+                    //console.log(`Data fetched successfully for model ${model}`);
                 } catch (error) {
                     // Log the error if fetching the data fails
                     console.error(`Failed to fetch data for model ${model}`, error);
@@ -1202,7 +1202,7 @@
                 }
             }
 
-            // console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
+            // //console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
         }
 
 
@@ -1235,7 +1235,7 @@
 
 
         window.onload = function () {
-            console.log("window.onload");
+            //console.log("window.onload");
             // Automatically click the edit button when the page loads for the first time
     const editButton = document.getElementById('editButton');
     if (editButton) {
@@ -1283,7 +1283,7 @@
                 const fetchButton = document.getElementById('fetchCoordinatesButton');
 
                 zipcodeInput.value = savedZipcode;
-                //   console.log("Zip cookie loaded");
+                //   //console.log("Zip cookie loaded");
                 // Check if fetchCoordinatesButton has already a click event listener that fetches the weather
                 // If not, manually call the handleZipcodeFetch(zipcode) function after a short delay to ensure any setup logic has completed
                 setTimeout(function () {
@@ -1316,7 +1316,7 @@
             document.getElementById('toggleDaylightButton').textContent = daylightHoursShown ? 'Daylight' : 'Show All Hours';
         };
         function toggleTemperatureTables() {
-            console.log("toggleTemperatureTables");
+            //console.log("toggleTemperatureTables");
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
                     const dataTable = document.getElementById(tableId);
@@ -1441,8 +1441,8 @@
 
         }
         function createTable(tableId, weatherData, model) {
-            console.log('createTable');
-            console.log(globalWeatherData);
+            //console.log('createTable');
+            //console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
             const dataTable = document.getElementById(tableId);
@@ -1452,9 +1452,9 @@
             let currentDay = null; // Variable to store the current day as you loop through the timestamps
             // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
             let isDayArray = weatherData.hourly.is_day;
-            console.log(isDayArray);
+            //console.log(isDayArray);
             isDayArray = extendDaylightHours(isDayArray);
-            console.log(isDayArray);
+            //console.log(isDayArray);
             
             timestamps.forEach((timestamp, index) => {
                 const date = new Date(timestamp);
@@ -1511,8 +1511,8 @@
                 } else {
                     // If cloud cover data does not exist for this pressure altitude (hPa), span across all time intervals
                     tableHtml += `<td colspan="${weatherData.hourly.time.length}" class="data-cell">Data not available</td>`;
-                    console.log('cloud cover data does not exist for this pressure');
-                    console.log(cloudCoverKey);
+                    //console.log('cloud cover data does not exist for this pressure');
+                    //console.log(cloudCoverKey);
                 }
 
                 // Close the table row
@@ -1525,7 +1525,7 @@
 
 
             dataTable.dataset.model = model;
-            //console.log(`Listeners added for ${model} model`);
+            ////console.log(`Listeners added for ${model} model`);
         }
 
         document.getElementById('toggleButton').addEventListener('click', toggleWindClouds);
@@ -1553,7 +1553,7 @@
 
 
         function extendDaylightHours(isDayArray) {
-            console.log('extendDaylightHours');
+            //console.log('extendDaylightHours');
                 const transitions = [];
 
                 // Step 1: Identify all transition indices
@@ -1582,7 +1582,7 @@
 
 
         function fillTableWithWindSpeed(table, weatherData) {
-            //console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
+            ////console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
             const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
@@ -1735,7 +1735,7 @@
             
             toggleDaylightHours();
             if (windShearEnabled) {
-                console.log('Wind Shear Enabled: Checking...');
+                //console.log('Wind Shear Enabled: Checking...');
                 // Asynchronously call the wind shear check function
                 displaywindshear();
                 // Once completed, set the text to reflect the current state
@@ -1807,7 +1807,7 @@
         };
 
         async function refreshWeatherDataAndTables(zipcode) {
-            console.log('refreshWeatherDataAndTables');
+            //console.log('refreshWeatherDataAndTables');
             // Fetch coordinates from zipcode
             await getCoordinatesByZipcode(zipcode);
 
@@ -1892,7 +1892,7 @@
 
 
         function fillTableWithCloudCover(table, weatherData) {
-                console.log('fillTableWithCloudCover');
+                //console.log('fillTableWithCloudCover');
                 const model = table.dataset.model;
                 // Update showing attribute here
                 table.dataset.showing = 'clouds';
