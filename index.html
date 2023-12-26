@@ -462,27 +462,25 @@
             disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
         }
             function getTemperatureColor(temperature) {
-                //console.log('getTemperatureColor');
-                    let percentage;
                     let backgroundColorRGB;
-                    let textColor = 'black'; // Default text color
+                    let textColor = 'black'; // Default text color for light backgrounds
 
                     if (temperature >= 100) {
-                        backgroundColorRGB = colors.maroon;
-                    } else if (temperature >= 85) {
-                        percentage = (temperature - 85) / (100 - 85);
-                        backgroundColorRGB = interpolateColorRGB('red', 'maroon', percentage);
-                    } else if (temperature >= 70) {
-                        percentage = (temperature - 70) / (85 - 70);
-                        backgroundColorRGB = interpolateColorRGB('blue', 'red', percentage);
-                    } else if (temperature >= 40) {
-                        percentage = (temperature - 40) / (70 - 40);
-                        backgroundColorRGB = interpolateColorRGB('lightblue', 'blue', percentage);
-                    } else if (temperature <= 32) {
-                        backgroundColorRGB = colors.white;
-                    } else { // Temperatures between 32 and 40
-                        percentage = (temperature - 32) / (40 - 32);
-                        backgroundColorRGB = interpolateColorRGB('white', 'lightblue', percentage);
+                        backgroundColorRGB = colors.darkred; // Dark Red color for 100 and above
+                    } else if (temperature >= 90) {
+                        // Gradient from red to dark red
+                        backgroundColorRGB = interpolateColorRGB('red', 'darkred', (temperature - 90) / (100 - 90));
+                    } else if (temperature >= 72) {
+                        // Gradient from green to red
+                        backgroundColorRGB = interpolateColorRGB('green', 'red', (temperature - 72) / (90 - 72));
+                    } else if (temperature >= 55) {
+                        // Gradient from blue to green
+                        backgroundColorRGB = interpolateColorRGB('blue', 'green', (temperature - 50) / (72 - 50));
+                    } else if (temperature >= 32) {
+                        // Gradient from white to blue
+                        backgroundColorRGB = interpolateColorRGB('white', 'blue', (temperature - 32) / (50 - 32));
+                    } else {
+                        backgroundColorRGB = colors.white; // White color for temperatures below 32
                     }
 
                     // Set text color to white if background is dark
@@ -490,7 +488,7 @@
                         textColor = 'white';
                     }
 
-                    // Return the color in CSS rgb() format
+                    // Return the background color in CSS rgb() format and the contrasting text color
                     const backgroundColor = `rgb(${backgroundColorRGB.r}, ${backgroundColorRGB.g}, ${backgroundColorRGB.b})`;
                     return { backgroundColor, textColor };
                 }
@@ -1842,6 +1840,7 @@
             return { backgroundColor, textColor };
         }
         const colors = {
+            darkred: { r: 139, g: 0, b: 0 },    // A dark red color
              maroon: { r: 128, g: 0, b: 0 }, // Maroon color
             blue: { r: 0, g: 0, b: 255 },
             green: { r: 0, g: 255, b: 0 },
