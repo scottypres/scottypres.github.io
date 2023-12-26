@@ -297,7 +297,7 @@
             <div class="button-column">
                 <div class="column-header">Table Display/Config:</div>
                 <button id="toggleButton" class="button">Wind/Clouds</button>
-                <button id="toggleTemperatureButton" class="button">Temperature</button>
+                <button id="toggleTemperatureButton" class="button">Temperature (F)</button>
                 <button id="editThresholdsButton" class="button">Wind Speed Colors</button>
             </div>
         <br>
@@ -420,36 +420,44 @@
             
             });
         function fillTableWithTemperature(table, weatherData) {
-                //console.log('fillTableWithTemperature');
-                const model = table.dataset.model; // Use the model attribute to customize the table for different data sources
-                let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>'; // Reuse the header rows for consistency
+                let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
+                // Adjusted to include values in meters (2m, 10m, 80m, 180m), and their approximate conversion to feet
+                const altitudeLevels = [2, 10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
 
-                const altitudeLevels = [2, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Should match your data's altitude levels
+                // Convert altitude levels to their corresponding temperature keys and display values
+                altitudeLevels.forEach(altitude => {
+                    let temperatureKey;
+                    let displayAltitude; // Define a variable to hold our display altitude
 
-                // Use the weatherData object to fill temperature data
-                altitudeLevels.forEach(hPa => {
-                    const temperatureKey = `temperature_${hPa}hPa`; // Must match the key used in your weatherData object for temperatures at different altitudes
+                    if (altitude === 2 || altitude === 10 || altitude === 80 || altitude === 180) {
+                        // Handle the specific meters values, convert to feet for display
+                        temperatureKey = `temperature_${altitude}m`;
+                        displayAltitude = `${Math.round(altitude * 3.28084)} ft`; // Convert meters to feet
+                    } else {
+                        // Handle hPa values
+                        temperatureKey = `temperature_${altitude}hPa`;
+                        displayAltitude = `${hPaToFeet(altitude)} ft`; // Convert hPa to feet for display
+                    }
 
+                    // Check if the data contains temperature info for this altitude
                     if (weatherData.hourly.hasOwnProperty(temperatureKey)) {
-                        // Convert hPa to feet for display
-                        const displayAltitude = `${hPaToFeet(hPa)} ft`;
-
                         tableHtml += `<tr><th class="sticky-header">${displayAltitude}</th>`;
-
-                        // Add temperature data cells
                         weatherData.hourly[temperatureKey].forEach(temp => {
-                            const { backgroundColor, textColor } = getTemperatureColor(temp); // Get the color based on the temperature
-                            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${Math.round(temp)}</td>`; // Display temperature with Fahrenheit symbol and gradient color
+                            const { backgroundColor, textColor } = getTemperatureColor(temp);
+                            // Round temp to the nearest whole number or display a placeholder if null
+                            const displayedTemp = temp !== null ? Math.round(temp) : '?';
+                            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
                         });
-
                         tableHtml += '</tr>';
                     }
                 });
 
-                table.innerHTML = tableHtml; // Update the table's HTML with the new rows
-                table.dataset.showing = 'temperature'; // Update data attribute to indicate current data being shown
-                // Disable all buttons except "Wind/Clouds" and "Temperature"
-                toggleHighAltitude();
+                table.innerHTML = tableHtml; // Update the table HTML
+                table.dataset.showing = 'temperature'; // Set attribute to indicate current data shown
+
+                // After adding temperature data, enable/disable buttons as needed
+                // Other relevant functions like toggleDaylightHours might be called, based on your full code structure
+                   toggleHighAltitude();
             toggleDaylightHours();
             disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
         }
@@ -1591,7 +1599,7 @@
                 let windSpeedKey, windDirectionKey;
                 let displayAltitude; // Define a variable to hold our display altitude
 
-                if (alt === 10 || alt === 80 || alt === 180) {
+                if (alt === 2 || alt === 10 || alt === 80 || alt === 180) {
                     // Handle the specific feet values (10m, 80m, 180m are in meters, need conversion to feet)
                     const altInFeet = Math.round(alt * 3.28084); // Convert meters to feet, rounding to the nearest whole number
                     windSpeedKey = `wind_speed_${alt}m`;
