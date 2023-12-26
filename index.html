@@ -1639,7 +1639,7 @@
             const windGustsKey = `wind_gusts_10m`;
             if (weatherData.hourly.hasOwnProperty(windGustsKey)) {
                 // Start the gusts table row with a descriptive header
-                tableHtml += `<tr><th class="sticky-header">Gusts</th>`;
+                tableHtml += `<tr><th class="sticky-header small-text-cell">Gusts</th>`;
 
                 // Add a data cell for each time interval with wind gusts data
                 weatherData.hourly[windGustsKey].forEach((windGust, idx) => {
@@ -1662,7 +1662,7 @@
                 // Assuming weatherData.hourly['cape'] is an array of CAPE values at hourly intervals
                 if (weatherData.hourly.hasOwnProperty('cape')) {
                     // Add CAPE row header
-                    tableHtml += `<tr><th class="sticky-header">CAPE</th>`;
+                    tableHtml += `<tr><th class="sticky-header small-text-cell">CAPE</th>`;
 
                     // Add CAPE data cells for each time interval
                     weatherData.hourly['cape'].forEach(capeValue => {
@@ -1682,7 +1682,7 @@
                 // Precipitation probability only exists for certain models
                 if (weatherData.hourly.hasOwnProperty('precipitation_probability')) {
                     // Add precipitation probability row header
-                    tableHtml += '<tr><th class="sticky-header">Precip %</th>';
+                    tableHtml += '<tr><th class="sticky-header small-text-cell">Precip %</th>';
 
                     // Add precipitation probability data cells for each time interval
                     weatherData.hourly.precipitation_probability.forEach(precipProbability => {
@@ -1698,7 +1698,7 @@
             }
             if (additionalVariablesEnabled && weatherData.hourly.hasOwnProperty('cloud_cover')) {
                 // Add cloud cover row header
-                tableHtml += `<tr><th class="sticky-header">Clouds</th>`;
+                tableHtml += `<tr><th class="sticky-header small-text-cell">Clouds</th>`;
 
                 // Add cloud cover data cells for each time interval
                 weatherData.hourly['cloud_cover'].forEach(cloudCover => {
