@@ -356,10 +356,11 @@
         <br>
         <br>
         <!-- GFS Table -->
-        <table id="gfs-table">
+       
+        <!-- OpenMeteo Table -->
+        <table id="openmeteo-table">
             <!-- The table will be populated by JavaScript -->
         </table>
-        <!-- OpenMeteo Table -->
 <br><br>
 
 
@@ -815,8 +816,8 @@
             
         // Fetch data for each model
         const baseUrls = {
-            //openMeteo: 'https://api.open-meteo.com/v1/forecast',
-            gfs: 'https://api.open-meteo.com/v1/gfs',
+            openMeteo: 'https://api.open-meteo.com/v1/forecast',
+           // gfs: 'https://api.open-meteo.com/v1/gfs',
             icon: 'https://api.open-meteo.com/v1/dwd-icon'
         };
         //fetchAllModelsData();
@@ -864,7 +865,7 @@
             medWindThreshold = med;
             highWindThreshold = high;
 
-            const tableIds = ['icon-table', 'gfs-table']; // Add other table IDs as needed
+            const tableIds = ['icon-table', 'openmeteo-table']; // Add other table IDs as needed
             tableIds.forEach(tableId => {
                 const table = document.getElementById(tableId);
                 if (table.dataset.showing === 'winds') {
