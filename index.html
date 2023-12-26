@@ -629,7 +629,7 @@
                 // Iterate over each table
                 tables.forEach(table => {
                     const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Header cells, excluding the first sticky column
-console.log('daylight hours shown');
+                    console.log('daylight hours shown');
                 
                     headerCells.forEach((cell, index) => {
                         // Check if the header cell has the 'daylight' class
@@ -695,6 +695,7 @@ console.log('daylight hours shown');
                 } else {
                     // Since the popup is visible, apply the filter
                     filterBestDaysColumns();
+                    
                     applyBestDaysButton.textContent = 'Apply';
                     bestDaysButton.textContent = 'Reset Best Hours'; // Change the button text to 'Reset Best Hours'
                     bestDaysPopup.style.display = 'none';
@@ -1357,6 +1358,39 @@ console.log('daylight hours shown');
             // Select all tables that you want to apply the border to
             const tables = document.querySelectorAll('table');
 
+
+
+        if (daylightHoursShown == false) {
+            tables.forEach(table => {
+                // Get all header cells in the first row
+                const dayHeaders = table.querySelectorAll('tr:first-child th:not(:first-child)');
+
+                // Loop through the header cells to check for "daylight" class transitions
+                dayHeaders.forEach((headerCell, index) => {
+                    const isDaylight = headerCell.classList.contains('daylight');
+                    const prevHeader = dayHeaders[index - 1];
+                    const nextHeader = dayHeaders[index + 1];
+
+                    // If it's daylight and the previous header is not, apply a left border
+                    if (isDaylight && (!prevHeader || !prevHeader.classList.contains('daylight'))) {
+                        headerCell.style.borderLeft = '3px solid black';
+                        table.querySelectorAll(`tr:not(:first-child) td:nth-child(${index + 2})`).forEach(cell => {
+                            cell.style.borderLeft = '3px solid black';
+                        });
+                    }
+
+                    // If it's daylight and the next header is not, apply a right border
+                    if (isDaylight && (!nextHeader || !nextHeader.classList.contains('daylight'))) {
+                        headerCell.style.borderRight = '3px solid black';
+                        table.querySelectorAll(`tr:not(:first-child) td:nth-child(${index + 2})`).forEach(cell => {
+                            cell.style.borderRight = '3px solid black';
+                        });
+                    }
+                });
+            });
+        }
+
+            if (daylightHoursShown==true){
             // Iterate over each table
             tables.forEach(table => {
                 // Get all header cells in the first row that have 'data-day' attribute, excluding the very first cell
@@ -1389,6 +1423,12 @@ console.log('daylight hours shown');
                     }
                 });
             });
+        }
+
+
+
+
+
         }
         function createTable(tableId, weatherData, model) {
             console.log('createTable');
@@ -1853,7 +1893,7 @@ console.log('daylight hours shown');
                 }
         // Initialize the tables to display clouds by default
         document.querySelectorAll('table[id$="-table"]').forEach(table => {
-            table.dataset.showing = 'clouds'; // Default view
+            table.dataset.showing = 'winds'; // Default view
         });
         // Function to convert degrees to Unicode arrows with text-style rendering
         function getWindDirectionArrow(degrees) {
