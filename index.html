@@ -1320,7 +1320,7 @@
                 daylightHoursShown = true;
             }
             // Set the initial button text
-            document.getElementById('toggleDaylightButton').textContent = daylightHoursShown ? 'Daylight' : 'Show All Hours';
+            document.getElementById('toggleDaylightButton').textContent = daylightHoursShown ? 'Show All Hours' : 'Daylight';
         };
         function toggleTemperatureTables() {
             //console.log("toggleTemperatureTables");
@@ -1936,18 +1936,77 @@
 
 
 
-        function fillTableWithCloudCover(table, weatherData) {
-                //console.log('fillTableWithCloudCover');
+      
+         function fillTableWithCloudCover(table, weatherData) {
                 const model = table.dataset.model;
-                // Update showing attribute here
-                table.dataset.showing = 'clouds';
-                createTable(table.id, weatherData, model); // Reuse createTable function
+                table.dataset.showing = 'clouds'; // Update showing attribute here
+                let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
+
+                // Define the cloud cover keys for low, mid, and high altitudes
+                const cloudCoverKeys = [
+                    'cloud_cover_high',
+                    'cloud_cover_mid',
+                    'cloud_cover_low',
+                ];
+
+                // Label for each cloud cover key
+                const cloudCoverLabels = {
+                    'cloud_cover_high': 'High%',
+                    'cloud_cover_mid': 'Mid%',
+                    'cloud_cover_low': 'Low%',
+                };
+
+                
+
+                // Add original cloud cover rows (e.g. 1000hPa, 975hPa, etc.)
+                const originalAltitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
+                originalAltitudeLabels.forEach(hPa => {
+                    const cloudCoverKey = `cloud_cover_${hPa}hPa`;
+                    if (weatherData.hourly.hasOwnProperty(cloudCoverKey)) {
+                        tableHtml += `<tr><th class="sticky-header">${hPaToFeet(hPa)} ft</th>`;
+                        weatherData.hourly[cloudCoverKey].forEach(cloudCover => {
+                            const bgColor = `rgba(0, 0, 0, ${cloudCover * 0.75 / 100})`;
+                            tableHtml += `<td class="grey-bg" style="background-color: ${bgColor}"></td>`;
+                        });
+                        tableHtml += '</tr>';
+                    }
+                });
+
+                // Now, insert a horizontal border before adding high cloud cover rows
+                tableHtml += `<tr><td colspan="${weatherData.hourly.time.length + 1}" style="border-top: 2px solid black;"></td></tr>`;
+
+                // Add rows for high, mid, and low cloud cover
+                cloudCoverKeys.forEach(key => {
+                 const label = cloudCoverLabels[key];
+                 // Verify that the cloud cover data exists for the key
+                 if (weatherData.hourly.hasOwnProperty(key)) {
+                     tableHtml += `<tr><th class="sticky-header small-text-cell">${label}</th>`;
+
+                     weatherData.hourly[key].forEach(cloudCover => {
+                         const maxDarkness = 0.75; // Maximum darkness based on cloud cover percentage
+                         const opacity = cloudCover * maxDarkness / 100;
+                         const bgColor = `rgba(0, 0, 0, ${opacity})`; // Calculate background color
+
+                         // Determine text color based on opacity for contrast
+                         // For very light or white backgrounds (opacity close to 0), use a darker text color
+                         const textColor = opacity < 0.35 ? 'black' : 'white';
+
+                         // Add the 'small-text-cell' class to the data cell and also set the text color
+                         tableHtml += `<td class="data-cell grey-bg small-text-cell" style="background-color: ${bgColor}; color: ${textColor};">${cloudCover}</td>`;
+                     });
+
+                     tableHtml += '</tr>';
+                 }
+             });
+
+                // Finally, set the table's HTML to the newly created rows
+                table.innerHTML = tableHtml;
+
+                // Additional calls to manipulate table appearance after it is created
                 toggleHighAltitude();
                 toggleDaylightHours();
-            addVerticalBordersBetweenDays();
-                // Disable all buttons except "Wind/Clouds" and "Temperature"
+                addVerticalBordersBetweenDays();
                 disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
-                
             }
 
             function disableButtonsExcept(buttonIds) {
