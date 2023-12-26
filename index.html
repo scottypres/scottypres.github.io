@@ -372,7 +372,7 @@
     <script>
 
         let highAltitudeVisible = false;
-        let windShearEnabled = true;
+        let windShearEnabled = false;
     
     let additionalVariablesEnabled=true;
         
@@ -404,8 +404,7 @@
         document.getElementById('checkWindShearButton').addEventListener('click', function () {
                 //console.log("Wind shear button clicked");
                 windShearEnabled = !windShearEnabled;
-                localStorage.setItem('windShearEnabled', windShearEnabled);
-
+                setCookie('windShearEnabled', windShearEnabled ? 'true' : 'false', 365);
                 //console.log(windShearEnabled);
                 const button = this; // 'this' refers to the button element in a regular function.
 
@@ -1241,19 +1240,19 @@
     if (editButton) {
         editButton.click();
     }
-
-            // Check for saved wind shear enabled state
-            const savedWindShearEnabled = localStorage.getItem('windShearEnabled');
-            if (savedWindShearEnabled !== null) {
-                // If we have a saved value, use it to set the windShearEnabled flag
-                windShearEnabled = (savedWindShearEnabled === 'true');
-            } else {
-                // Initialize with a default value (e.g., false) and save it to localStorage
-                windShearEnabled = true;
-                localStorage.setItem('windShearEnabled', windShearEnabled);
+            // Retrieve the 'windShearEnabled' flag from the cookie, if it exists
+            const windShearCookie = getCookie('windShearEnabled');
+            if (windShearCookie) {
+                // Set the global variable to the value from the cookie
+                windShearEnabled = (windShearCookie === 'true');
             }
-             document.getElementById('checkWindShearButton').textContent =
-                windShearEnabled ? 'Disable Wind Shear' : 'Enable Wind Shear';
+
+            // Update the button text based on the cookie value
+            const windShearButton = document.getElementById('checkWindShearButton');
+            if (windShearButton) {
+                windShearButton.textContent = windShearEnabled ? 'Disable Wind Shear' : 'Enable Wind Shear';
+            }
+            
             // Get threshold values from cookies, if they exist
             const blueThreshold = getCookie('blueThreshold');
             const greenThreshold = getCookie('greenThreshold');
@@ -1783,7 +1782,7 @@
                 backgroundColorRGB = interpolateColorRGB('lightblue', 'green', percentage);
             } else {
                 percentage = capeValue / 400;
-                backgroundColorRGB = interpolateColorRGB('darkblue', 'lightblue', percentage);
+                backgroundColorRGB = interpolateColorRGB('white', 'lightblue', percentage);
             }
 
             // Set text color to white if background is dark
