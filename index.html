@@ -627,7 +627,7 @@
 
         document.getElementById('toggleDaylightButton').addEventListener('click', function () {
                 daylightHoursShown = !daylightHoursShown;
-                this.textContent = daylightHoursShown ? 'Daylight' : 'Show All Hours';
+                this.textContent = daylightHoursShown ? 'Show All Hours' : 'Daylight Hours Only';
                 setCookie('daylightHoursShown', daylightHoursShown ? 'true' : 'false', 365); // Save the state in a cookie
                 fetchAllModelsData();
             });
@@ -1041,7 +1041,7 @@
 
                 if (model.toLowerCase() === 'icon') {
                     commonParameters = [
-                        'temperature_2m', 'temperature_80m', 'temperature_180m',
+                        'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
                         'weather_code', 'relative_humidity_2m',
                         'dew_point_2m',
                         'cloud_cover',
@@ -1651,7 +1651,7 @@
             const windGustsKey = `wind_gusts_10m`;
             if (weatherData.hourly.hasOwnProperty(windGustsKey)) {
                 // Start the gusts table row with a descriptive header
-                tableHtml += `<tr><th class="sticky-header small-text-cell">Gusts</th>`;
+                tableHtml += `<tr><th class="sticky-header small-text-cell">Gusts (mph)</th>`;
 
                 // Add a data cell for each time interval with wind gusts data
                 weatherData.hourly[windGustsKey].forEach((windGust, idx) => {
@@ -1708,9 +1708,28 @@
                     tableHtml += '</tr>';
                 }
             }
+            if (additionalVariablesEnabled && table.id === 'icon-table') {
+                // Add Precipitation row header
+                tableHtml += '<tr><th class="sticky-header small-text-cell">Precip (in)</th>';
+
+                // Add Precipitation data cells for each time interval
+                weatherData.hourly.precipitation.forEach(precipValue => {
+                    const backgroundColor = getPrecipitationColor(precipValue);
+                    const textColor = getTextColorForBackground(backgroundColor);
+
+                    // Round to two decimal places and convert to string for display
+                    const precipValueDisplay = precipValue.toFixed(2);
+
+                    // Add the Precipitation data cell with fading blue background based on the value
+                    tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipValueDisplay}</td>`;
+                });
+
+                // Close the Precipitation table row
+                tableHtml += '</tr>';
+            }
             if (additionalVariablesEnabled && weatherData.hourly.hasOwnProperty('cloud_cover')) {
                 // Add cloud cover row header
-                tableHtml += `<tr><th class="sticky-header small-text-cell">Clouds</th>`;
+                tableHtml += `<tr><th class="sticky-header small-text-cell">Clouds %</th>`;
 
                 // Add cloud cover data cells for each time interval
                 weatherData.hourly['cloud_cover'].forEach(cloudCover => {
@@ -1734,8 +1753,8 @@
                 if (allRows[i].cells[0].innerText === '33 ft') {
                     // If "33 ft" is found, set a black border below this row
                     // Check if the next row is "Gusts"
-                    if (i < (allRows.length - 1) && allRows[i + 1].cells[0].innerText === 'Gusts') {
-                        allRows[i].style.borderBottom = '4px solid black';
+                    if (i < (allRows.length - 1) && allRows[i + 1].cells[0].innerText === 'Gusts (mph)') {
+                        allRows[i].style.borderBottom = '3px solid black';
                         break; // Border applied, no need to continue loop
                     }
                 }
@@ -1755,6 +1774,24 @@
             addVerticalBordersBetweenDays();
             
         }
+
+   function getPrecipitationColor(precipValue) {
+        const startColor = { r: 255, g: 255, b: 255 }; // White color for 0 inches
+        const endColor = { r: 0, g: 0, b: 139 }; // Blue color for 0.5 inches or more
+        const percent = Math.min(precipValue / 0.1, 1); // Ensuring percentage is between 0 and 1
+        const interpolate = (value1, value2) => value1 + (value2 - value1) * percent; // Linear interpolation
+        const interpolatedColor = {
+            r: interpolate(startColor.r, endColor.r),
+            g: interpolate(startColor.g, endColor.g),
+            b: interpolate(startColor.b, endColor.b),
+        };
+        return `rgb(${Math.round(interpolatedColor.r)}, ${Math.round(interpolatedColor.g)}, ${Math.round(interpolatedColor.b)})`;
+    }
+
+    function getTextColorForBackground(backgroundColor) {
+        const rgbValues = backgroundColor.substring(4, backgroundColor.length - 1).replace(/ /g, '').split(',');
+        return isColorDark(parseInt(rgbValues[0]), parseInt(rgbValues[1]), parseInt(rgbValues[2])) ? 'white' : 'black';
+    }
 
 
         
