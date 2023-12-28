@@ -1749,12 +1749,11 @@
             for (let i = 0; i < allRows.length; i++) {
                 // Check if the first cell (header) contains "33 ft"
                 if (allRows[i].cells[0].innerText === '33 ft') {
-                    // If "33 ft" is found, set a black border below this row
-                    // Check if the next row is "Gusts"
-                    if (i < (allRows.length - 1) && allRows[i + 1].cells[0].innerText === 'Gusts (mph)') {
-                        allRows[i].style.borderBottom = '3px solid black';
-                        break; // Border applied, no need to continue loop
+                    // If "33 ft" is found, set a black border above ("top" of) this row
+                    if (i > 0) {  // Make sure it's not the first row
+                        allRows[i - 1].style.borderBottom = '3px solid black'; // Apply border to the bottom of the row above
                     }
+                    break; // Border applied, no need to continue loop
                 }
             }
             toggleHighAltitude();
