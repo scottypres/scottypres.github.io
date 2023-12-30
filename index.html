@@ -306,7 +306,7 @@
                 
                 <button id="toggleDaylightButton" class="button">Show All Hours</button>
                 <button id="toggleHighAltitudeButton" class="button">High Altitude</button>
-                <button id="additionalVariablesButton" class="button">Additional Variables</button>
+                <button id="additionalVariablesButton" class="button">Toggle Additional Variables</button>
 <br>
                 <div class="button-column">
                     <div class="column-header">Analysis Options:</div>
@@ -1663,6 +1663,7 @@
                     <div>${roundedWindGust}</div>
                   </td>`;
                 });
+                
 
                 // Close the gusts table row
                 tableHtml += '</tr>';
@@ -1688,6 +1689,7 @@
                     tableHtml += '</tr>';
                 }
             }
+            
             if (additionalVariablesEnabled && (table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
                 // Precipitation probability only exists for certain models
                 if (weatherData.hourly.hasOwnProperty('precipitation_probability')) {
@@ -1704,6 +1706,16 @@
                     });
 
                     tableHtml += '</tr>';
+                     if (weatherData.hourly.hasOwnProperty('temperature_2m')) {
+                        let temperatureRowHtml = '<tr><th class="sticky-header small-text-cell">Temp (°F)</th>'; // Header for the temperature row
+                        weatherData.hourly.temperature_2m.forEach(temp => {
+                            const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
+                            const displayedTemp = temp !== null ? Math.round(temp) : '?'; // Round temperature or use placeholder
+                            temperatureRowHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
+                        });
+                        temperatureRowHtml += '</tr>';
+                        tableHtml += temperatureRowHtml; // Add the temperature row to the table HTML
+                    }
                 }
             }
             if (additionalVariablesEnabled && table.id === 'icon-table') {
@@ -1721,6 +1733,16 @@
                     // Add the Precipitation data cell with fading blue background based on the value
                     tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipValueDisplay}</td>`;
                 });
+                 if (weatherData.hourly.hasOwnProperty('temperature_2m')) {
+                    let temperatureRowHtml = '<tr><th class="sticky-header small-text-cell">Temp (°F)</th>'; // Header for the temperature row
+                    weatherData.hourly.temperature_2m.forEach(temp => {
+                        const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
+                        const displayedTemp = temp !== null ? Math.round(temp) : '?'; // Round temperature or use placeholder
+                        temperatureRowHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
+                    });
+                    temperatureRowHtml += '</tr>';
+                    tableHtml += temperatureRowHtml; // Add the temperature row to the table HTML
+                }
 
                 // Close the Precipitation table row
                 tableHtml += '</tr>';
