@@ -299,6 +299,31 @@
                 <button id="toggleButton" class="button">Wind/Clouds</button>
                 <button id="toggleTemperatureButton" class="button">Temperature (F)</button>
                 <button id="editThresholdsButton" class="button">Wind Speed Colors</button>
+            
+            <button id="toggleVariableOptionsPopup" class="button" onclick="toggleVariableOptionsPopup()">Additional
+                Variables</button>
+                </div>
+            <!-- Variable Options Popup -->
+            <div id="variableOptionsPopup" class="config-popup" style="display: none;">
+                <div class="config-content">
+                    <label for="capeCheckbox">CAPE:</label>
+                    <input type="checkbox" id="capeCheckbox" checked>
+                    <br>
+                    <label for="precipProbCheckbox">Precipitation Probability:</label>
+                    <input type="checkbox" id="precipProbCheckbox" checked>
+                    <br>
+                    <label for="temp2mCheckbox">Temperature 2m:</label>
+                    <input type="checkbox" id="temp2mCheckbox" checked>
+                    <br>
+                    <label for="cloudCoverCheckbox">Cloud Cover:</label>
+                    <input type="checkbox" id="cloudCoverCheckbox" checked>
+                    <br>
+                    <label for="precipSumCheckbox">Precipitation Sum:</label>
+                    <input type="checkbox" id="precipSumCheckbox" checked>
+                    <br>
+                    <button id="saveAndFetchButton">Submit</button>
+                    <button onclick="toggleVariableOptionsPopup()">Close</button>
+                </div>
             </div>
         <br>
             <div class="button-column">
@@ -306,7 +331,7 @@
                 
                 <button id="toggleDaylightButton" class="button">Show All Hours</button>
                 <button id="toggleHighAltitudeButton" class="button">High Altitude</button>
-                <button id="additionalVariablesButton" class="button">Toggle Additional Variables</button>
+                
 <br>
                 <div class="button-column">
                     <div class="column-header">Analysis Options:</div>
@@ -334,7 +359,10 @@
         </div>
     </div>
         <!-- Rest of the HTML content... -->
+        
     
+        
+    </div>
     </div></div>
 
         
@@ -375,7 +403,7 @@
         let highAltitudeVisible = false;
         let windShearEnabled = false;
     
-    let additionalVariablesEnabled=true;
+    
         
         const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
 
@@ -383,7 +411,57 @@
     const buttonSections = document.getElementById('buttonSections');
 
     
+    
+    // Function to toggle the variable options popup
+        function toggleVariableOptionsPopup() {
+                const popup = document.getElementById('variableOptionsPopup');
+                popup.style.display = popup.style.display === 'none' ? 'flex' : 'none'; // Toggle between showing and hiding
+            }
+
+    
+
+    function saveSettingsAndFetchData() {
+            // Get all the checkbox elements
+            const capeCheckbox = document.getElementById('capeCheckbox');
+            const precipProbCheckbox = document.getElementById('precipProbCheckbox');
+            const temp2mCheckbox = document.getElementById('temp2mCheckbox');
+            const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
+            const precipSumCheckbox = document.getElementById('precipSumCheckbox');
+
+            // Save the checkbox states to cookies
+            setCookie('variable_cape', capeCheckbox.checked, 365);
+            setCookie('variable_precipitation_probability', precipProbCheckbox.checked, 365);
+            setCookie('variable_temperature_2m', temp2mCheckbox.checked, 365);
+            setCookie('variable_cloud_cover', cloudCoverCheckbox.checked, 365);
+            setCookie('variable_precipitation_sum', precipSumCheckbox.checked, 365);
+
+            // Hide the popup
+            toggleVariableOptionsPopup();
+
+            // Fetch all model data
+            fetchAllModelsData();
+        }
+       // document.addEventListener('DOMContentLoaded', function () {
+       //         // Get references to checkboxes by their IDs
+         //       const capeCheckbox = document.getElementById('capeCheckbox');
+           //     const precipProbCheckbox = document.getElementById('precipProbCheckbox');
+             //   const temp2mCheckbox = document.getElementById('temp2mCheckbox');
+               // const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
+               // const precipSumCheckbox = document.getElementById('precipSumCheckbox');
+
+               
+            //});
+
+            document.addEventListener('DOMContentLoaded', function () {
+                    // Get the submit button by its ID
+                    const saveAndFetchButton = document.getElementById('saveAndFetchButton');
+
+                    // Register the click event listener for the submit button
+                    saveAndFetchButton.addEventListener('click', saveSettingsAndFetchData);
+                });
+
     // Listen for click events on the "Edit" button
+    
     editButton.addEventListener('click', function () {
             // Toggle visibility state
             if (buttonSections.style.display === 'none') {
@@ -603,16 +681,7 @@
             longitude: 81.4173,  // Use a default longitude or prompt the user to enter a valid one.
         };
         
-        document.getElementById('additionalVariablesButton').addEventListener('click', () => {
-            additionalVariablesEnabled = !additionalVariablesEnabled; // Toggle the boolean value
-            // //console.log("Additional Variables Enabled:", additionalVariablesEnabled);
-            setCookie('additionalVariablesEnabled', additionalVariablesEnabled, 365);
-            // Update button text to reflect the current state
-            document.getElementById('additionalVariablesButton').textContent =
-                additionalVariablesEnabled ? "Toggle Additional Variables" : "Toggle Additional Variables";
-            fetchAllModelsData();
-            // Add any other code that should run when the toggle occurs
-        });
+       
 
         // Initialize global threshold variables
         lowWindThreshold = 7;
@@ -1238,12 +1307,32 @@
         }
 
 
+    function getCookieValueOrDefault(cookieName, defaultValue) {
+        const value = getCookie(cookieName);
+        if (value !== "") {
+            return (value === 'true'); // if cookie value is a string "true", return boolean true
+        }
+        return defaultValue; // if cookie does not exist, return the default value
+    }
 
-
+   
 
         window.onload = function () {
             //console.log("window.onload");
             // Automatically click the edit button when the page loads for the first time
+    const capeCheckbox = document.getElementById('capeCheckbox');
+            const precipProbCheckbox = document.getElementById('precipProbCheckbox');
+            const temp2mCheckbox = document.getElementById('temp2mCheckbox');
+            const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
+            const precipSumCheckbox = document.getElementById('precipSumCheckbox');
+
+            // Load saved cookie values and set checkbox status; default to true
+            capeCheckbox.checked = getCookieValueOrDefault('variable_cape', true);
+            precipProbCheckbox.checked = getCookieValueOrDefault('variable_precipitation_probability', true);
+            temp2mCheckbox.checked = getCookieValueOrDefault('variable_temperature_2m', true);
+            cloudCoverCheckbox.checked = getCookieValueOrDefault('variable_cloud_cover', true);
+            precipSumCheckbox.checked = getCookieValueOrDefault('variable_precipitation_sum', true);
+
     const editButton = document.getElementById('editButton');
     if (editButton) {
         editButton.click();
@@ -1266,16 +1355,8 @@
             const greenThreshold = getCookie('greenThreshold');
             const redThreshold = getCookie('redThreshold');
             
-            const additionalVariablesCookie = getCookie('additionalVariablesEnabled');
-            if (additionalVariablesCookie) {
-                // If we have a saved value, use it to set the additionalVariablesEnabled flag
-                additionalVariablesEnabled = additionalVariablesCookie === 'true';
-            } else {
-                // If no value is saved, use the default value (true)
-                let additionalVariablesEnabled = true;
-                // Optionally set the cookie with the default value for future visits
-                setCookie('additionalVariablesEnabled', additionalVariablesEnabled, 365);
-            }
+            
+            
             // Update threshold inputs with cookie values
             if (blueThreshold) document.getElementById('blueThreshold').value = blueThreshold;
             if (greenThreshold) document.getElementById('greenThreshold').value = greenThreshold;
@@ -1354,7 +1435,7 @@
 
                         // Collapse the button sections after initiating the fetch
                         buttonSections.style.display = 'none'; // Hide the buttons
-                        editButton.textContent = 'Edit'; // Reset the button text to "Edit"
+                        editButton.textContent = 'Toolbar'; // Reset the button text to "Edit"
                     } else {
                         alert('Please enter a valid zipcode.');
                     }
@@ -1669,9 +1750,10 @@
                 tableHtml += '</tr>';
 
             }
-            if (additionalVariablesEnabled) {
+            
                 // Assuming weatherData.hourly['cape'] is an array of CAPE values at hourly intervals
-                if (weatherData.hourly.hasOwnProperty('cape')) {
+                if (weatherData.hourly.hasOwnProperty('cape') && capeCheckbox && capeCheckbox.checked) {
+
                     // Add CAPE row header
                     tableHtml += `<tr><th class="sticky-header small-text-cell">CAPE</th>`;
 
@@ -1688,11 +1770,11 @@
                     // Close the CAPE table row
                     tableHtml += '</tr>';
                 }
-            }
             
-            if (additionalVariablesEnabled && (table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
+            
+            if ((table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
                 // Precipitation probability only exists for certain models
-                if (weatherData.hourly.hasOwnProperty('precipitation_probability')) {
+                if (weatherData.hourly.hasOwnProperty('precipitation_probability') && precipProbCheckbox && precipProbCheckbox.checked) {
                     // Add precipitation probability row header
                     tableHtml += '<tr><th class="sticky-header small-text-cell">Precip %</th>';
 
@@ -1706,7 +1788,7 @@
                     });
 
                     tableHtml += '</tr>';
-                     if (weatherData.hourly.hasOwnProperty('temperature_2m')) {
+                     if (weatherData.hourly.hasOwnProperty('temperature_2m') && temp2mCheckbox && temp2mCheckbox.checked) {
                         let temperatureRowHtml = '<tr><th class="sticky-header small-text-cell">Temp (°F)</th>'; // Header for the temperature row
                         weatherData.hourly.temperature_2m.forEach(temp => {
                             const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
@@ -1718,7 +1800,7 @@
                     }
                 }
             }
-            if (additionalVariablesEnabled && table.id === 'icon-table') {
+            if (table.id === 'icon-table' && precipSumCheckbox && precipSumCheckbox.checked) {
                 // Add Precipitation row header
                 tableHtml += '<tr><th class="sticky-header small-text-cell">Precip (in)</th>';
 
@@ -1733,7 +1815,7 @@
                     // Add the Precipitation data cell with fading blue background based on the value
                     tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipValueDisplay}</td>`;
                 });
-                 if (weatherData.hourly.hasOwnProperty('temperature_2m')) {
+                 if (weatherData.hourly.hasOwnProperty('temperature_2m') && temp2mCheckbox && temp2mCheckbox.checked) {
                     let temperatureRowHtml = '<tr><th class="sticky-header small-text-cell">Temp (°F)</th>'; // Header for the temperature row
                     weatherData.hourly.temperature_2m.forEach(temp => {
                         const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
@@ -1747,7 +1829,7 @@
                 // Close the Precipitation table row
                 tableHtml += '</tr>';
             }
-            if (additionalVariablesEnabled && weatherData.hourly.hasOwnProperty('cloud_cover')) {
+            if (weatherData.hourly.hasOwnProperty('cloud_cover') && cloudCoverCheckbox && cloudCoverCheckbox.checked) {
                 // Add cloud cover row header
                 tableHtml += `<tr><th class="sticky-header small-text-cell">Clouds %</th>`;
 
@@ -2103,7 +2185,7 @@
             'checkWindShearButton', // Enable Wind Shear button ID
             'toggleDaylightButton', // All Hours/Daylight button ID
             'toggleHighAltitudeButton', // High Altitude button ID
-            'additionalVariablesButton' // Toggle Additional Variables button ID
+           
         ];
 
         buttonIdsToTriggerCollapse.forEach(buttonId => {
