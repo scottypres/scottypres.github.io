@@ -315,7 +315,19 @@
             <button id="toggleVariableOptionsPopup" class="button" onclick="toggleVariableOptionsPopup()">Additional
                 Variables</button>
                 <button id="editThresholdsButton" class="button">Wind Speed Colors</button>
+                <!-- New Forecast Length Button -->
+                <button id="forecastLengthButton" class="button">Forecast Length</button>
+                <!-- Forecast Length Popup -->
+                <div id="forecastLengthPopup" class="config-popup" style="display: none;">
+                    <div class="config-content">
+                        <label for="gfsOpenMeteoLength">GFS/OpenMeteo<br>(max 14):</label>
+                        <input type="number" id="gfsOpenMeteoLength" value="7" min="1" max="14"><br>
+                        <label for="iconLength">ICON<br>(max 7):</label>
+                        <input type="number" id="iconLength" value="7" min="1" max="7"><br>
+                        <button id="submitForecastLength">Submit</button>
+                    </div>
                 </div>
+
             <!-- Variable Options Popup -->
             <div id="variableOptionsPopup" class="config-popup" style="display: none;">
                 <div class="config-content">
@@ -384,14 +396,14 @@
             </div>
             
         </div>
-        <button id="toggleFogButton" class="button">Fog</button> <!-- Fog button added -->
+        <button id="toggleFogButton" class="button">Fog</button>
     </div>
         <!-- Rest of the HTML content... -->
         
     
         
     </div>
-    </div></div>
+    </div>
 
         
         <!-- Edit Button (New) -->
@@ -405,18 +417,18 @@
 
         </div>
 
-
-        <table id="icon-table">
-            <!-- The table will be populated by JavaScript -->
-        </table>
+<table id="gfs-table">
+    <!-- The table will be populated by JavaScript -->
+</table>
+        
         <br>
         <br>
         <!-- GFS Table -->
        
         <!-- gfs Table -->
-        <table id="gfs-table">
-            <!-- The table will be populated by JavaScript -->
-        </table>
+    <table id="icon-table">
+        <!-- The table will be populated by JavaScript -->
+    </table>
 <br><br>
 
 
@@ -430,7 +442,7 @@
 
         let highAltitudeVisible = false;
         let windShearEnabled = false;
-    
+        let fogEnabled = false;
     
         
         const highPressureAltitudes = [400, 500, 600, 700, 800]; // hPa values to be toggled
@@ -517,10 +529,10 @@
             fetchAllModelsData();
         });
         document.getElementById('checkWindShearButton').addEventListener('click', function () {
-                //console.log("Wind shear button clicked");
+                ////console.log("Wind shear button clicked");
                 windShearEnabled = !windShearEnabled;
                 setCookie('windShearEnabled', windShearEnabled ? 'true' : 'false', 365);
-                //console.log(windShearEnabled);
+                ////console.log(windShearEnabled);
                 const button = this; // 'this' refers to the button element in a regular function.
 
                 // Always display "Loading..." text and disable the button while processing
@@ -610,21 +622,21 @@
                         window.open('https://scottypres.github.io/instructions.html', '_blank');
                     });
         function displaywindshear() {
-             //console.log('checkwindshear');
+             ////console.log('checkwindshear');
                 
         
                 
 
             // Select all tables that end in '-table', such as 'icon-table', 'gfs-table', etc.
-            //console.log("Wind shear check starting...");
+            ////console.log("Wind shear check starting...");
             const tables = document.querySelectorAll('table[id$="-table"]');
                     tables.forEach(table => {
                 
-                //console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
+                ////console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
 
                 // Get all the rows (tr elements) of the current table, excluding the header row
                 const rows = table.querySelectorAll('tr:not(:first-child)');
-                //console.log(`${table.id} has ${rows.length} data rows available for wind shear detection.`);
+                ////console.log(`${table.id} has ${rows.length} data rows available for wind shear detection.`);
                 const rowCount = rows.length;
 
                 // Ensure only the last 5 rows are considered
@@ -652,39 +664,39 @@
                             const nextWindDirection = parseFloat(nextCell.dataset.windDirection);
 
                             // Log the wind speeds and directions being compared for shear
-                            ////console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Speed: ${currentWindSpeed}, Next Wind Speed: ${nextWindSpeed}`);
-                            // //console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
+                            //////console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Speed: ${currentWindSpeed}, Next Wind Speed: ${nextWindSpeed}`);
+                            // ////console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
 
                             // Check if the difference between current and next wind speed exceeds the threshold and check wind direction difference
                             if (Math.abs(currentWindSpeed - nextWindSpeed) > 9 || Math.abs(currentWindDirection - nextWindDirection) > 90) {
                                 // Apply the "shear-detected" class to current and corresponding cell in the next row
                                 cell.classList.add('shear-detected');
                                 nextCell.classList.add('shear-detected');
-                                ////console.log(`SHEAR DETECTED ${table.id} Column: ${cellIndex + 1}`);
+                                //////console.log(`SHEAR DETECTED ${table.id} Column: ${cellIndex + 1}`);
                                 // Log that wind shear was detected between the two cells
-                                // //console.log(`Wind shear detected at Row: ${rowIndex + 1}, Column: ${cellIndex + 1}`);
+                                // ////console.log(`Wind shear detected at Row: ${rowIndex + 1}, Column: ${cellIndex + 1}`);
                             }
                         });
                     }
                 }
             });
 
-             //console.log("Wind shear check completed.");
+             ////console.log("Wind shear check completed.");
                     
                     
                 
         }
 
         function removeWindShearStyles() {
-            //console.log('removeWindShearStyles');
+            ////console.log('removeWindShearStyles');
             document.querySelectorAll('.shear-detected').forEach(cell => {
                 cell.classList.remove('shear-detected');
             });
         }
         function toggleHighAltitude() {
-            //console.log('toggleHighAltitude');
+            ////console.log('toggleHighAltitude');
             if (!highAltitudeVisible) {  // Check if the flag indicates altitude should be hidden
-                // //console.log('Hiding high altitude rows');
+                // ////console.log('Hiding high altitude rows');
                 const tables = document.querySelectorAll('table[id$="-table"]');
                 tables.forEach(table => {
                     const rows = table.getElementsByTagName('tr');
@@ -697,7 +709,7 @@
                     }
                 });
             } else {
-                // //console.log('Showing high altitude rows');
+                // ////console.log('Showing high altitude rows');
                 const tables = document.querySelectorAll('table[id$="-table"]');
                 tables.forEach(table => {
                     const rows = table.getElementsByTagName('tr');
@@ -741,7 +753,7 @@
                 // Iterate over each table
                 tables.forEach(table => {
                     const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Header cells, excluding the first sticky column
-                    //console.log('daylight hours shown');
+                    ////console.log('daylight hours shown');
                 
                     headerCells.forEach((cell, index) => {
                         // Check if the header cell has the 'daylight' class
@@ -761,7 +773,7 @@
                             dataCell.style.display = cell.style.display; // Match the display style of the header cell
                         });
                     });
-                    //console.log(daylightHoursShown);
+                    ////console.log(daylightHoursShown);
                 });
 
                 
@@ -783,9 +795,9 @@
     let showingBestHours = false;
        ;
         function resetTables() {
-            //console.log('resetTables');
+            ////console.log('resetTables');
             // Loop over each model to create the tables again using the stored data
-            //  //console.log('resetTables');
+            //  ////console.log('resetTables');
             Object.keys(globalWeatherData).forEach(model => {
                 const tableId = `${model.toLowerCase()}-table`;
                 createTable(tableId, globalWeatherData[model], model);
@@ -827,7 +839,7 @@
     }
 });
         function filterBestDaysColumns() {
-            //console.log('filterBestDaysColumns');
+            ////console.log('filterBestDaysColumns');
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
 
@@ -906,7 +918,7 @@
             return 'wind-arrow rotate-' + classNameDegrees;
         }
         function initialTableSetup() {
-            //console.log('Initial Table Setup');
+            ////console.log('Initial Table Setup');
             if (!isUpdatingTables) {
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
@@ -1024,11 +1036,11 @@
         async function fetchAllModelsData() {
             if (isUpdatingTables) return;
             isUpdatingTables = true;
-            //console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
+            ////console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
             try {
                 // Await all fetches to be completed using Promise.all
                 await Promise.all(Object.entries(baseUrls).map(async ([model, baseUrl]) => {
-                    //console.log(`Fetching data for model "${model}"`, new Date().toISOString());
+                    ////console.log(`Fetching data for model "${model}"`, new Date().toISOString());
                     await checkAndFetchData(baseUrl, model);
                 }));
 
@@ -1049,11 +1061,11 @@
         let commonParameters = [];
 
         async function getCoordinatesByZipcode(zipcode) {
-            //console.log("getCoordinatesByZipcode");
+            ////console.log("getCoordinatesByZipcode");
             
-            ////console.log("getCoordinatesByZipcode called", new Date().toISOString());
+            //////console.log("getCoordinatesByZipcode called", new Date().toISOString());
             const zipApiUrl = `https://api.zippopotam.us/us/${zipcode}`;
-            // //console.log("getCoordinatesByZipcode start", new Date().toISOString());
+            // ////console.log("getCoordinatesByZipcode start", new Date().toISOString());
             try {
                 const response = await fetch(zipApiUrl);
                 if (!response.ok) {
@@ -1066,9 +1078,9 @@
                         latitude: parseFloat(data.places[0].latitude),
                         longitude: parseFloat(data.places[0].longitude)
                     };
-                    ////console.log('Coordinates:', userLocation);
+                    //////console.log('Coordinates:', userLocation);
                     setCookie('zipcode', zipcode, 365); // Save for 365 days
-                    // //console.log('zip cookie saved');
+                    // ////console.log('zip cookie saved');
                     // Now call the API with these coordinates for each model and update the table with new data
                     for (const model of Object.keys(baseUrls)) {
                         await checkAndFetchData(baseUrls[model], model);
@@ -1084,14 +1096,14 @@
                 alert('Failed to get coordinates. Please check the zipcode and try again.');
             }
 
-            //console.log("getCoordinatesByZipcode end", new Date().toISOString());
+            ////console.log("getCoordinatesByZipcode end", new Date().toISOString());
 
 
         };
 
         async function checkAndFetchData(baseUrl, model) {
-            //console.log("checkAndFetchData");
-            // //console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
+            ////console.log("checkAndFetchData");
+            // ////console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
             const dailyParameters = [
                 'weather_code',
                 'temperature_2m_max',
@@ -1111,28 +1123,39 @@
 
 
             // Check the model to determine the correct forecast_days parameter
-            if (model.toLowerCase() === 'openmeteo') {
-                additionalParameters += '&forecast_days=4'; // 14-day forecast for OpenMeteo
+            if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+                const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 7); // Default 7, max 14
+                additionalParameters += `&forecast_days=${forecastDays}`;
             } else if (model.toLowerCase() === 'icon') {
-                additionalParameters += '&forecast_days=4' ; // 7-day forecast for ICON
-            }
-            if (model.toLowerCase() === 'gfs') {
-                additionalParameters += '&forecast_days=4'; // 14-day forecast for OpenMeteo
+                const forecastDays = getCookieValueOrDefault('iconLength', 7); // Default 7, max 7
+                additionalParameters += `&forecast_days=${forecastDays}`;
             }
             const zipcode = document.getElementById('zipcodeInput').value.trim();
             const lastApiCallKey = `lastApiCall_${model}_${zipcode}`;
+            
             const now = Date.now();
             const cacheDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
             const lastApiCallData = localStorage.getItem(lastApiCallKey);
+            
             let shouldFetchData = true;
 
             // Check if we have cached data for this model and zipcode
             if (lastApiCallData) {
                 const cachedData = JSON.parse(lastApiCallData);
+                //console.log(lastApiCallData);
+                //console.log('now');
+                //console.log(now);
+                //console.log('-');
+                //console.log('cacheddatatimestamp');
+                //console.log(cachedData.timestamp);
 
+                //console.log('cacheDuration');
+                  //console.log(cacheDuration);
+                  //console.log('difference:');
+                  //console.log(now-cacheDuration);
                 // Check if the cached data is still valid
                 if (cachedData.zipcode === zipcode && now - cachedData.timestamp < cacheDuration) {
-                    // //console.log(`Using cached data for model "${model}"`, new Date().toISOString());
+                    // ////console.log(`Using cached data for model "${model}"`, new Date().toISOString());
                     globalWeatherData[model] = cachedData.data;
                     createTable(`${model.toLowerCase()}-table`, cachedData.data, model);
                     shouldFetchData = false;
@@ -1141,7 +1164,7 @@
 
             // Fetch new data if necessary
             if (shouldFetchData) {
-
+//console.log('fetching new data');
                 if (model.toLowerCase() === 'icon') {
                     commonParameters = [
                         'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
@@ -1282,7 +1305,7 @@
                 const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
 
                 try {
-                    //console.log('fetching new data');
+                    ////console.log('fetching new data');
                     // Request data from the weather API using the assembled URL
                     const response = await fetch(requestUrl);
 
@@ -1307,7 +1330,7 @@
                     // Store the fetched data globally
                     globalWeatherData[model] = weatherData;
 
-                    //console.log(`Data fetched successfully for model ${model}`);
+                    ////console.log(`Data fetched successfully for model ${model}`);
                 } catch (error) {
                     // Log the error if fetching the data fails
                     console.error(`Failed to fetch data for model ${model}`, error);
@@ -1315,7 +1338,7 @@
                 }
             }
 
-            // //console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
+            // ////console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
         }
 
 
@@ -1345,18 +1368,20 @@
 
 
     function getCookieValueOrDefault(cookieName, defaultValue) {
-        const value = getCookie(cookieName);
-        if (value !== "") {
-            return (value === 'true'); // if cookie value is a string "true", return boolean true
+            const value = getCookie(cookieName); // getCookie is supposed to fetch the cookie by its name
+            if (value !== "") {
+                return isNaN(value) ? value : parseInt(value, 10); // Return value as a number if it's numeric
+            }
+            return defaultValue; // Return default value if cookie is not found
         }
-        return defaultValue; // if cookie does not exist, return the default value
-    }
 
    
 
         window.onload = function () {
-            //console.log("window.onload");
+            ////console.log("window.onload");
             // Automatically click the edit button when the page loads for the first time
+            const gfsOpenMeteoLengthValue = getCookieValueOrDefault('gfsOpenMeteoLength', 7);
+            const iconLengthValue = getCookieValueOrDefault('iconLength', 7);
             const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
             const capeCheckbox = document.getElementById('capeCheckbox');
             const precipProbCheckbox = document.getElementById('precipProbCheckbox');
@@ -1368,6 +1393,18 @@
             const visibilityCheckbox = document.getElementById('visibilityCheckbox');
 
             // Load saved cookie values and set checkbox status; default to true
+            document.getElementById('gfsOpenMeteoLength').addEventListener('keyup', function (event) {
+                if (event.key === 'Enter' || event.keyCode === 13) {
+                    document.getElementById('submitForecastLength').click();
+                }
+            });
+            document.getElementById('iconLength').addEventListener('keyup', function (event) {
+                if (event.key === 'Enter' || event.keyCode === 13) {
+                    document.getElementById('submitForecastLength').click();
+                }
+            });
+            document.getElementById('gfsOpenMeteoLength').value = gfsOpenMeteoLengthValue;
+            document.getElementById('iconLength').value = iconLengthValue;
             capeCheckbox.checked = getCookieValueOrDefault('variable_cape', true);
             precipProbCheckbox.checked = getCookieValueOrDefault('variable_precipitation_probability', true);
             temp2mCheckbox.checked = getCookieValueOrDefault('variable_temperature_2m', true);
@@ -1377,7 +1414,17 @@
             relativeHumidityCheckbox.checked = getCookieValueOrDefault('variable_relative_humidity', true);
             liftedIndexCheckbox.checked = getCookieValueOrDefault('variable_lifted_index', false);
             visibilityCheckbox.checked = getCookieValueOrDefault('variable_visibility', true);
-
+            //console.log(`GFS/OpeMeteo length value: ${gfsOpenMeteoLengthValue}`);
+            //console.log(`ICON length value: ${iconLengthValue}`);
+            const fogStatusCookie = getCookie('fogEnabled');
+            if (fogStatusCookie !== "") {
+                fogEnabled = (fogStatusCookie === 'true');
+            }
+            const fogButton = document.getElementById('toggleFogButton');
+            if (fogButton) {
+                fogButton.textContent = fogEnabled ? 'Disable Fog' : 'Fog';
+            }
+        
     const editButton = document.getElementById('editButton');
     if (editButton) {
         editButton.click();
@@ -1416,7 +1463,7 @@
                 const fetchButton = document.getElementById('fetchCoordinatesButton');
 
                 zipcodeInput.value = savedZipcode;
-                //   //console.log("Zip cookie loaded");
+                //   ////console.log("Zip cookie loaded");
                 // Check if fetchCoordinatesButton has already a click event listener that fetches the weather
                 // If not, manually call the handleZipcodeFetch(zipcode) function after a short delay to ensure any setup logic has completed
                 setTimeout(function () {
@@ -1448,8 +1495,125 @@
             // Set the initial button text
             document.getElementById('toggleDaylightButton').textContent = daylightHoursShown ? 'Show All Hours' : 'Daylight Hours Only';
         };
+        function saveForecastLengthSettings() {
+                const gfsOpenMeteoLength = document.getElementById('gfsOpenMeteoLength').value;
+                const iconLength = document.getElementById('iconLength').value;
+
+                setCookie('gfsOpenMeteoLength', gfsOpenMeteoLength, 365);
+                setCookie('iconLength', iconLength, 365);
+
+                document.getElementById('forecastLengthPopup').style.display = 'none'; // Hide the popup
+
+                fetchAllModelsData();
+            }
+
+            // Function to close the forecast length popup
+            function closeForecastLengthPopup() {
+                document.getElementById('forecastLengthPopup').style.display = 'none';
+            }
+
+            // Event listener for the Forecast Length button
+            document.getElementById('forecastLengthButton').addEventListener('click', function () {
+                document.getElementById('forecastLengthPopup').style.display = 'flex'; // Show the popup
+                toggleButtonsDisabledState(true, ['submitForecastLength', 'editButton']);
+            });
+
+            // Event listener for the Submit button in the forecast length popup
+            document.getElementById('submitForecastLength').addEventListener('click', function () {
+                    // Retrieve the gfsOpenMeteoLength value from the input field and convert it to a number
+                    let gfsOpenMeteoLength = parseInt(document.getElementById('gfsOpenMeteoLength').value, 10);
+                    let iconLength= parseInt(document.getElementById('iconLength').value, 10);
+
+                    // Check if the length exceeds the maximum value, if so, set it to the maximum
+                    if (gfsOpenMeteoLength > 14) {
+                        gfsOpenMeteoLength = 14;
+                        // Optionally update the input field to reflect the change
+                        document.getElementById('gfsOpenMeteoLength').value = gfsOpenMeteoLength;
+                    }
+                    if (gfsOpenMeteoLength < 1) {
+                    gfsOpenMeteoLength = 1;
+                    // Optionally update the input field to reflect the change
+                    document.getElementById('gfsOpenMeteoLength').value = gfsOpenMeteoLength;
+                }
+                if (iconLength > 7) {
+                    iconLength = 7;
+                    // Optionally update the input field to reflect the change
+                    document.getElementById('iconLength').value = gfsOpenMeteoLength;
+                }
+                if (iconLength < 1) {
+                    iconLength = 1;
+                    // Optionally update the input field to reflect the change
+                    document.getElementById('iconLength').value = gfsOpenMeteoLength;
+                }
+                    let model = 'gfs'; // Replace with the actual model name used in your localStorage key
+                    let zipcode = document.getElementById('zipcodeInput').value.trim(); // Replace with the actual zipcode used in your localStorage key
+                    let lastApiCallKey = `lastApiCall_${model}_${zipcode}`; // Adjust based on how you create your localStorage key
+                    let lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
+
+                    // Check if the data exists
+                    if (lastApiCallDataStr) {
+                        // Parse to JSON object
+                        let lastApiCallData = JSON.parse(lastApiCallDataStr);
+
+                        // Subtract 1000000 from the timestamp
+                        lastApiCallData.timestamp -= 1000000000000;
+
+                        // Convert back to string and save in localStorage
+                        localStorage.setItem(lastApiCallKey, JSON.stringify(lastApiCallData));
+
+                        // Log the updated timestamp for confirmation
+                        //console.log(`Updated timestamp: ${lastApiCallData.timestamp}`);
+                    }
+                     model = 'icon'; // Replace with the actual model name used in your localStorage key
+                 zipcode = document.getElementById('zipcodeInput').value.trim(); // Replace with the actual zipcode used in your localStorage key
+                 lastApiCallKey = `lastApiCall_${model}_${zipcode}`; // Adjust based on how you create your localStorage key
+                 lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
+
+                // Check if the data exists
+                if (lastApiCallDataStr) {
+                    // Parse to JSON object
+                    let lastApiCallData = JSON.parse(lastApiCallDataStr);
+
+                    // Subtract 1000000 from the timestamp
+                    lastApiCallData.timestamp -= 1000000000000;
+
+                    // Convert back to string and save in localStorage
+                    localStorage.setItem(lastApiCallKey, JSON.stringify(lastApiCallData));
+
+                    // Log the updated timestamp for confirmation
+                    //console.log(`Updated timestamp: ${lastApiCallData.timestamp}`);
+                }
+
+                    // Continue with the remaining actions after saving the updated timestamp
+                    saveForecastLengthSettings();
+                    // ...any other actions that should happen after updating...
+
+                    clickCollapseButton();
+                });
+        
+        
+        
+        
+            function handleFogButtonClick() {
+                fogEnabled = !fogEnabled;
+                setCookie('fogEnabled', fogEnabled, 365);
+                const fogButton = document.getElementById('toggleFogButton');
+                fogButton.textContent = fogEnabled ? 'Disable Fog' : 'Fog';
+
+                // Check the relevant checkboxes
+                document.getElementById('relativeHumidityCheckbox').checked = fogEnabled;
+                document.getElementById('visibilityCheckbox').checked = fogEnabled;
+                document.getElementById('dewpointSpreadCheckbox').checked = fogEnabled;
+
+                // Click collapse button if needed
+                clickCollapseButton();
+
+                // Fetch all models data
+                fetchAllModelsData();
+            }
+            document.getElementById('toggleFogButton').addEventListener('click', handleFogButtonClick);
         function toggleTemperatureTables() {
-            //console.log("toggleTemperatureTables");
+            ////console.log("toggleTemperatureTables");
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
                     const dataTable = document.getElementById(tableId);
@@ -1570,12 +1734,14 @@
 
 
 
+        //console.log(`GFS/OpeMeteo length input value after onload: ${document.getElementById('gfsOpenMeteoLength').value}`);
+        //console.log(`ICON length input value after onload: ${document.getElementById('iconLength').value}`);
+    };
 
-
-        }
+        
         function createTable(tableId, weatherData, model) {
-            //console.log('createTable');
-            console.log(globalWeatherData);
+            ////console.log('createTable');
+            //console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
             const dataTable = document.getElementById(tableId);
@@ -1585,9 +1751,9 @@
             let currentDay = null; // Variable to store the current day as you loop through the timestamps
             // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
             let isDayArray = weatherData.hourly.is_day;
-            //console.log(isDayArray);
+            ////console.log(isDayArray);
             isDayArray = extendDaylightHours(isDayArray);
-            //console.log(isDayArray);
+            ////console.log(isDayArray);
             
             timestamps.forEach((timestamp, index) => {
                 const date = new Date(timestamp);
@@ -1644,8 +1810,8 @@
                 } else {
                     // If cloud cover data does not exist for this pressure altitude (hPa), span across all time intervals
                     tableHtml += `<td colspan="${weatherData.hourly.time.length}" class="data-cell">Data not available</td>`;
-                    //console.log('cloud cover data does not exist for this pressure');
-                    //console.log(cloudCoverKey);
+                    ////console.log('cloud cover data does not exist for this pressure');
+                    ////console.log(cloudCoverKey);
                 }
 
                 // Close the table row
@@ -1658,7 +1824,7 @@
 
 
             dataTable.dataset.model = model;
-            ////console.log(`Listeners added for ${model} model`);
+            //////console.log(`Listeners added for ${model} model`);
         }
 
         document.getElementById('toggleButton').addEventListener('click', toggleWindClouds);
@@ -1686,7 +1852,7 @@
 
 
         function extendDaylightHours(isDayArray) {
-            //console.log('extendDaylightHours');
+            ////console.log('extendDaylightHours');
                 const transitions = [];
 
                 // Step 1: Identify all transition indices
@@ -1715,7 +1881,7 @@
 
 
         function fillTableWithWindSpeed(table, weatherData) {
-            ////console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
+            //////console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
             const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
@@ -1889,23 +2055,17 @@
                 const startColor = { r: 255, g: 255, b: 255 }; // White for 40% humidity
                 const endColor = { r: 0, g: 0, b: 255 }; // Blue for 100% humidity
                 weatherData.hourly.relative_humidity_2m.forEach(humidity => {
-                    // Adjust the percentage for the 40% to 100% humidity range
-                    let percentage = (humidity - 40) / 60; // 40% humidity becomes 0%, 100% remains 100%
-                    percentage = Math.max(0, Math.min(1, percentage)); // Clamp the value between 0 and 1
-
-                    // Interpolate color between white and blue based on the adjusted humidity percentage
-                    const bgColorRGB = interpolateColorRGB('white', 'blue', percentage);
-                    // Determine text color based on the darkness of the background
-                    const textColor = isColorDark(bgColorRGB.r, bgColorRGB.g, bgColorRGB.b) ? 'white' : 'black';
-
-                    tableHtml += `<td class="data-cell small-text-cell" style="background-color: rgb(${bgColorRGB.r}, ${bgColorRGB.g}, ${bgColorRGB.b}); color: ${textColor};">${Math.round(humidity)}%</td>`;
+                    let cellStyle = 'background-color: white;'; // Default cell style
+                    if (fogEnabled && humidity > 90) {
+                        cellStyle = 'border: 2px solid red;'; // Apply lightblue border when fog conditions are met
+                    }
+                    tableHtml += `<td class="data-cell small-text-cell" style="${cellStyle}">${Math.round(humidity)}%</td>`;
                 });
 
                 tableHtml += '</tr>';
             }
             const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
-            if (dewpointSpreadCheckbox && dewpointSpreadCheckbox.checked && weatherData.hourly.hasOwnProperty('dew_point_2m')) {
-                // Assuming temperature_2m and dew_point_2m are arrays with the same length as timestamps
+            if (dewpointSpreadCheckbox && dewpointSpreadCheckbox.checked && weatherData.hourly.hasOwnProperty('dew_point_2m') && weatherData.hourly.hasOwnProperty('temperature_2m')) {
                 let temperature2m = weatherData.hourly.temperature_2m;
                 let dewpoint2m = weatherData.hourly.dew_point_2m;
 
@@ -1913,15 +2073,12 @@
                 let dewpointSpreadRowHtml = `<tr><th class="sticky-header small-text-cell">Dp Spread</th>`;
                 for (let i = 0; i < temperature2m.length; i++) {
                     let spread = temperature2m[i] - dewpoint2m[i];
-                    let bgColor = 'white'; // Default background color white
-                    let textColor = 'black'; // Default text color black
-
-                    if (spread >= 0 && spread <= 2.5) {
-                        bgColor = 'lightgray'; // Light gray background for spread between 3-5
+                    let cellStyle = 'background-color: white;'; // Default background color white
+                    if (fogEnabled && spread < 3) {
+                        cellStyle = 'border: 2px solid red;'; // Apply lightblue border when fog conditions are met
                     }
-
                     // Add the dewpoint spread cell with computed styles
-                    dewpointSpreadRowHtml += `<td class="data-cell small-text-cell" style="background-color: ${bgColor}; color: ${textColor};">${spread.toFixed(1)}</td>`;
+                    dewpointSpreadRowHtml += `<td class="data-cell small-text-cell" style="${cellStyle}">${spread.toFixed(1)}</td>`;
                 }
 
                 // Close the dewpoint spread row
@@ -1937,10 +2094,14 @@
                 if (weatherData.hourly.hasOwnProperty('visibility') && document.getElementById('visibilityCheckbox').checked) {
                     tableHtml += `<tr><th class="sticky-header small-text-cell">Visibility (mi)</th>`;
                     weatherData.hourly['visibility'].forEach(visibility => {
-                        // Convert visibility from meters to miles and round to the nearest tenth
-                        const visibilityInMiles = (visibility * 0.000621371).toFixed(1);
-                        tableHtml += `<td class="data-cell smallest-text-cell">${visibilityInMiles}</td>`;
+                        const visibilityInMiles = (visibility * 0.000621371).toFixed(1); // Convert meters to miles
+                        let cellStyle = 'background-color: white;';
+                        if (fogEnabled && visibilityInMiles < 20) {
+                            cellStyle = 'border: 2px solid red;';
+                        }
+                        tableHtml += `<td class="data-cell smallest-text-cell" style="${cellStyle}">${visibilityInMiles}</td>`;
                     });
+
                     tableHtml += '</tr>';
                 }
                 
@@ -1984,7 +2145,7 @@
             
             toggleDaylightHours();
             if (windShearEnabled) {
-                //console.log('Wind Shear Enabled: Checking...');
+                ////console.log('Wind Shear Enabled: Checking...');
                 // Asynchronously call the wind shear check function
                 displaywindshear();
                 // Once completed, set the text to reflect the current state
@@ -2091,7 +2252,7 @@
         };
 
         async function refreshWeatherDataAndTables(zipcode) {
-            //console.log('refreshWeatherDataAndTables');
+            ////console.log('refreshWeatherDataAndTables');
             // Fetch coordinates from zipcode
             await getCoordinatesByZipcode(zipcode);
 
