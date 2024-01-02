@@ -321,6 +321,9 @@
                     <label for="precipSumCheckbox">Precipitation Sum:</label>
                     <input type="checkbox" id="precipSumCheckbox" checked>
                     <br>
+                    <label for="dewpointSpreadCheckbox">Dewpoint Spread:</label>
+                    <input type="checkbox" id="dewpointSpreadCheckbox" checked>
+                    <br>
                     <button id="saveAndFetchButton">Submit</button>
                     <button onclick="toggleVariableOptionsPopup()">Close</button>
                 </div>
@@ -419,7 +422,7 @@
             }
 
     
-
+    let dewpointSpreadCheckbox = null;
     function saveSettingsAndFetchData() {
             // Get all the checkbox elements
             const capeCheckbox = document.getElementById('capeCheckbox');
@@ -427,6 +430,8 @@
             const temp2mCheckbox = document.getElementById('temp2mCheckbox');
             const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
             const precipSumCheckbox = document.getElementById('precipSumCheckbox');
+            const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
+           
 
             // Save the checkbox states to cookies
             setCookie('variable_cape', capeCheckbox.checked, 365);
@@ -434,7 +439,7 @@
             setCookie('variable_temperature_2m', temp2mCheckbox.checked, 365);
             setCookie('variable_cloud_cover', cloudCoverCheckbox.checked, 365);
             setCookie('variable_precipitation_sum', precipSumCheckbox.checked, 365);
-
+        setCookie('variable_dewpoint_spread', dewpointSpreadCheckbox.checked, 365);
             // Hide the popup
             toggleVariableOptionsPopup();
 
@@ -1320,11 +1325,13 @@
         window.onload = function () {
             //console.log("window.onload");
             // Automatically click the edit button when the page loads for the first time
+            const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
     const capeCheckbox = document.getElementById('capeCheckbox');
             const precipProbCheckbox = document.getElementById('precipProbCheckbox');
             const temp2mCheckbox = document.getElementById('temp2mCheckbox');
             const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
             const precipSumCheckbox = document.getElementById('precipSumCheckbox');
+            
 
             // Load saved cookie values and set checkbox status; default to true
             capeCheckbox.checked = getCookieValueOrDefault('variable_cape', true);
@@ -1332,7 +1339,7 @@
             temp2mCheckbox.checked = getCookieValueOrDefault('variable_temperature_2m', true);
             cloudCoverCheckbox.checked = getCookieValueOrDefault('variable_cloud_cover', true);
             precipSumCheckbox.checked = getCookieValueOrDefault('variable_precipitation_sum', true);
-
+            dewpointSpreadCheckbox.checked = getCookieValueOrDefault('variable_dewpoint_spread', true);
     const editButton = document.getElementById('editButton');
     if (editButton) {
         editButton.click();
@@ -1530,7 +1537,7 @@
         }
         function createTable(tableId, weatherData, model) {
             //console.log('createTable');
-            //console.log(globalWeatherData);
+            console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
             const dataTable = document.getElementById(tableId);
@@ -1793,11 +1800,40 @@
                         weatherData.hourly.temperature_2m.forEach(temp => {
                             const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
                             const displayedTemp = temp !== null ? Math.round(temp) : '?'; // Round temperature or use placeholder
-                            temperatureRowHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
+                            temperatureRowHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
                         });
                         temperatureRowHtml += '</tr>';
                         tableHtml += temperatureRowHtml; // Add the temperature row to the table HTML
                     }
+                }
+
+
+                const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
+                if (dewpointSpreadCheckbox && dewpointSpreadCheckbox.checked && weatherData.hourly.hasOwnProperty('dew_point_2m')) {
+                    // Assuming temperature_2m and dew_point_2m are arrays with the same length as timestamps
+                    let temperature2m = weatherData.hourly.temperature_2m;
+                    let dewpoint2m = weatherData.hourly.dew_point_2m;
+
+                    // Define a new row for the dewpoint spread
+                    let dewpointSpreadRowHtml = `<tr><th class="sticky-header small-text-cell">Dp Spread</th>`;
+                    for (let i = 0; i < temperature2m.length; i++) {
+                        let spread = temperature2m[i] - dewpoint2m[i];
+                        let bgColor = 'white'; // Default background color white
+                        let textColor = 'black'; // Default text color black
+
+                        if (spread >= 0 && spread <= 4) {
+                            bgColor = 'lightgray'; // Light gray background for spread between 3-5
+                        }
+
+                        // Add the dewpoint spread cell with computed styles
+                        dewpointSpreadRowHtml += `<td class="data-cell small-text-cell" style="background-color: ${bgColor}; color: ${textColor};">${spread.toFixed(1)}</td>`;
+                    }
+
+                    // Close the dewpoint spread row
+                    dewpointSpreadRowHtml += '</tr>';
+
+                    // Add the dewpoint spread row to the existing HTML of the table
+                    tableHtml += dewpointSpreadRowHtml;
                 }
             }
             if (table.id === 'icon-table' && precipSumCheckbox && precipSumCheckbox.checked) {
@@ -1820,15 +1856,43 @@
                     weatherData.hourly.temperature_2m.forEach(temp => {
                         const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
                         const displayedTemp = temp !== null ? Math.round(temp) : '?'; // Round temperature or use placeholder
-                        temperatureRowHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
+                        temperatureRowHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
                     });
                     temperatureRowHtml += '</tr>';
                     tableHtml += temperatureRowHtml; // Add the temperature row to the table HTML
+                }
+                 const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
+                if (dewpointSpreadCheckbox && dewpointSpreadCheckbox.checked && weatherData.hourly.hasOwnProperty('dew_point_2m')) {
+                    // Assuming temperature_2m and dew_point_2m are arrays with the same length as timestamps
+                    let temperature2m = weatherData.hourly.temperature_2m;
+                    let dewpoint2m = weatherData.hourly.dew_point_2m;
+
+                    // Define a new row for the dewpoint spread
+                    let dewpointSpreadRowHtml = `<tr><th class="sticky-header small-text-cell">Dp Spread</th>`;
+                    for (let i = 0; i < temperature2m.length; i++) {
+                        let spread = temperature2m[i] - dewpoint2m[i];
+                        let bgColor = 'white'; // Default background color white
+                        let textColor = 'black'; // Default text color black
+
+                        if (spread >= 0 && spread <= 4) {
+                            bgColor = 'lightgray'; // Light gray background for spread between 3-5
+                        } 
+
+                        // Add the dewpoint spread cell with computed styles
+                        dewpointSpreadRowHtml += `<td class="data-cell small-text-cell" style="background-color: ${bgColor}; color: ${textColor};">${spread.toFixed(1)}</td>`;
+                    }
+
+                    // Close the dewpoint spread row
+                    dewpointSpreadRowHtml += '</tr>';
+
+                    // Add the dewpoint spread row to the existing HTML of the table
+                    tableHtml += dewpointSpreadRowHtml;
                 }
 
                 // Close the Precipitation table row
                 tableHtml += '</tr>';
             }
+            
             if (weatherData.hourly.hasOwnProperty('cloud_cover') && cloudCoverCheckbox && cloudCoverCheckbox.checked) {
                 // Add cloud cover row header
                 tableHtml += `<tr><th class="sticky-header small-text-cell">Clouds %</th>`;
