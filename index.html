@@ -20,8 +20,16 @@
 .small-text-cell {
     font-size: 12px; /* Adjust to your preferred size */
 }
+
+.smallest-text-cell {
+    font-size: 10px; /* Adjust to your preferred size */
+}
 .cape-cell {
     font-size: 12px; /* Adjust to whatever size you prefer for the CAPE cell text */
+}
+.button {
+    width: 150px; /* Adjust as needed */
+    /* ...other styles... */
 }
         #autocomplete-list {
             position: absolute;
@@ -241,21 +249,25 @@
         }
         /* Additional CSS for rows and columns */
 .button-row {
-    display: flex; /* Align items horizontally */
-    flex-direction: column; /* Align items vertically */
-    align-items: flex-start; /* Align items to the start */
+    display: flex; /* Use flexbox to layout items horizontally */
+    justify-content: center; /* Center the items along the main axis (horizontally) */
     margin-bottom: 10px; /* Spacing between rows */
+    flex-wrap: wrap; /* Allow items to wrap as needed */
+    flex-direction: column;
 }
 
 .button-column {
     display: flex;
     flex-direction: column; /* Stack the header and buttons vertically */
+    align-items: center; /* Center the buttons horizontally in the flex container */
     margin-right: 15px; /* Spacing between columns */
+    flex-direction: column;
 }
 
 .column-header {
+    text-align: center; /* Center the header text */
     margin-bottom: 10px; /* Spacing between header and buttons */
-    font-weight: bold; /* Optional: make it bold */
+    flex-direction: column;
 }
 
 #editButton {
@@ -328,11 +340,18 @@
                     <label for="relativeHumidityCheckbox">Relative Humidity:</label>
                     <input type="checkbox" id="relativeHumidityCheckbox" checked>
                     <br>
+                    <label for="liftedIndexCheckbox">Lifted Index:</label>
+                    <input type="checkbox" id="liftedIndexCheckbox" checked>
+                    <br>
+                    <label for="visibilityCheckbox">Visibility (Miles):</label>
+                    <input type="checkbox" id="visibilityCheckbox" checked>
+                    <br>
                     <button id="saveAndFetchButton">Submit</button>
                     <button onclick="toggleVariableOptionsPopup()">Close</button>
                 </div>
             </div>
         <br>
+        
             <div class="button-column">
                 <div class="column-header">View Options:</div>
                 
@@ -340,11 +359,11 @@
                 <button id="toggleHighAltitudeButton" class="button">High Altitude</button>
                 
 <br>
-                <div class="button-column">
+            
                     <div class="column-header">Analysis Options:</div>
                 <button id="bestDaysButton" class="button" disabled>Best Hours</button>
                 <button id="checkWindShearButton" class="button">Enable Wind Shear</button>
-            </div></div>
+            </div>
             <div id="configPopup" class="config-popup" style="display: none;">
                 <div class="config-content">
                     <label for="blueThreshold">Low Speed - Blue (mph)</label>
@@ -363,7 +382,9 @@
                 <button id="applyBestDaysButton">Apply</button>
         
             </div>
+            
         </div>
+        <button id="toggleFogButton" class="button">Fog</button> <!-- Fog button added -->
     </div>
         <!-- Rest of the HTML content... -->
         
@@ -429,6 +450,7 @@
     let dewpointSpreadCheckbox = null;
     function saveSettingsAndFetchData() {
             // Get all the checkbox elements
+            
             const capeCheckbox = document.getElementById('capeCheckbox');
             const precipProbCheckbox = document.getElementById('precipProbCheckbox');
             const temp2mCheckbox = document.getElementById('temp2mCheckbox');
@@ -436,7 +458,8 @@
             const precipSumCheckbox = document.getElementById('precipSumCheckbox');
             const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
             const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
-        
+            const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
+            const visibilityCheckbox = document.getElementById('visibilityCheckbox');
 
             // Save the checkbox states to cookies
             setCookie('variable_cape', capeCheckbox.checked, 365);
@@ -444,12 +467,13 @@
             setCookie('variable_temperature_2m', temp2mCheckbox.checked, 365);
             setCookie('variable_cloud_cover', cloudCoverCheckbox.checked, 365);
             setCookie('variable_precipitation_sum', precipSumCheckbox.checked, 365);
-        setCookie('variable_dewpoint_spread', dewpointSpreadCheckbox.checked, 365);
-        setCookie('variable_relative_humidity', relativeHumidityCheckbox.checked, 365);
-
+            setCookie('variable_dewpoint_spread', dewpointSpreadCheckbox.checked, 365);
+            setCookie('variable_lifted_index', liftedIndexCheckbox.checked, 365);
+            setCookie('variable_visibility', visibilityCheckbox.checked, 365);
             // Hide the popup
+            
             toggleVariableOptionsPopup();
-
+            clickCollapseButton();
             // Fetch all model data
             fetchAllModelsData();
         }
@@ -1088,12 +1112,12 @@
 
             // Check the model to determine the correct forecast_days parameter
             if (model.toLowerCase() === 'openmeteo') {
-                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=4'; // 14-day forecast for OpenMeteo
             } else if (model.toLowerCase() === 'icon') {
-                additionalParameters += '&forecast_days=7' ; // 7-day forecast for ICON
+                additionalParameters += '&forecast_days=4' ; // 7-day forecast for ICON
             }
             if (model.toLowerCase() === 'gfs') {
-                additionalParameters += '&forecast_days=14'; // 14-day forecast for OpenMeteo
+                additionalParameters += '&forecast_days=4'; // 14-day forecast for OpenMeteo
             }
             const zipcode = document.getElementById('zipcodeInput').value.trim();
             const lastApiCallKey = `lastApiCall_${model}_${zipcode}`;
@@ -1334,12 +1358,14 @@
             //console.log("window.onload");
             // Automatically click the edit button when the page loads for the first time
             const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
-    const capeCheckbox = document.getElementById('capeCheckbox');
+            const capeCheckbox = document.getElementById('capeCheckbox');
             const precipProbCheckbox = document.getElementById('precipProbCheckbox');
             const temp2mCheckbox = document.getElementById('temp2mCheckbox');
             const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
             const precipSumCheckbox = document.getElementById('precipSumCheckbox');
-                const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
+            const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
+            const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
+            const visibilityCheckbox = document.getElementById('visibilityCheckbox');
 
             // Load saved cookie values and set checkbox status; default to true
             capeCheckbox.checked = getCookieValueOrDefault('variable_cape', true);
@@ -1349,6 +1375,8 @@
             precipSumCheckbox.checked = getCookieValueOrDefault('variable_precipitation_sum', true);
             dewpointSpreadCheckbox.checked = getCookieValueOrDefault('variable_dewpoint_spread', true);
             relativeHumidityCheckbox.checked = getCookieValueOrDefault('variable_relative_humidity', true);
+            liftedIndexCheckbox.checked = getCookieValueOrDefault('variable_lifted_index', false);
+            visibilityCheckbox.checked = getCookieValueOrDefault('variable_visibility', true);
 
     const editButton = document.getElementById('editButton');
     if (editButton) {
@@ -1787,9 +1815,21 @@
                     // Close the CAPE table row
                     tableHtml += '</tr>';
                 }
+
             
             
             if ((table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
+              const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
+                if (liftedIndexCheckbox && liftedIndexCheckbox.checked && weatherData.hourly.hasOwnProperty('lifted_index')) {
+                    tableHtml += '<tr><th class="sticky-header small-text-cell">Lifted Index</th>';
+                    weatherData.hourly['lifted_index'].forEach(liftedIndex => {
+                        const { backgroundColor, textColor } = getLiftedIndexColor(liftedIndex);
+                        tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${liftedIndex.toFixed(1)}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                }
+
+         
                 // Precipitation probability only exists for certain models
                 if (weatherData.hourly.hasOwnProperty('precipitation_probability') && precipProbCheckbox && precipProbCheckbox.checked) {
                     // Add precipitation probability row header
@@ -1890,6 +1930,23 @@
                 // Add the dewpoint spread row to the existing HTML of the table
                 tableHtml += dewpointSpreadRowHtml;
             }
+            if ((table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
+                
+
+                // Add Visibility row if option selected and data is available
+                if (weatherData.hourly.hasOwnProperty('visibility') && document.getElementById('visibilityCheckbox').checked) {
+                    tableHtml += `<tr><th class="sticky-header small-text-cell">Visibility (mi)</th>`;
+                    weatherData.hourly['visibility'].forEach(visibility => {
+                        // Convert visibility from meters to miles and round to the nearest tenth
+                        const visibilityInMiles = (visibility * 0.000621371).toFixed(1);
+                        tableHtml += `<td class="data-cell smallest-text-cell">${visibilityInMiles}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                }
+                
+
+
+            }
             
             if (weatherData.hourly.hasOwnProperty('cloud_cover') && cloudCoverCheckbox && cloudCoverCheckbox.checked) {
                 // Add cloud cover row header
@@ -1958,7 +2015,23 @@
     }
 
 
-        
+        function getLiftedIndexColor(liftedIndex) {
+                let backgroundColorRGB;
+                let textColor = 'white'; // Default text color (for contrast against darker backgrounds)
+
+                if (liftedIndex >= 6) {
+                    backgroundColorRGB = colors.blue; // Blue for very stable conditions
+                } else if (liftedIndex >= 0) {
+                    // Directly interpolate the color from blue to red
+                    backgroundColorRGB = interpolateColorRGB('blue', 'red', (6 - liftedIndex) / 6);
+                } else {
+                    backgroundColorRGB = colors.red; // Red for very unstable (severe thunderstorms likely)
+                }
+
+                // Return the background color in CSS rgb() format and the text color
+                const backgroundColor = `rgb(${backgroundColorRGB.r}, ${backgroundColorRGB.g}, ${backgroundColorRGB.b})`;
+                return { backgroundColor, textColor };
+            }
 
         function enableAllButtons() {
                 const allButtons = document.querySelectorAll('button');
@@ -2228,8 +2301,7 @@
                 }
                 return ''; // Return empty string if the direction does not fall within known ranges
             }
-    document.addEventListener('DOMContentLoaded', () => {
-        const collapseButton = document.getElementById('editButton');
+    const collapseButton = document.getElementById('editButton');
 
         function clickCollapseButton() {
             // Check if the collapse button text is "Collapse" and click it
@@ -2237,6 +2309,8 @@
                 collapseButton.click();
             }
         }
+    document.addEventListener('DOMContentLoaded', () => {
+    
 
         // Array of button IDs that should trigger the collapse button click
         const buttonIdsToTriggerCollapse = [
