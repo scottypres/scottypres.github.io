@@ -462,8 +462,9 @@
     let dewpointSpreadCheckbox = null;
     function saveSettingsAndFetchData() {
             // Get all the checkbox elements
-            
+            console.log("save settings");
             const capeCheckbox = document.getElementById('capeCheckbox');
+            console.log('capeCheckbox:', capeCheckbox); // Check if the element is found
             const precipProbCheckbox = document.getElementById('precipProbCheckbox');
             const temp2mCheckbox = document.getElementById('temp2mCheckbox');
             const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
@@ -472,18 +473,31 @@
             const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
             const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
             const visibilityCheckbox = document.getElementById('visibilityCheckbox');
-
-            // Save the checkbox states to cookies
-            setCookie('variable_cape', capeCheckbox.checked, 365);
-            setCookie('variable_precipitation_probability', precipProbCheckbox.checked, 365);
-            setCookie('variable_temperature_2m', temp2mCheckbox.checked, 365);
-            setCookie('variable_cloud_cover', cloudCoverCheckbox.checked, 365);
-            setCookie('variable_precipitation_sum', precipSumCheckbox.checked, 365);
-            setCookie('variable_dewpoint_spread', dewpointSpreadCheckbox.checked, 365);
-            setCookie('variable_lifted_index', liftedIndexCheckbox.checked, 365);
-            setCookie('variable_visibility', visibilityCheckbox.checked, 365);
-            // Hide the popup
+            console.log(liftedIndexCheckbox);
             
+            console.log(document.getElementById('liftedIndexCheckbox'));
+            // Save the checkbox states to cookies
+            setCookie('variable_cape', capeCheckbox.checked ? 'true' : 'false', 365);
+            setCookie('variable_precipitation_probability', precipProbCheckbox.checked ? 'true' : 'false', 365);
+            setCookie('variable_temperature_2m', temp2mCheckbox.checked ? 'true' : 'false', 365);
+            setCookie('variable_cloud_cover', cloudCoverCheckbox.checked ? 'true' : 'false', 365);
+            setCookie('variable_precipitation_sum', precipSumCheckbox.checked ? 'true' : 'false', 365);
+            setCookie('variable_dewpoint_spread', dewpointSpreadCheckbox.checked ? 'true' : 'false', 365);
+            console.log('About to save checkbox state:', liftedIndexCheckbox.checked);
+            setCookie('variable_lifted_index', liftedIndexCheckbox.checked ? 'true' : 'false', 365);
+            console.log(liftedIndexCheckbox.checked);
+            setCookie('variable_visibility', visibilityCheckbox.checked ? 'true' : 'false', 365);
+            // Hide the popup
+             saveCheckboxState(capeCheckbox);
+        saveCheckboxState(precipProbCheckbox);
+        saveCheckboxState(temp2mCheckbox);
+        saveCheckboxState(cloudCoverCheckbox);
+        saveCheckboxState(precipSumCheckbox);
+        saveCheckboxState(dewpointSpreadCheckbox);
+        saveCheckboxState(relativeHumidityCheckbox);
+        saveCheckboxState(liftedIndexCheckbox);
+        saveCheckboxState(visibilityCheckbox);
+
             toggleVariableOptionsPopup();
             clickCollapseButton();
             // Fetch all model data
@@ -1351,35 +1365,80 @@
         }
 
         function getCookie(name) {
-            const cname = `${encodeURIComponent(name)}=`;
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const ca = decodedCookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') {
-                    c = c.substring(1);
+                const cname = `${encodeURIComponent(name)}=`;
+                const decodedCookie = decodeURIComponent(document.cookie);
+                const ca = decodedCookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(cname) === 0) {
+                        return c.substring(cname.length, c.length);
+                    }
                 }
-                if (c.indexOf(cname) === 0) {
-                    return c.substring(cname.length, c.length);
-                }
+                return "";
             }
-            return "";
+    function saveCheckboxState(checkbox) {
+            console.log('Saving state for:', checkbox.id, 'State:', checkbox.checked);
+        setCookie(checkbox.id, checkbox.checked ? 'true' : 'false', 365);
         }
 
+        // Controller function to restore checkbox state
+        function restoreCheckboxState(checkboxId) {
+                // Default values map for each checkbox
+                const defaultValues = {
+                    capeCheckbox: false,
+                    precipProbCheckbox: true,
+                    temp2mCheckbox: true,
+                    cloudCoverCheckbox: true,
+                    precipSumCheckbox: true,
+                    dewpointSpreadCheckbox: false,
+                    relativeHumidityCheckbox: false,
+                    liftedIndexCheckbox: false,
+                    visibilityCheckbox: false
+                };
 
+                // Get the cookie value or use default if the cookie does not exist
+                const cookieValue = getCookie(checkboxId);
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    // If the cookie has a value set, use it; otherwise, use the default
+                    checkbox.checked = cookieValue !== "" ? (cookieValue === 'true') : defaultValues[checkboxId];
+                }
+            }
+    
     function getCookieValueOrDefault(cookieName, defaultValue) {
             const value = getCookie(cookieName); // getCookie is supposed to fetch the cookie by its name
             if (value !== "") {
                 return isNaN(value) ? value : parseInt(value, 10); // Return value as a number if it's numeric
             }
             return defaultValue; // Return default value if cookie is not found
+            console.log(liftedIndexCheckbox);
         }
 
-   
+  
 
         window.onload = function () {
             ////console.log("window.onload");
             // Automatically click the edit button when the page loads for the first time
+            
+            
+
+            restoreCheckboxState('capeCheckbox');
+            restoreCheckboxState('precipProbCheckbox');
+            restoreCheckboxState('temp2mCheckbox');
+            restoreCheckboxState('cloudCoverCheckbox');
+            restoreCheckboxState('precipSumCheckbox');
+            restoreCheckboxState('dewpointSpreadCheckbox');
+            restoreCheckboxState('relativeHumidityCheckbox');
+           restoreCheckboxState('liftedIndexCheckbox');
+            restoreCheckboxState('visibilityCheckbox');
+
+
+            
+            console.log('Before initializing checkboxes:');
+            console.log(`Cape Checkbox Cookie: ${getCookie('variable_cape')}`);
             const gfsOpenMeteoLengthValue = getCookieValueOrDefault('gfsOpenMeteoLength', 7);
             const iconLengthValue = getCookieValueOrDefault('iconLength', 7);
             const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
@@ -1391,7 +1450,18 @@
             const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
             const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
             const visibilityCheckbox = document.getElementById('visibilityCheckbox');
-
+            
+            const liftedIndexCookieValue = getCookie('liftedIndexCheckbox');
+            console.log(`Liftedindex Cookie: ${getCookie('liftedIndexCheckbox')}`);
+            console.log(`Liftedindex checked: ${getCookie('liftedIndexCheckbox')}`);
+            
+            
+            
+            console.log('After window.onload:');
+            console.log('Cape Checkbox State:', capeCheckbox.checked);
+            console.log('Precip Prob Checkbox State:', precipProbCheckbox.checked);
+            console.log(`Temperature 2m checkbox: ${temp2mCheckbox.checked}`);
+            console.log(`Cloud cover checkbox: ${cloudCoverCheckbox.checked}`);
             // Load saved cookie values and set checkbox status; default to true
             document.getElementById('gfsOpenMeteoLength').addEventListener('keyup', function (event) {
                 if (event.key === 'Enter' || event.keyCode === 13) {
@@ -1405,15 +1475,8 @@
             });
             document.getElementById('gfsOpenMeteoLength').value = gfsOpenMeteoLengthValue;
             document.getElementById('iconLength').value = iconLengthValue;
-            capeCheckbox.checked = getCookieValueOrDefault('variable_cape', true);
-            precipProbCheckbox.checked = getCookieValueOrDefault('variable_precipitation_probability', true);
-            temp2mCheckbox.checked = getCookieValueOrDefault('variable_temperature_2m', true);
-            cloudCoverCheckbox.checked = getCookieValueOrDefault('variable_cloud_cover', true);
-            precipSumCheckbox.checked = getCookieValueOrDefault('variable_precipitation_sum', true);
-            dewpointSpreadCheckbox.checked = getCookieValueOrDefault('variable_dewpoint_spread', true);
-            relativeHumidityCheckbox.checked = getCookieValueOrDefault('variable_relative_humidity', true);
-            liftedIndexCheckbox.checked = getCookieValueOrDefault('variable_lifted_index', false);
-            visibilityCheckbox.checked = getCookieValueOrDefault('variable_visibility', true);
+            
+            
             //console.log(`GFS/OpeMeteo length value: ${gfsOpenMeteoLengthValue}`);
             //console.log(`ICON length value: ${iconLengthValue}`);
             const fogStatusCookie = getCookie('fogEnabled');
@@ -1656,6 +1719,9 @@
 
             // Fetch the coordinates and update the tables
             await getCoordinatesByZipcode(zipcode);
+            console.log('In handleZipcodeFetch:');
+            console.log('Cape Checkbox Cookie Value:', getCookie('variable_cape'));
+            console.log('Precip Prob Checkbox Cookie Value:', getCookie('variable_precipitation_probability'));
             // Re-enable the button and the recent search links
             document.getElementById('fetchCoordinatesButton').disabled = false;
             document.querySelectorAll('.recent-search').forEach(elem => elem.style.pointerEvents = '');
