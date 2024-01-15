@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Location Autocomplete Example</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #autocomplete-results {
+            border: 1px solid #ccc;
+            display: none;
+            position: absolute;
+            z-index: 1000;
+        }
+        .autocomplete-item {
+            padding: 5px;
+            cursor: pointer;
+            background-color: #fff;
+        }
+        .autocomplete-item:hover {
+            background-color: #e9e9e9;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <input type="text" id="location-input" placeholder="Enter location">
+    <button id="submit-button">Submit</button>
+    <ul id="autocomplete-results"></ul>
+</div>
+
+<script>
+    const input = $('#location-input');
+    const autocompleteResults = $('#autocomplete-results');
+
+    input.on('input', function(e) {
+        // call the API while typing
+        const value = $(this).val();
+        if (value.length > 2) { // Threshold to avoid too many requests
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${value}`)
+            .then(response => response.json())
+            .then(data => {
+                autocompleteResults.empty();
+                data.forEach((item) => {
+                    autocompleteResults.append(
+                        `<li class="autocomplete-item" data-lat="${item.lat}" data-lon="${item.lon}">${item.display_name}</li>`
+                    );
+                });
+                autocompleteResults.show();
+            });
+        } else {
+            autocompleteResults.hide();
+        }
+    });
+
+    $(document).on('click', '.autocomplete-item', function() {
+        // Fill the input with the selected location
+        input.val($(this).text());
+        input.data('lat', $(this).data('lat'));
+        input.data('lon', $(this).data('lon'));
+        autocompleteResults.hide();
+    });
+
+    $('#submit-button').on('click', function() {
+        const lat = input.data('lat');
+        const lon = input.data('lon');
+        if (lat && lon) {
+            // do something with the coordinates
+            alert(`Coordinates are: Latitude: ${lat}, Longitude: ${lon}`);
+        } else {
+            // input does not have coordinates data, you can make a new request or urge the user to select from suggestions
+            alert('Please select a location from the suggestions.');
+        }
+    });
+
+    // To hide results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).is('#location-input')) {
+            autocompleteResults.hide();
+        }
+    });
+</script>
+
+</body>
+</html>

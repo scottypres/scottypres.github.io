@@ -2,10 +2,39 @@
 <html lang="en">
 
 <head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soar Forecaster</title>
     <style>
+        #loadingIndicator {
+    text-align: center;
+    font-size:20px;
+}
+        #cityNameContainer {
+    text-align: center;
+    margin: 20px 0;
+}
+
+#cityName {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+         #autocomplete-results {
+            border: 1px solid #ccc;
+            display: none;
+            position: absolute;
+            z-index: 1000;
+        }
+        .autocomplete-item {
+            padding: 5px;
+            cursor: pointer;
+            background-color: #fff;
+        }
+        .autocomplete-item:hover {
+            background-color: #e9e9e9;
+        }
         /* Add a general header class to apply common header styles across tables */
         .sticky-container {
     position: fixed;
@@ -299,8 +328,9 @@
     
         <br>
         <div id="zipcode-section" class="button-row">
-            <label for="zipcodeInput">Enter Zipcode:</label>
-            <input type="text" id="zipcodeInput" placeholder="Enter zipcode" class="button-column"><button id="fetchCoordinatesButton" class="button-column">GO</button>
+            <input type="text" id="location-input" placeholder="Enter location">
+            <ul id="autocomplete-results"></ul>
+            <button id="fetchCoordinatesButton" class="button">Fetch Weather</button>
             <button id="instructionsButton" class="button-column">Instructions</button>
         </div>
     
@@ -417,6 +447,13 @@
 
         </div>
 
+        <div id="cityNameContainer">
+            <h2 id="cityName" style="display: none;">Select a city</h2>
+        </div>
+        <div id="loadingIndicator" style="display: none;">
+            <p>Loading...</p>
+        </div>
+
 <table id="gfs-table">
     <!-- The table will be populated by JavaScript -->
 </table>
@@ -439,6 +476,61 @@
 
 
     <script>
+          const input = $('#location-input');
+            const autocompleteResults = $('#autocomplete-results');
+
+            input.on('input', function (e) {
+                // call the API while typing
+                const value = $(this).val();
+                if (value.length > 2) { // Threshold to avoid too many requests
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${value}`)
+                        .then(response => response.json())
+                        
+                        .then(data => {
+                            autocompleteResults.empty();
+                            data.forEach((item) => {
+                                autocompleteResults.append(
+                                    `<li class="autocomplete-item" data-lat="${item.lat}" data-lon="${item.lon}">${item.display_name}</li>`
+                                );
+                            });
+                            autocompleteResults.show();
+                        })
+                         ;
+                } else {
+                    autocompleteResults.hide();
+                }
+            });
+
+            $(document).on('click', '.autocomplete-item', function () {
+                    // Fill the input with the selected location
+                    input.val($(this).text());
+                    input.data('lat', $(this).data('lat'));
+                    input.data('lon', $(this).data('lon'));
+                    autocompleteResults.hide();
+                    // Store the city name in a global variable or data attribute
+                    const cityName = $(this).text().split(',')[0]; // Get the city name (assuming it is the first part of the location string)
+                    $('#cityName').text(cityName); // Update the city name element
+                    setCookie('cityname',cityName);
+                });
+
+            $('#submit-button').on('click', function () {
+                const lat = input.data('lat');
+                const lon = input.data('lon');
+                if (lat && lon) {
+                    // do something with the coordinates
+                    alert(`Coordinates are: Latitude: ${lat}, Longitude: ${lon}`);
+                } else {
+                    // input does not have coordinates data, you can make a new request or urge the user to select from suggestions
+                    alert('Please select a location from the suggestions.');
+                }
+            });
+
+            // To hide results when clicking outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).is('#location-input')) {
+                    autocompleteResults.hide();
+                }
+            });
 
         let highAltitudeVisible = false;
         let windShearEnabled = false;
@@ -462,7 +554,7 @@
     let dewpointSpreadCheckbox = null;
     function saveSettingsAndFetchData() {
             // Get all the checkbox elements
-            console.log("save settings");
+            console.log("save settings and fetch data function");
             const capeCheckbox = document.getElementById('capeCheckbox');
             console.log('capeCheckbox:', capeCheckbox); // Check if the element is found
             const precipProbCheckbox = document.getElementById('precipProbCheckbox');
@@ -738,10 +830,7 @@
             }
         }
         let daylightHoursShown = true;
-        let userLocation = {
-            latitude: 26.4187,   // Use a default latitude or prompt the user to enter a valid one.
-            longitude: 81.4173,  // Use a default longitude or prompt the user to enter a valid one.
-        };
+        userLocation = getUserLocationFromCookies();
         
        
 
@@ -809,6 +898,7 @@
     let showingBestHours = false;
        ;
         function resetTables() {
+            loadingIndicator.style.display = 'block';
             ////console.log('resetTables');
             // Loop over each model to create the tables again using the stored data
             //  ////console.log('resetTables');
@@ -819,10 +909,13 @@
             // After resetting the tables, update the toggle button text to reflect the content shown in the tables
 
             initialTableSetup();
+            loadingIndicator.style.display = 'none';
+            cityName.style.display = 'block';
         }
 
         // Event listener to handle when the user clicks the "Apply" button in the Best Days popup
         document.getElementById('applyBestDaysButton').addEventListener('click', function () {
+            loadingIndicator.style.display = 'block';
                 const bestDaysPopup = document.getElementById('bestDaysPopup');
                 const applyBestDaysButton = this; // "this" refers to the 'applyBestDaysButton'
                 const bestDaysButton = document.getElementById('bestDaysButton'); // Assuming this is the ID of your "Best Days/Reset Best Hours" button
@@ -839,8 +932,11 @@
                     bestDaysPopup.style.display = 'none';
                 }
                 toggleButtonsDisabledState(false, ['editButton']);
+                loadingIndicator.style.display = 'none';
+                cityName.style.display='block';
             });
     document.getElementById('bestDaysButton').addEventListener('click', function () {
+        loadingIndicator.style.display = 'block';
     if (this.textContent === 'Reset Best Hours') {
         // Reset the tables
         resetTables();
@@ -851,8 +947,11 @@
         // Hide the popup if it's visible
         document.getElementById('bestDaysPopup').style.display = 'none';
     }
+    loadingIndicator.style.display = 'none';
+    cityName.style.display = 'block';
 });
         function filterBestDaysColumns() {
+            loadingIndicator.style.display = 'block';
             ////console.log('filterBestDaysColumns');
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
@@ -913,6 +1012,7 @@
                     }
                 });
             });
+            loadingIndicator.style.display = 'none';
         }
 
         // After tables have been generated, enable the "Best Days" button
@@ -932,7 +1032,8 @@
             return 'wind-arrow rotate-' + classNameDegrees;
         }
         function initialTableSetup() {
-            ////console.log('Initial Table Setup');
+            loadingIndicator.style.display = 'block';
+            console.log('Initial Table Setup');
             if (!isUpdatingTables) {
                 Object.keys(globalWeatherData).forEach(model => {
                     const tableId = `${model.toLowerCase()}-table`;
@@ -943,6 +1044,7 @@
             };
             // toggleDaylightHours();
             submitThresholdsAndRepaint();
+            loadingIndicator.style.display = 'none';
         }
         function showConfigPopup() {
                 document.getElementById('configPopup').style.display = 'flex';
@@ -1034,21 +1136,32 @@
         document.querySelectorAll('table[id$="-table"]').forEach(table => {
             table.dataset.showing = 'winds'; // Start with winds data shown
         });
-        document.getElementById('fetchCoordinatesButton').addEventListener('click', () => {
-                const zipcode = document.getElementById('zipcodeInput').value.trim();
-                if (zipcode) {
-                    handleZipcodeFetch(zipcode);
-
-                    // Collapse the button sections after initiating the fetch
-                    buttonSections.style.display = 'none'; // Hide the buttons
-                    editButton.textContent = 'Toolbar'; // Reset the button text to "Edit"
+        
+        document.getElementById('fetchCoordinatesButton').addEventListener('click', function () {
+                const input = $('#location-input');
+                const lat = input.data('lat');
+                const lon = input.data('lon');
+                if (lat && lon) {
+                    // Set the user's coordinates with fetched latitude and longitude
+                    userLocation.latitude = lat;
+                    userLocation.longitude = lon;
+                    setCookie('userLatitude', lat, 365);
+                    setCookie('userLongitude', lon, 365);
+                    // Trigger data fetch with these new coordinates
+                    fetchAllModelsData();
                 } else {
-                    alert('Please enter a valid zipcode.');
+                    alert('Please select a location from the suggestions.');
                 }
             });
+
+            //#####
         let isUpdatingTables = false;
         async function fetchAllModelsData() {
-            if (isUpdatingTables) return;
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (isUpdatingTables || !loadingIndicator) return;
+            cityName.style.display = 'block';
+                // Show the loading indicator
+                loadingIndicator.style.display = 'block';
             isUpdatingTables = true;
             ////console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
             try {
@@ -1066,6 +1179,8 @@
             } catch (error) {
                 console.error('Error fetching data for all models:', error);
             }
+             loadingIndicator.style.display = 'none'; // Make sure this line is reached in both success and error scenarios
+
             isUpdatingTables = false;
         }
 
@@ -1074,50 +1189,32 @@
 
         let commonParameters = [];
 
-        async function getCoordinatesByZipcode(zipcode) {
-            ////console.log("getCoordinatesByZipcode");
-            
-            //////console.log("getCoordinatesByZipcode called", new Date().toISOString());
-            const zipApiUrl = `https://api.zippopotam.us/us/${zipcode}`;
-            // ////console.log("getCoordinatesByZipcode start", new Date().toISOString());
-            try {
-                const response = await fetch(zipApiUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data = await response.json();
-                if (data && data.places.length > 0) {
-                    // Update the global location variable
-                    userLocation = {
-                        latitude: parseFloat(data.places[0].latitude),
-                        longitude: parseFloat(data.places[0].longitude)
-                    };
-                    //////console.log('Coordinates:', userLocation);
-                    setCookie('zipcode', zipcode, 365); // Save for 365 days
-                    // ////console.log('zip cookie saved');
-                    // Now call the API with these coordinates for each model and update the table with new data
-                    for (const model of Object.keys(baseUrls)) {
-                        await checkAndFetchData(baseUrls[model], model);
-                    }
-                    initialTableSetup(); // Refresh the table setup
 
+        //#####
+      
+    function getUserLocationFromCookies() {
+        const latitude = getCookie('userLatitude');
+        const longitude = getCookie('userLongitude');
+        return { latitude, longitude };
+    }
+    function hasApiBeenCalledRecently(latitude, longitude) {
+            const lastApiCallKey = `lastApiCall_${latitude}_${longitude}`;
+            const lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
+            const now = Date.now();
+            const cacheDuration = 15 * 60 * 1000;
 
-                } else {
-                    alert('No coordinates found for the provided zipcode.');
+            if (lastApiCallDataStr) {
+                const lastApiCallData = JSON.parse(lastApiCallDataStr);
+                if (now - lastApiCallData.timestamp < cacheDuration) {
+                    return true; // API has been called within last 15 minutes
                 }
-            } catch (error) {
-                console.error('Failed to fetch coordinates:', error);
-                alert('Failed to get coordinates. Please check the zipcode and try again.');
             }
-
-            ////console.log("getCoordinatesByZipcode end", new Date().toISOString());
-
-
-        };
-
+            return false;
+        }
         async function checkAndFetchData(baseUrl, model) {
-            ////console.log("checkAndFetchData");
+            console.log("checkAndFetchData");
             // ////console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
+            console.log("check and fetch data");
             const dailyParameters = [
                 'weather_code',
                 'temperature_2m_max',
@@ -1144,38 +1241,32 @@
                 const forecastDays = getCookieValueOrDefault('iconLength', 7); // Default 7, max 7
                 additionalParameters += `&forecast_days=${forecastDays}`;
             }
-            const zipcode = document.getElementById('zipcodeInput').value.trim();
-            const lastApiCallKey = `lastApiCall_${model}_${zipcode}`;
+              let shouldFetchData = true;  // Default to true to indicate new data should be fetched
+            const lastApiCallKey = `lastApiCall_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+            console.log(lastApiCallKey);
             
+            //#####
+
             const now = Date.now();
             const cacheDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
-            const lastApiCallData = localStorage.getItem(lastApiCallKey);
+           const lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
+
             
-            let shouldFetchData = true;
+
 
             // Check if we have cached data for this model and zipcode
-            if (lastApiCallData) {
-                const cachedData = JSON.parse(lastApiCallData);
-                //console.log(lastApiCallData);
-                //console.log('now');
-                //console.log(now);
-                //console.log('-');
-                //console.log('cacheddatatimestamp');
-                //console.log(cachedData.timestamp);
+             if (lastApiCallDataStr) {
+        const lastApiCallData = JSON.parse(lastApiCallDataStr);
 
-                //console.log('cacheDuration');
-                  //console.log(cacheDuration);
-                  //console.log('difference:');
-                  //console.log(now-cacheDuration);
-                // Check if the cached data is still valid
-                if (cachedData.zipcode === zipcode && now - cachedData.timestamp < cacheDuration) {
-                    // ////console.log(`Using cached data for model "${model}"`, new Date().toISOString());
-                    globalWeatherData[model] = cachedData.data;
-                    createTable(`${model.toLowerCase()}-table`, cachedData.data, model);
-                    shouldFetchData = false;
-                }
-            }
-
+        // Check if the cached data's timestamp is within the acceptable range
+        if (now - lastApiCallData.timestamp < cacheDuration) {
+            // If the data is still fresh, use the cached data and avoid making a new fetch
+            shouldFetchData = false;
+            globalWeatherData[model] = lastApiCallData.data;
+            createTable(`${model.toLowerCase()}-table`, lastApiCallData.data, model);
+        }
+    }
+console.log('should fetch data: ',shouldFetchData)
             // Fetch new data if necessary
             if (shouldFetchData) {
 //console.log('fetching new data');
@@ -1317,7 +1408,7 @@
 
 
                 const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-
+console.log(requestUrl);
                 try {
                     ////console.log('fetching new data');
                     // Request data from the weather API using the assembled URL
@@ -1335,7 +1426,8 @@
                     localStorage.setItem(lastApiCallKey, JSON.stringify({
                         timestamp: now,
                         data: weatherData,
-                        zipcode: zipcode
+                        latitude: userLocation.latitude,
+                       longitude: userLocation.latitude
                     }));
 
                     // Populate the respective table with the fetched data
@@ -1420,7 +1512,16 @@
   
 
         window.onload = function () {
-            ////console.log("window.onload");
+            console.log("window.onload");
+
+            
+            const cityNameFromCookie = getCookie('cityname');
+
+            // Update the displayed city name if the cookie exists
+            if (cityNameFromCookie) {
+                document.getElementById('cityName').textContent = cityNameFromCookie;
+            }
+            
             // Automatically click the edit button when the page loads for the first time
             
             
@@ -1437,8 +1538,8 @@
 
 
             
-            console.log('Before initializing checkboxes:');
-            console.log(`Cape Checkbox Cookie: ${getCookie('variable_cape')}`);
+            //console.log('Before initializing checkboxes:');
+            //console.log(`Cape Checkbox Cookie: ${getCookie('variable_cape')}`);
             const gfsOpenMeteoLengthValue = getCookieValueOrDefault('gfsOpenMeteoLength', 7);
             const iconLengthValue = getCookieValueOrDefault('iconLength', 7);
             const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
@@ -1452,16 +1553,7 @@
             const visibilityCheckbox = document.getElementById('visibilityCheckbox');
             
             const liftedIndexCookieValue = getCookie('liftedIndexCheckbox');
-            console.log(`Liftedindex Cookie: ${getCookie('liftedIndexCheckbox')}`);
-            console.log(`Liftedindex checked: ${getCookie('liftedIndexCheckbox')}`);
             
-            
-            
-            console.log('After window.onload:');
-            console.log('Cape Checkbox State:', capeCheckbox.checked);
-            console.log('Precip Prob Checkbox State:', precipProbCheckbox.checked);
-            console.log(`Temperature 2m checkbox: ${temp2mCheckbox.checked}`);
-            console.log(`Cloud cover checkbox: ${cloudCoverCheckbox.checked}`);
             // Load saved cookie values and set checkbox status; default to true
             document.getElementById('gfsOpenMeteoLength').addEventListener('keyup', function (event) {
                 if (event.key === 'Enter' || event.keyCode === 13) {
@@ -1517,22 +1609,9 @@
             if (greenThreshold) document.getElementById('greenThreshold').value = greenThreshold;
             if (redThreshold) document.getElementById('redThreshold').value = redThreshold;
 
-            // Check for the presence of the zipcode cookie
-            const savedZipcode = getCookie('zipcode');
+            
 
-            if (savedZipcode) {
-                const zipcodeInput = document.getElementById('zipcodeInput');
-
-                const fetchButton = document.getElementById('fetchCoordinatesButton');
-
-                zipcodeInput.value = savedZipcode;
-                //   ////console.log("Zip cookie loaded");
-                // Check if fetchCoordinatesButton has already a click event listener that fetches the weather
-                // If not, manually call the handleZipcodeFetch(zipcode) function after a short delay to ensure any setup logic has completed
-                setTimeout(function () {
-                    fetchButton.click();
-                }, 0);
-            }
+            
             const savedBestWindSpeed = getCookie('bestWindSpeed');
 
             if (savedBestWindSpeed) {
@@ -1557,6 +1636,17 @@
             }
             // Set the initial button text
             document.getElementById('toggleDaylightButton').textContent = daylightHoursShown ? 'Show All Hours' : 'Daylight Hours Only';
+        if (userLocation.latitude && userLocation.longitude) {
+                if (hasApiBeenCalledRecently(userLocation.latitude, userLocation.longitude)) {
+                    // Create table without calling API
+                    createTableBasedOnCachedData(userLocation.latitude, userLocation.longitude);
+                } else {
+                    // Fetch new data and create table
+                    refreshWeatherDataAndTables(userLocation.latitude, userLocation.longitude);
+                }
+            }
+        
+        
         };
         function saveForecastLengthSettings() {
                 const gfsOpenMeteoLength = document.getElementById('gfsOpenMeteoLength').value;
@@ -1583,79 +1673,46 @@
 
             // Event listener for the Submit button in the forecast length popup
             document.getElementById('submitForecastLength').addEventListener('click', function () {
-                    // Retrieve the gfsOpenMeteoLength value from the input field and convert it to a number
-                    let gfsOpenMeteoLength = parseInt(document.getElementById('gfsOpenMeteoLength').value, 10);
-                    let iconLength= parseInt(document.getElementById('iconLength').value, 10);
+                    // Retrieve the forecast lengths from the input fields.
+                    const gfsOpenMeteoLength = parseInt(document.getElementById('gfsOpenMeteoLength').value, 10);
+                    const iconLength = parseInt(document.getElementById('iconLength').value, 10);
 
-                    // Check if the length exceeds the maximum value, if so, set it to the maximum
-                    if (gfsOpenMeteoLength > 14) {
-                        gfsOpenMeteoLength = 14;
-                        // Optionally update the input field to reflect the change
-                        document.getElementById('gfsOpenMeteoLength').value = gfsOpenMeteoLength;
-                    }
-                    if (gfsOpenMeteoLength < 1) {
-                    gfsOpenMeteoLength = 1;
-                    // Optionally update the input field to reflect the change
-                    document.getElementById('gfsOpenMeteoLength').value = gfsOpenMeteoLength;
-                }
-                if (iconLength > 7) {
-                    iconLength = 7;
-                    // Optionally update the input field to reflect the change
-                    document.getElementById('iconLength').value = gfsOpenMeteoLength;
-                }
-                if (iconLength < 1) {
-                    iconLength = 1;
-                    // Optionally update the input field to reflect the change
-                    document.getElementById('iconLength').value = gfsOpenMeteoLength;
-                }
-                    let model = 'gfs'; // Replace with the actual model name used in your localStorage key
-                    let zipcode = document.getElementById('zipcodeInput').value.trim(); // Replace with the actual zipcode used in your localStorage key
-                    let lastApiCallKey = `lastApiCall_${model}_${zipcode}`; // Adjust based on how you create your localStorage key
-                    let lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
+                    // Save the new lengths to cookies.
+                    setCookie('gfsOpenMeteoLength', gfsOpenMeteoLength, 365);
+                    setCookie('iconLength', iconLength, 365);
 
-                    // Check if the data exists
-                    if (lastApiCallDataStr) {
-                        // Parse to JSON object
-                        let lastApiCallData = JSON.parse(lastApiCallDataStr);
+                    // Invalidate the cache by updating the timestamp for both models.
+                    ['gfs', 'icon'].forEach(model => {
+                        const lastApiCallKey = `lastApiCall_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+                        // Manually adjust the timestamp to be older than the cache duration.
+                        localStorage.setItem(lastApiCallKey, JSON.stringify({
+                            timestamp: Date.now() - 1000 * 60 * 60,
+                            data: {} // You can set the data to an empty object or the most recent data as per your preference.
+                        }));
+                    });
 
-                        // Subtract 1000000 from the timestamp
-                        lastApiCallData.timestamp -= 1000000000000;
+                    // Fetch new data for both models now that the cache is invalidated.
+                    fetchAllModelsData();
 
-                        // Convert back to string and save in localStorage
-                        localStorage.setItem(lastApiCallKey, JSON.stringify(lastApiCallData));
+                    // Close the forecast length popup.
+                    document.getElementById('forecastLengthPopup').style.display = 'none';
 
-                        // Log the updated timestamp for confirmation
-                        //console.log(`Updated timestamp: ${lastApiCallData.timestamp}`);
-                    }
-                     model = 'icon'; // Replace with the actual model name used in your localStorage key
-                 zipcode = document.getElementById('zipcodeInput').value.trim(); // Replace with the actual zipcode used in your localStorage key
-                 lastApiCallKey = `lastApiCall_${model}_${zipcode}`; // Adjust based on how you create your localStorage key
-                 lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
-
-                // Check if the data exists
-                if (lastApiCallDataStr) {
-                    // Parse to JSON object
-                    let lastApiCallData = JSON.parse(lastApiCallDataStr);
-
-                    // Subtract 1000000 from the timestamp
-                    lastApiCallData.timestamp -= 1000000000000;
-
-                    // Convert back to string and save in localStorage
-                    localStorage.setItem(lastApiCallKey, JSON.stringify(lastApiCallData));
-
-                    // Log the updated timestamp for confirmation
-                    //console.log(`Updated timestamp: ${lastApiCallData.timestamp}`);
-                }
-
-                    // Continue with the remaining actions after saving the updated timestamp
-                    saveForecastLengthSettings();
-                    // ...any other actions that should happen after updating...
-
-                    clickCollapseButton();
+                
                 });
         
         
-        
+        function createTableBasedOnCachedData(latitude, longitude) {
+                const lastApiCallKey = `lastApiCall_${latitude}_${longitude}`;
+                const cachedDataStr = localStorage.getItem(lastApiCallKey);
+                if (cachedDataStr) {
+                    const cachedData = JSON.parse(cachedDataStr);
+                    Object.keys(cachedData.data).forEach(model => {
+                        const tableId = `${model.toLowerCase()}-table`;
+                        createTable(tableId, cachedData.data[model], model);
+                    });
+                    initialTableSetup();
+                }
+            }
         
             function handleFogButtonClick() {
                 fogEnabled = !fogEnabled;
@@ -1693,39 +1750,10 @@
                     }
                 });
             }
-            document.getElementById('zipcodeInput').addEventListener('keyup', function (event) {
-                    if (event.key === 'Enter' || event.keyCode === 13) {
-                        // Call the function that fetches coordinates and updates the weather data
-                        handleZipcodeSubmit();
-                    }
-                });
+            
 
-                function handleZipcodeSubmit() {
-                    const zipcode = document.getElementById('zipcodeInput').value.trim();
-                    if (zipcode) {
-                        handleZipcodeFetch(zipcode);
-
-                        // Collapse the button sections after initiating the fetch
-                        buttonSections.style.display = 'none'; // Hide the buttons
-                        editButton.textContent = 'Toolbar'; // Reset the button text to "Edit"
-                    } else {
-                        alert('Please enter a valid zipcode.');
-                    }
-                }
-        async function handleZipcodeFetch(zipcode) {
-            // Disable the button and recent search links to prevent multiple fetches
-            document.getElementById('fetchCoordinatesButton').disabled = true;
-            document.querySelectorAll('.recent-search').forEach(elem => elem.style.pointerEvents = 'none');
-
-            // Fetch the coordinates and update the tables
-            await getCoordinatesByZipcode(zipcode);
-            console.log('In handleZipcodeFetch:');
-            console.log('Cape Checkbox Cookie Value:', getCookie('variable_cape'));
-            console.log('Precip Prob Checkbox Cookie Value:', getCookie('variable_precipitation_probability'));
-            // Re-enable the button and the recent search links
-            document.getElementById('fetchCoordinatesButton').disabled = false;
-            document.querySelectorAll('.recent-search').forEach(elem => elem.style.pointerEvents = '');
-        }
+                
+        
         
     function addVerticalBordersBetweenDays() {
             // Select all tables that you want to apply the border to
@@ -1806,7 +1834,7 @@
 
         
         function createTable(tableId, weatherData, model) {
-            ////console.log('createTable');
+            console.log('createTable');
             //console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
@@ -1896,6 +1924,7 @@
         document.getElementById('toggleButton').addEventListener('click', toggleWindClouds);
         document.getElementById('toggleButton').textContent = 'Winds/Clouds'; // Default text
         function toggleWindClouds() {
+            
             Object.keys(globalWeatherData).forEach(model => {
                 const tableId = `${model.toLowerCase()}-table`;
                 const dataTable = document.getElementById(tableId);
@@ -2220,7 +2249,7 @@
             };
             enableAllButtons();
             addVerticalBordersBetweenDays();
-            
+            cityName.style.display = 'block';
         }
 
    function getPrecipitationColor(precipValue) {
@@ -2318,9 +2347,9 @@
         };
 
         async function refreshWeatherDataAndTables(zipcode) {
-            ////console.log('refreshWeatherDataAndTables');
+            console.log('refreshWeatherDataAndTables');
             // Fetch coordinates from zipcode
-            await getCoordinatesByZipcode(zipcode);
+           
 
             // Fetch weather data
             await fetchAllModelsData();
