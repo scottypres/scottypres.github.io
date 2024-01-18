@@ -3,37 +3,48 @@
 
 <head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soar Forecaster</title>
     <style>
-        #loadingIndicator {
-    text-align: center;
-    font-size:20px;
-}
+        
+       
         #cityNameContainer {
-    text-align: center;
-    margin: 20px 0;
+    text-align: left;
+    margin: 0px 0;
+    position: fixed;
+    left:70px;
+    top:5px;
+    z-index: 10000;
+    background-color: white; /* This is the new line you should add */
 }
 
 #cityName {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: bold;
     margin: 0;
 }
          #autocomplete-results {
-            border: 1px solid #ccc;
+            
+             background-color: #ffffff;
+            border: 2px solid #000000;
             display: none;
             position: absolute;
-            z-index: 1000;
+            z-index: 1000px;
+            left:0px;
+            top:60px;
+            width: calc(100% - 2px); /* Assume border is 1px */
+       
         }
         .autocomplete-item {
             padding: 5px;
             cursor: pointer;
-            background-color: #fff;
+            background-color: #ffffff;
         }
         .autocomplete-item:hover {
-            background-color: #e9e9e9;
+            background-color: #ffffff;
         }
         /* Add a general header class to apply common header styles across tables */
         .sticky-container {
@@ -88,6 +99,7 @@
 
 
         .column-header {
+            font-size: 14px;
             white-space: nowrap;
             background-color: white;
             text-align: center;
@@ -318,142 +330,121 @@
 </head>
 
 <body>
+    
 <!-- Sticky Container -->
-
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css" rel="stylesheet">
     
     <div class="sticky-container">
-    <!-- Rest of the button rows are initially hidden -->
-    <div id="buttonSections" style="display: none;">
+        <!-- Rest of the button rows are initially hidden -->
+        <div id="buttonSections" style="display: none;">
+            <br>
+            <div id="zipcode-section" class="button-row">
+                <input type="text" id="location-input" placeholder="Enter location" autocomplete="off">
+                <ul id="autocomplete-results"></ul>
+                <button id="fetchCoordinatesButton" class="button">Fetch Weather</button>
+                <button id="instructionsButton" class="button">Instructions</button>
+            <br>
     
+            <div class="button-row">
+                <div class="button">
+                    <div class="column-header">Table Display/Config:</div>
+                    <button id="toggleButton" class="button" disabled>Wind/Clouds</button>
+                    <button id="toggleTemperatureButton" class="button" disabled>Temperature (F)</button>
     
-        <br>
-        <div id="zipcode-section" class="button-row">
-            <input type="text" id="location-input" placeholder="Enter location">
-            <ul id="autocomplete-results"></ul>
-            <button id="fetchCoordinatesButton" class="button">Fetch Weather</button>
-            <button id="instructionsButton" class="button-column">Instructions</button>
-        </div>
+                    <button id="toggleVariableOptionsPopup" class="button" disabled
+                        onclick="toggleVariableOptionsPopup()">Additional Variables</button>
+                    <button id="editThresholdsButton" class="button" disabled>Wind Speed Colors</button>
     
-        
-        <div class="button-row">
-            <div class="button-column">
-                <div class="column-header">Table Display/Config:</div>
-                <button id="toggleButton" class="button">Wind/Clouds</button>
-                <button id="toggleTemperatureButton" class="button">Temperature (F)</button>
-                
-            
-            <button id="toggleVariableOptionsPopup" class="button" onclick="toggleVariableOptionsPopup()">Additional
-                Variables</button>
-                <button id="editThresholdsButton" class="button">Wind Speed Colors</button>
-                <!-- New Forecast Length Button -->
-                <button id="forecastLengthButton" class="button">Forecast Length</button>
-                <!-- Forecast Length Popup -->
-                <div id="forecastLengthPopup" class="config-popup" style="display: none;">
-                    <div class="config-content">
-                        <label for="gfsOpenMeteoLength">GFS/OpenMeteo<br>(max 14):</label>
-                        <input type="number" id="gfsOpenMeteoLength" value="7" min="1" max="14"><br>
-                        <label for="iconLength">ICON<br>(max 7):</label>
-                        <input type="number" id="iconLength" value="7" min="1" max="7"><br>
-                        <button id="submitForecastLength">Submit</button>
+                    <!-- New Forecast Length Button -->
+                    <button id="forecastLengthButton" class="button" disabled>Forecast Length</button>
+    
+                    <!-- Forecast Length Popup -->
+                    <div id="forecastLengthPopup" class="config-popup" style="display: none;">
+                        <div class="config-content">
+                            <label for="gfsOpenMeteoLength">GFS/OpenMeteo (max 14):</label>
+                            <input type="number" id="gfsOpenMeteoLength" value="7" min="1" max="14"><br>
+                            <label for="iconLength">ICON (max 7):</label>
+                            <input type="number" id="iconLength" value="7" min="1" max="7"><br>
+                            <button id="submitForecastLength">Submit</button>
+                        </div>
+                    </div>
+    
+                    <!-- Variable Options Popup -->
+                    <div id="variableOptionsPopup" class="config-popup" style="display: none;">
+                        <div class="config-content">
+                            <label for="capeCheckbox">CAPE:</label>
+                            <input type="checkbox" id="capeCheckbox" checked><br>
+                            <label for="precipProbCheckbox">Precipitation Probability:</label>
+                            <input type="checkbox" id="precipProbCheckbox" checked><br>
+                            <label for="temp2mCheckbox">Temperature 2m:</label>
+                            <input type="checkbox" id="temp2mCheckbox" checked><br>
+                            <label for="cloudCoverCheckbox">Cloud Cover:</label>
+                            <input type="checkbox" id="cloudCoverCheckbox" checked><br>
+                            <label for="precipSumCheckbox">Precipitation Sum:</label>
+                            <input type="checkbox" id="precipSumCheckbox" checked><br>
+                            <label for="dewpointSpreadCheckbox">Dewpoint Spread:</label>
+                            <input type="checkbox" id="dewpointSpreadCheckbox" checked><br>
+                            <label for="relativeHumidityCheckbox">Relative Humidity:</label>
+                            <input type="checkbox" id="relativeHumidityCheckbox" checked><br>
+                            <label for="liftedIndexCheckbox">Lifted Index:</label>
+                            <input type="checkbox" id="liftedIndexCheckbox" checked><br>
+                            <label for="visibilityCheckbox">Visibility (Miles):</label>
+                            <input type="checkbox" id="visibilityCheckbox" checked><br>
+                            <button id="saveAndFetchButton">Submit</button>
+                            <button onclick="toggleVariableOptionsPopup()">Close</button>
+                        </div>
                     </div>
                 </div>
-
-            <!-- Variable Options Popup -->
-            <div id="variableOptionsPopup" class="config-popup" style="display: none;">
-                <div class="config-content">
-                    <label for="capeCheckbox">CAPE:</label>
-                    <input type="checkbox" id="capeCheckbox" checked>
-                    <br>
-                    <label for="precipProbCheckbox">Precipitation Probability:</label>
-                    <input type="checkbox" id="precipProbCheckbox" checked>
-                    <br>
-                    <label for="temp2mCheckbox">Temperature 2m:</label>
-                    <input type="checkbox" id="temp2mCheckbox" checked>
-                    <br>
-                    <label for="cloudCoverCheckbox">Cloud Cover:</label>
-                    <input type="checkbox" id="cloudCoverCheckbox" checked>
-                    <br>
-                    <label for="precipSumCheckbox">Precipitation Sum:</label>
-                    <input type="checkbox" id="precipSumCheckbox" checked>
-                    <br>
-                    <label for="dewpointSpreadCheckbox">Dewpoint Spread:</label>
-                    <input type="checkbox" id="dewpointSpreadCheckbox" checked>
-                    <br>
-                    <label for="relativeHumidityCheckbox">Relative Humidity:</label>
-                    <input type="checkbox" id="relativeHumidityCheckbox" checked>
-                    <br>
-                    <label for="liftedIndexCheckbox">Lifted Index:</label>
-                    <input type="checkbox" id="liftedIndexCheckbox" checked>
-                    <br>
-                    <label for="visibilityCheckbox">Visibility (Miles):</label>
-                    <input type="checkbox" id="visibilityCheckbox" checked>
-                    <br>
-                    <button id="saveAndFetchButton">Submit</button>
-                    <button onclick="toggleVariableOptionsPopup()">Close</button>
-                </div>
-            </div>
-        <br>
-        
-            <div class="button-column">
-                <div class="column-header">View Options:</div>
-                
-                <button id="toggleDaylightButton" class="button">Show All Hours</button>
-                <button id="toggleHighAltitudeButton" class="button">High Altitude</button>
-                
-<br>
-            
+    <br>
+                <div class="button">
+                    <div class="column-header">View Options:</div>
+                    <button id="toggleDaylightButton" class="button" disabled>Show All Hours</button>
+                    <button id="toggleHighAltitudeButton" class="button" disabled>High Altitude</button>
+                    <br><br>
                     <div class="column-header">Analysis Options:</div>
-                <button id="bestDaysButton" class="button" disabled>Best Hours</button>
-                <button id="checkWindShearButton" class="button">Enable Wind Shear</button>
-            </div>
-            <div id="configPopup" class="config-popup" style="display: none;">
-                <div class="config-content">
-                    <label for="blueThreshold">Low Speed - Blue (mph)</label>
-                    <input type="number" id="blueThreshold" value="7" min="0" /><br />
-                    <label for="greenThreshold">Moderate Speed - Green (mph)</label>
-                    <input type="number" id="greenThreshold" value="12" min="1" /><br />
-                    <label for="redThreshold">High Speed - Red (mph)</label>
-                    <input type="number" id="redThreshold" value="20" min="2" /><br />
-                    <button id="submitThresholds">Submit</button>
+                    <button id="bestDaysButton" class="button" disabled>Best Hours</button>
+                    <button id="checkWindShearButton" class="button" disabled>Enable Wind Shear</button>
                 </div>
-        </div>
-        <div id="bestDaysPopup" class="config-popup" style="display: none;">
-            <div class="config-content">
-                <label for="bestWindSpeed">Max Wind Speed</label>
-                <input type="number" id="bestWindSpeed" value="15" min="0" /><br />
-                <button id="applyBestDaysButton">Apply</button>
-        
-            </div>
-            
-        </div>
-        <button id="toggleFogButton" class="button">Fog</button>
-    </div>
-        <!-- Rest of the HTML content... -->
-        
     
-        
+                <div id="configPopup" class="config-popup" style="display: none;">
+                    <div class="config-content">
+                        <label for="blueThreshold">Low Speed - Blue (mph)</label>
+                        <input type="number" id="blueThreshold" value="7" min="0" /><br />
+                        <label for="greenThreshold">Moderate Speed - Green (mph)</label>
+                        <input type="number" id="greenThreshold" value="12" min="1" /><br />
+                        <label for="redThreshold">High Speed - Red (mph)</label>
+                        <input type="number" id="redThreshold" value="20" min="2" /><br />
+                        <button id="submitThresholds">Submit</button>
+                    </div>
+                </div>
+    
+                <div id="bestDaysPopup" class="config-popup" style="display: none;">
+                    <div class="config-content">
+                        <label for="bestWindSpeed">Max Wind Speed (mph)</label>
+                        <input type="number" id="bestWindSpeed" value="15" min="0" /><br />
+                        <button id="applyBestDaysButton">Apply</button>
+                    </div>
+                </div>
+    
+                <button id="toggleFogButton" class="button" disabled>Fog</button>
+    <br>
+                <!-- Reset All Button -->
+                <button id="resetAllButton" class="button">Reset to Defaults</button>
+            </div>
+            <!-- Rest of the HTML content... -->
+        </div>
+    </div></div>
+    
+    <!-- ICON Table -->
+    <div id="cityNameContainer">
+        <h2 id="cityName" style="display: none;">Select a city</h2>
     </div>
+    
+    <!-- Edit Button (New) -->
+    <button id="editButton" class="button">Toolbar</button>
     </div>
-
-        
-        <!-- Edit Button (New) -->
-        <button id="editButton" class="button-column">Toolbar</button>
-</div>
-
-        <!-- ICON Table -->
-        
-
-
-
-        </div>
-
-        <div id="cityNameContainer">
-            <h2 id="cityName" style="display: none;">Select a city</h2>
-        </div>
-        <div id="loadingIndicator" style="display: none;">
-            <p>Loading...</p>
-        </div>
-
+    <br>
+    <br>
 <table id="gfs-table">
     <!-- The table will be populated by JavaScript -->
 </table>
@@ -476,6 +467,8 @@
 
 
     <script>
+        
+            
           const input = $('#location-input');
             const autocompleteResults = $('#autocomplete-results');
 
@@ -500,20 +493,24 @@
                     autocompleteResults.hide();
                 }
             });
-
+        
             $(document).on('click', '.autocomplete-item', function () {
-                    // Fill the input with the selected location
-                    input.val($(this).text());
-                    input.data('lat', $(this).data('lat'));
-                    input.data('lon', $(this).data('lon'));
-                    autocompleteResults.hide();
-                    // Store the city name in a global variable or data attribute
-                    const cityName = $(this).text().split(',')[0]; // Get the city name (assuming it is the first part of the location string)
-                    $('#cityName').text(cityName); // Update the city name element
-                    setCookie('cityname',cityName);
-                });
+    // Fill the input with the selected location
+    input.val($(this).text());
+    input.data('lat', $(this).data('lat'));
+    input.data('lon', $(this).data('lon'));
+    autocompleteResults.hide();
+    // Store the city name in a global variable or data attribute
+    const cityName = $(this).text().split(',')[0]; // Get the city name (assuming it is the first part of the location string)
+    $('#cityName').text(cityName); // Update the city name element
+    setCookie('cityname',cityName);
 
+    // Automatically click the fetch weather data button after selection
+    $('#fetchCoordinatesButton').click();
+});
+            
             $('#submit-button').on('click', function () {
+                
                 const lat = input.data('lat');
                 const lon = input.data('lon');
                 if (lat && lon) {
@@ -522,6 +519,9 @@
                 } else {
                     // input does not have coordinates data, you can make a new request or urge the user to select from suggestions
                     alert('Please select a location from the suggestions.');
+                   
+                    
+                    return
                 }
             });
 
@@ -541,8 +541,31 @@
 
     const editButton = document.getElementById('editButton');
     const buttonSections = document.getElementById('buttonSections');
+    document.getElementById('resetAllButton').addEventListener('click', function () {
+            // Clear all cookies
+            document.cookie.split(";").forEach(function (c) {
+                document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            });
 
-    
+            // Clear all localStorage data
+            localStorage.clear();
+
+            // Refresh the page to apply changes
+            location.reload();
+        });
+    function isWindShearDetected(currentSpeed, nextSpeed, currentDirection, nextDirection) {
+            const speedDiff = Math.abs(currentSpeed - nextSpeed);
+            const directionDiff = getWindDirectionDifference(currentDirection, nextDirection);
+
+            // Check wind shear conditions based on speed and direction differences
+            return speedDiff > 10 || (speedDiff > 5 && directionDiff > 90);
+        }
+
+        function getWindDirectionDifference(dir1, dir2) {
+            const diff = Math.abs(dir1 - dir2) % 360; // This is the naive difference
+            // The smallest difference takes the wraparound into account
+            return diff > 180 ? 360 - diff : diff;
+        }
     
     // Function to toggle the variable options popup
         function toggleVariableOptionsPopup() {
@@ -552,6 +575,8 @@
 
     
     let dewpointSpreadCheckbox = null;
+
+    
     function saveSettingsAndFetchData() {
             // Get all the checkbox elements
             console.log("save settings and fetch data function");
@@ -608,6 +633,7 @@
 
             document.addEventListener('DOMContentLoaded', function () {
                     // Get the submit button by its ID
+                    console.log('DCOMContentLoaded');
                     const saveAndFetchButton = document.getElementById('saveAndFetchButton');
 
                     // Register the click event listener for the submit button
@@ -635,6 +661,8 @@
             fetchAllModelsData();
         });
         document.getElementById('checkWindShearButton').addEventListener('click', function () {
+            
+           
                 ////console.log("Wind shear button clicked");
                 windShearEnabled = !windShearEnabled;
                 setCookie('windShearEnabled', windShearEnabled ? 'true' : 'false', 365);
@@ -746,7 +774,7 @@
                 const rowCount = rows.length;
 
                 // Ensure only the last 5 rows are considered
-                const startRow = Math.max(rowCount - 12, 0);
+                const startRow = Math.max(rowCount - 18, 0);
                 // Iterate through each row, but not the last row since there's no row below it
                  for (let rowIndex = startRow; rowIndex < rows.length - 1; rowIndex++) {
                     const currentRow = rows[rowIndex];
@@ -774,13 +802,10 @@
                             // ////console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
 
                             // Check if the difference between current and next wind speed exceeds the threshold and check wind direction difference
-                            if (Math.abs(currentWindSpeed - nextWindSpeed) > 9 || Math.abs(currentWindDirection - nextWindDirection) > 90) {
+                             if (isWindShearDetected(currentWindSpeed, nextWindSpeed, currentWindDirection, nextWindDirection)) {
                                 // Apply the "shear-detected" class to current and corresponding cell in the next row
                                 cell.classList.add('shear-detected');
                                 nextCell.classList.add('shear-detected');
-                                //////console.log(`SHEAR DETECTED ${table.id} Column: ${cellIndex + 1}`);
-                                // Log that wind shear was detected between the two cells
-                                // ////console.log(`Wind shear detected at Row: ${rowIndex + 1}, Column: ${cellIndex + 1}`);
                             }
                         });
                     }
@@ -898,7 +923,7 @@
     let showingBestHours = false;
        ;
         function resetTables() {
-            loadingIndicator.style.display = 'block';
+            
             ////console.log('resetTables');
             // Loop over each model to create the tables again using the stored data
             //  ////console.log('resetTables');
@@ -909,13 +934,13 @@
             // After resetting the tables, update the toggle button text to reflect the content shown in the tables
 
             initialTableSetup();
-            loadingIndicator.style.display = 'none';
+           
             cityName.style.display = 'block';
         }
 
         // Event listener to handle when the user clicks the "Apply" button in the Best Days popup
         document.getElementById('applyBestDaysButton').addEventListener('click', function () {
-            loadingIndicator.style.display = 'block';
+           
                 const bestDaysPopup = document.getElementById('bestDaysPopup');
                 const applyBestDaysButton = this; // "this" refers to the 'applyBestDaysButton'
                 const bestDaysButton = document.getElementById('bestDaysButton'); // Assuming this is the ID of your "Best Days/Reset Best Hours" button
@@ -932,11 +957,11 @@
                     bestDaysPopup.style.display = 'none';
                 }
                 toggleButtonsDisabledState(false, ['editButton']);
-                loadingIndicator.style.display = 'none';
+                
                 cityName.style.display='block';
             });
     document.getElementById('bestDaysButton').addEventListener('click', function () {
-        loadingIndicator.style.display = 'block';
+        
     if (this.textContent === 'Reset Best Hours') {
         // Reset the tables
         resetTables();
@@ -947,11 +972,11 @@
         // Hide the popup if it's visible
         document.getElementById('bestDaysPopup').style.display = 'none';
     }
-    loadingIndicator.style.display = 'none';
+   
     cityName.style.display = 'block';
 });
         function filterBestDaysColumns() {
-            loadingIndicator.style.display = 'block';
+            
             ////console.log('filterBestDaysColumns');
             // Threshold in mph
             const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
@@ -1012,7 +1037,7 @@
                     }
                 });
             });
-            loadingIndicator.style.display = 'none';
+            
         }
 
         // After tables have been generated, enable the "Best Days" button
@@ -1032,7 +1057,7 @@
             return 'wind-arrow rotate-' + classNameDegrees;
         }
         function initialTableSetup() {
-            loadingIndicator.style.display = 'block';
+            
             console.log('Initial Table Setup');
             if (!isUpdatingTables) {
                 Object.keys(globalWeatherData).forEach(model => {
@@ -1044,7 +1069,7 @@
             };
             // toggleDaylightHours();
             submitThresholdsAndRepaint();
-            loadingIndicator.style.display = 'none';
+            
         }
         function showConfigPopup() {
                 document.getElementById('configPopup').style.display = 'flex';
@@ -1099,6 +1124,7 @@
 
     document.getElementById('submitThresholds').addEventListener('click', submitThresholdsAndRepaint);
         function repaintGraphsWithNewThresholds(low, med, high) {
+            console.log('repaintgraphs');
             // Assume these are the names of three different tables you have
             lowWindThreshold = low;
             medWindThreshold = med;
@@ -1112,6 +1138,7 @@
                 }
             });
             
+           
         }
         function hPaToFeet(hPa) {
             const conversionTable = {
@@ -1138,6 +1165,10 @@
         });
         
         document.getElementById('fetchCoordinatesButton').addEventListener('click', function () {
+            console.log('fetch coord button');
+            clickCollapseButton();
+           
+            
                 const input = $('#location-input');
                 const lat = input.data('lat');
                 const lon = input.data('lon');
@@ -1151,38 +1182,50 @@
                     fetchAllModelsData();
                 } else {
                     alert('Please select a location from the suggestions.');
+                    buttonSections.style.display = 'block';    // Show the buttons
+                    editButton.textContent = 'Collapse';
+                    return
                 }
             });
 
             //#####
+
+            
         let isUpdatingTables = false;
         async function fetchAllModelsData() {
-                const loadingIndicator = document.getElementById('loadingIndicator');
-                if (isUpdatingTables || !loadingIndicator) return;
-            cityName.style.display = 'block';
-                // Show the loading indicator
-                loadingIndicator.style.display = 'block';
-            isUpdatingTables = true;
-            ////console.log("Inside fetchAllModelsData before Promise.all", new Date().toISOString());
-            try {
-                // Await all fetches to be completed using Promise.all
-                await Promise.all(Object.entries(baseUrls).map(async ([model, baseUrl]) => {
-                    ////console.log(`Fetching data for model "${model}"`, new Date().toISOString());
-                    await checkAndFetchData(baseUrl, model);
-                }));
+                console.log('fetchAllModelsData called');
 
+              
                 
+                if (isUpdatingTables) {
+                    // If already updating tables, do nothing.
+                    // You might want to handle this case more gracefully.
+                    
+                    return;
+                }
 
-                // Now that we have all data, setup the tables and perform shear checks
-                initialTableSetup();
+                isUpdatingTables = true;
 
-            } catch (error) {
-                console.error('Error fetching data for all models:', error);
+                try {
+                    // Await all promises related to API calls.
+                    // This ensures all promises are evaluated before closing the Swal modal.
+                    await Promise.all(Object.entries(baseUrls).map(async ([model, baseUrl]) => {
+                        console.log(`Processing model: ${model}`);
+                        await checkAndFetchData(baseUrl, model); // await added here
+                        console.log(`Finished processing model: ${model}`);
+                    }));
+
+                    console.log('All models data fetched');
+                    initialTableSetup(); // Call initial setup after all models have been processed.
+                } catch (error) {
+                    console.error('Error fetching data for all models:', error);
+                    // Optionally handle error display here.
+                } finally {
+                    isUpdatingTables = false;
+                    
+                    cityName.style.display = 'block';
+                }
             }
-             loadingIndicator.style.display = 'none'; // Make sure this line is reached in both success and error scenarios
-
-            isUpdatingTables = false;
-        }
 
         // Fetch data for each model by calling the new fetchAllModelsData function
         //fetchAllModelsData();
@@ -1513,7 +1556,7 @@ console.log(requestUrl);
 
         window.onload = function () {
             console.log("window.onload");
-
+            
             
             const cityNameFromCookie = getCookie('cityname');
 
@@ -1646,9 +1689,10 @@ console.log(requestUrl);
                 }
             }
         
-        
+            
         };
         function saveForecastLengthSettings() {
+            console.log('forecast length');
                 const gfsOpenMeteoLength = document.getElementById('gfsOpenMeteoLength').value;
                 const iconLength = document.getElementById('iconLength').value;
 
@@ -1674,6 +1718,7 @@ console.log(requestUrl);
             // Event listener for the Submit button in the forecast length popup
             document.getElementById('submitForecastLength').addEventListener('click', function () {
                     // Retrieve the forecast lengths from the input fields.
+                    clickCollapseButton();
                     const gfsOpenMeteoLength = parseInt(document.getElementById('gfsOpenMeteoLength').value, 10);
                     const iconLength = parseInt(document.getElementById('iconLength').value, 10);
 
@@ -1702,6 +1747,7 @@ console.log(requestUrl);
         
         
         function createTableBasedOnCachedData(latitude, longitude) {
+            console.log('createtablebasedoncacheddata');
                 const lastApiCallKey = `lastApiCall_${latitude}_${longitude}`;
                 const cachedDataStr = localStorage.getItem(lastApiCallKey);
                 if (cachedDataStr) {
@@ -1976,6 +2022,7 @@ console.log(requestUrl);
 
 
         function fillTableWithWindSpeed(table, weatherData) {
+            console.log('filltablewithwindspeed');
             //////console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
             const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
@@ -2250,7 +2297,8 @@ console.log(requestUrl);
             enableAllButtons();
             addVerticalBordersBetweenDays();
             cityName.style.display = 'block';
-        }
+            
+            }
 
    function getPrecipitationColor(precipValue) {
         const startColor = { r: 255, g: 255, b: 255 }; // White color for 0 inches
@@ -2566,8 +2614,7 @@ console.log(requestUrl);
             }
         }
     document.addEventListener('DOMContentLoaded', () => {
-    
-
+        
         // Array of button IDs that should trigger the collapse button click
         const buttonIdsToTriggerCollapse = [
             // Add all the button IDs that need to trigger the collapse
@@ -2595,6 +2642,7 @@ console.log(requestUrl);
 
         // If there are more buttons with similar functionality that are not captured by ID,
         // you can assign them a common class and add event listeners based on that.
+        
     });
 
     </script>
