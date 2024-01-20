@@ -9,7 +9,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soar Forecaster</title>
     <style>
-        
+    
+#forecastLengthPopup .config-content label, 
+#forecastLengthPopup .config-content input[type="range"] {
+    width: calc(100% - 30px); /* Adjust the value 50px to accommodate the span width */
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px; /* Optional spacing between the slider and the text */
+}
+
+/* Style for the text output to display inline */
+#forecastLengthPopup .config-content span {
+    display: inline-block;
+    vertical-align: middle;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
        
         #cityNameContainer {
     text-align: left;
@@ -56,6 +70,10 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Keep the shadow if desired */
     display: inline-block; /* Change to inline-block */
     box-sizing: border-box; /* Padding inside the width */
+    max-width: 600px; /* Choose a suitable width that can accommodate the sliders */
+            width:auto;
+    overflow-x: auto; /* Allow horizontal scrolling if content is too wide */
+
 }
 .small-text-cell {
     font-size: 12px; /* Adjust to your preferred size */
@@ -295,6 +313,7 @@
     margin-bottom: 10px; /* Spacing between rows */
     flex-wrap: wrap; /* Allow items to wrap as needed */
     flex-direction: column;
+    
 }
 
 .button-column {
@@ -343,6 +362,7 @@
                 <ul id="autocomplete-results"></ul>
                 <button id="fetchCoordinatesButton" class="button">Fetch Weather</button>
                 <button id="instructionsButton" class="button">Instructions</button>
+                </div>
             <br>
     
             <div class="button-row">
@@ -354,17 +374,17 @@
                     <button id="toggleVariableOptionsPopup" class="button" disabled
                         onclick="toggleVariableOptionsPopup()">Additional Variables</button>
                     <button id="editThresholdsButton" class="button" disabled>Wind Speed Colors</button>
-    <div id="configPopup" class="config-popup" style="display: none;">
-        <div class="config-content">
-            <label for="blueThreshold">Low Speed - Blue (mph)</label>
-            <input type="number" id="blueThreshold" value="7" min="0" /><br />
-            <label for="greenThreshold">Moderate Speed - Green (mph)</label>
-            <input type="number" id="greenThreshold" value="12" min="1" /><br />
-            <label for="redThreshold">High Speed - Red (mph)</label>
-            <input type="number" id="redThreshold" value="20" min="2" /><br />
-            <button id="submitThresholds">Submit</button>
-        </div>
-    </div>
+                <div id="configPopup" class="config-popup" style="display: none;">
+                    <div class="config-content">
+                        <label for="blueThreshold">Low Speed - Blue (mph)</label>
+                        <input type="number" id="blueThreshold" value="7" min="0" /><br />
+                        <label for="greenThreshold">Moderate Speed - Green (mph)</label>
+                        <input type="number" id="greenThreshold" value="12" min="1" /><br />
+                        <label for="redThreshold">High Speed - Red (mph)</label>
+                        <input type="number" id="redThreshold" value="20" min="2" /><br />
+                        <button id="submitThresholds">Submit</button>
+                    </div>
+                </div>
                     <!-- New Forecast Length Button -->
                     <button id="forecastLengthButton" class="button" disabled>Forecast Length</button>
     
@@ -372,9 +392,13 @@
                     <div id="forecastLengthPopup" class="config-popup" style="display: none;">
                         <div class="config-content">
                             <label for="gfsOpenMeteoLength">GFS/OpenMeteo (max 14):</label>
-                            <input type="number" id="gfsOpenMeteoLength" value="14" min="1" max="14"><br>
+                            <input type="range" id="gfsOpenMeteoLength" value="7" min="1" max="14">
+                            <span id="gfsOpenMeteoLengthValue">14</span><br>
+                    
                             <label for="iconLength">ICON (max 7):</label>
-                            <input type="number" id="iconLength" value="7" min="1" max="7"><br>
+                            <input type="range" id="iconLength" value="7" min="1" max="7">
+                            <span id="iconLengthValue">7</span><br>
+                    
                             <button id="submitForecastLength">Submit</button>
                         </div>
                     </div>
@@ -432,7 +456,7 @@
                 <button id="resetAllButton" class="button">Reset to Defaults</button>
             </div>
             <!-- Rest of the HTML content... -->
-        </div>
+        
     </div></div>
     
     <!-- ICON Table -->
@@ -1713,6 +1737,14 @@ console.log(requestUrl);
                 toggleButtonsDisabledState(true, ['submitForecastLength', 'editButton']);
             });
 
+            document.addEventListener('DOMContentLoaded', function () {
+                    // Add event listeners for slider changes to update the displayed value
+                    document.getElementById('gfsOpenMeteoLength').addEventListener('input', function () {
+                        document.getElementById('gfsOpenMeteoLengthValue').textContent = this.value;
+                    });
+                    document.getElementById('iconLength').addEventListener('input', function () {
+                        document.getElementById('iconLengthValue').textContent = this.value;
+                    });})
             // Event listener for the Submit button in the forecast length popup
             document.getElementById('submitForecastLength').addEventListener('click', function () {
                     // Retrieve the forecast lengths from the input fields.
@@ -1733,12 +1765,10 @@ console.log(requestUrl);
                             data: {} // You can set the data to an empty object or the most recent data as per your preference.
                         }));
                     });
-
+                    document.getElementById('forecastLengthPopup').style.display = 'none';
+                
                     // Fetch new data for both models now that the cache is invalidated.
                     fetchAllModelsData();
-
-                    // Close the forecast length popup.
-                    document.getElementById('forecastLengthPopup').style.display = 'none';
 
                 
                 });
