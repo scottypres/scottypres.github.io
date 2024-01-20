@@ -9,7 +9,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soar Forecaster</title>
     <style>
-    
+    #addCurrentLocationButton {
+    margin-top: 10px; /* Add some top margin to separate it from the list */
+}
+    #savedLocationsList {
+    list-style: none; /* Remove default list styling */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+}
+
+.saved-location-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Vertically center the content of list items */
+    margin-bottom: 5px; /* Add some space between list items */
+}
+
+.saved-location-item a {
+    flex-grow: 1; /* Ensure the location link takes up available space */
+    padding-right: 10px; /* Add some space between the location name and the delete button */
+}
+
 #forecastLengthPopup .config-content label, 
 #forecastLengthPopup .config-content input[type="range"] {
     width: calc(100% - 30px); /* Adjust the value 50px to accommodate the span width */
@@ -361,6 +381,23 @@
                 <input type="text" id="location-input" placeholder="Enter location" autocomplete="off">
                 <ul id="autocomplete-results"></ul>
                 <button id="fetchCoordinatesButton" class="button">Fetch Weather</button>
+                <button id="savedLocationsButton" class="button">Saved Locations</button>
+                <div id="savedLocationsPopup" class="config-popup" style="display: none;">
+                    
+                    <div class="config-content">
+                        <br>
+                        <ul id="savedLocationsList">
+                            <!-- List of saved locations will be populated here -->
+                        </ul>
+                        <button id="addCurrentLocationButton">Add</button>
+                        <br>
+                        <button onclick="toggleSavedLocationsPopup()">Close</button>
+                        <br>
+                        <br>
+                        <br>
+                        <br>
+                    </div>
+                </div>
                 <button id="instructionsButton" class="button">Instructions</button>
                 </div>
             <br>
@@ -492,7 +529,16 @@
 
     <script>
         
-            
+            $(document).ready(function () {
+                    // Existing event handlers...
+
+                    // Clear the input field every time it gains focus
+                    $('#location-input').on('focus', function () {
+                        $(this).val(''); // Set the value to an empty string
+                    });
+
+                    // Your other code can remain the same...
+                });
           const input = $('#location-input');
             const autocompleteResults = $('#autocomplete-results');
 
@@ -519,7 +565,7 @@
             });
         
             $(document).on('click', '.autocomplete-item', function () {
-    // Fill the input with the selected location
+    // Fill the input with the selected location 
     input.val($(this).text());
     input.data('lat', $(this).data('lat'));
     input.data('lon', $(this).data('lon'));
@@ -599,7 +645,91 @@
 
     
     let dewpointSpreadCheckbox = null;
+    document.getElementById('addCurrentLocationButton').addEventListener('click', function () {
+        const cityName = $('#cityName').text();
+        const lat = $('#location-input').data('lat');
+        const lon = $('#location-input').data('lon');
+        addLocationToSavedLocations(cityName, { lat, lon });
+    });
 
+    function addLocationToSavedLocations(name, coords) {
+            const savedLocations = getSavedLocations();
+            if (savedLocations.length < 5) {
+                savedLocations.push({ name, coords });
+                setCookie('savedLocations', JSON.stringify(savedLocations), 365);
+                updateSavedLocationsList();
+            } else {
+                alert('Maximum of 5 locations can be saved.');
+            }
+        }
+    function deleteLocationFromSavedLocations(index) {
+            // Retrieve existing locations from cookies
+            const savedLocations = getSavedLocations();
+            savedLocations.splice(index, 1); // Remove the location at the given index
+            setCookie('savedLocations', JSON.stringify(savedLocations), 365);
+            updateSavedLocationsList();
+        }
+        function loadWeatherDataForLocation(coords) {
+                userLocation.latitude = coords.lat;
+                userLocation.longitude = coords.lon;
+                setCookie('userLatitude', userLocation.latitude, 365);
+                setCookie('userLongitude', userLocation.longitude, 365);
+                fetchAllModelsData();
+            }
+            function getSavedLocations() {
+                    // Try to get the saved locations from a cookie
+                    const savedLocationsStr = getCookie('savedLocations');
+                    // If the cookie exists and is not empty, parse it into an array of locations
+                    if (savedLocationsStr) {
+                        try {
+                            return JSON.parse(savedLocationsStr);
+                        } catch (e) {
+                            console.error("Failed to parse saved locations:", e);
+                            return []; // Return an empty array if parsing fails
+                        }
+                    }
+                    // If there is no such cookie, return an empty array
+                    return [];
+                }
+        function updateSavedLocationsList() {
+                const savedLocations = getSavedLocations();
+                const listElement = document.getElementById('savedLocationsList');
+                listElement.innerHTML = ''; // Clear current list
+
+                savedLocations.forEach((location, index) => {
+                    const locationItem = document.createElement('li');
+                    locationItem.classList.add('saved-location-item'); // Added class for styling
+
+                    const locationLink = document.createElement('a');
+                    locationLink.href = "#";
+                    locationLink.textContent = location.name;
+
+                    // Attach a click event listener to the link
+                    locationLink.addEventListener('click', () => {
+                        // Update the displayed city name
+                        document.getElementById('cityName').textContent = location.name;
+                        document.getElementById('cityName').style.display = 'block'; // Ensure the city name is visible
+
+                        // Load weather data for the selected saved location
+                        loadWeatherDataForLocation(location.coords);
+                        toggleSavedLocationsPopup(); // Close the saved locations popup
+                        clickCollapseButton();
+                    });
+
+                    locationItem.appendChild(locationLink);
+
+                    // Add a delete button for each saved location
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => {
+                        deleteLocationFromSavedLocations(index); // Function to delete the location
+                    });
+
+                    locationItem.appendChild(deleteButton); // Append delete button to the flex container
+
+                    listElement.appendChild(locationItem); // Append the list item with flexbox to the saved locations list
+                });
+            }
     
     function saveSettingsAndFetchData() {
             // Get all the checkbox elements
@@ -2641,7 +2771,20 @@ console.log(requestUrl);
                 collapseButton.click();
             }
         }
+
+        function toggleSavedLocationsPopup() {
+                const popup = document.getElementById('savedLocationsPopup');
+                popup.style.display = (popup.style.display === 'none' || popup.style.display === '') ? 'flex' : 'none';
+
+                // Update the list of saved locations whenever the popup is displayed
+                if (popup.style.display === 'flex') {
+                    updateSavedLocationsList();
+                }
+            }
     document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('savedLocationsButton').addEventListener('click', toggleSavedLocationsPopup);
+
+        // Update saved locations list when the popup is shown
         
         // Array of button IDs that should trigger the collapse button click
         const buttonIdsToTriggerCollapse = [
