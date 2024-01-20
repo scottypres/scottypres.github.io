@@ -372,7 +372,7 @@
                     <div id="forecastLengthPopup" class="config-popup" style="display: none;">
                         <div class="config-content">
                             <label for="gfsOpenMeteoLength">GFS/OpenMeteo (max 14):</label>
-                            <input type="number" id="gfsOpenMeteoLength" value="7" min="1" max="14"><br>
+                            <input type="number" id="gfsOpenMeteoLength" value="14" min="1" max="14"><br>
                             <label for="iconLength">ICON (max 7):</label>
                             <input type="number" id="iconLength" value="7" min="1" max="7"><br>
                             <button id="submitForecastLength">Submit</button>
@@ -1556,8 +1556,6 @@ console.log(requestUrl);
 
         window.onload = function () {
             console.log("window.onload");
-            
-            
             const cityNameFromCookie = getCookie('cityname');
 
             // Update the displayed city name if the cookie exists
