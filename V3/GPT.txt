@@ -1,0 +1,2634 @@
+---
+
+autocomplete.css:
+```
+#autocomplete-list {
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+
+.autocomplete-items {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff; 
+  border-bottom: 1px solid #d4d4d4; 
+}
+
+.autocomplete-items:hover {
+  background-color: #e9e9e9;
+}
+```
+
+---
+
+autocomplete.js:
+```
+function debounceGetSuggestions() {
+  const inputValue = document.getElementById("locationInput").value;
+  if (!inputValue) return;
+
+  clearTimeout(timeout);
+  timeout = setTimeout(() => getSuggestions(inputValue), 1000);
+}
+
+async function getSuggestions(inputText) {
+  let url = new URL("https://nominatim.openstreetmap.org/search");
+  url.search = new URLSearchParams({
+    q: inputText,
+    format: "json",
+    addressdetails: 1,
+  });
+
+  try {
+    const response = await fetch(url);
+    const suggestions = await response.json();
+    displaySuggestions(suggestions);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function displaySuggestions(suggestions) {
+  const autocompleteList = document.getElementById("autocomplete-list");
+  autocompleteList.innerHTML = "";
+
+  suggestions.forEach((place) => {
+    const item = document.createElement("div");
+    item.innerHTML = `<strong>${place.display_name}</strong>`;
+    item.className = "autocomplete-items";
+
+    item.addEventListener("click", () => {
+      document.getElementById("locationInput").value = place.display_name;
+      document.getElementById(
+        "selectedLocation"
+      ).innerText = `Latitude: ${place.lat}, Longitude: ${place.lon}`;
+      autocompleteList.innerHTML = "";
+      getWeathergfs(place.lat, place.lon);
+      getWeathericon(place.lat, place.lon);
+      
+    });
+
+    autocompleteList.appendChild(item);
+  });
+}
+
+
+
+```
+
+---
+
+cookies.js:
+```
+function setCookie(name, value, minutes) {
+  var expires = "";
+  if (minutes) {
+    var date = new Date();
+    date.setTime(date.getTime() + minutes * 60 * 1000);
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+// Helper function to get cookie
+function getCookie(name) {
+  var nameEQ = name + "=";
+  var ca = document.cookie.split(';');
+  for (var i = 0; i < ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
+
+
+```
+
+---
+
+displaytables.js:
+```
+
+
+function displayTable(tableData, tableElementId) {
+  // Check if DataTables is already initialized for the given tableElementId
+  // to prevent re-initializing it on subsequent calls.
+  if (!$.fn.DataTable.isDataTable(`#${tableElementId}`)) {
+    // Initialize DataTables for the table element using the provided data
+    $(`#${tableElementId}`).DataTable({
+      data: tableData.data,
+      columns: tableData.columns,
+      // Additional DataTables configuration options can go here
+    });
+  }
+}
+window.displayTables = () => {
+  // Assuming you have prepared the data with keys `iconTableData` and `gfsTableData`
+  // and these are objects compatible with DataTables initialization.
+  displayTable(window.iconTableData, 'iconWindSpeedTable');
+  displayTable(window.gfsTableData, 'gfsWindSpeedTable');
+}
+// Call the displayTable function with the generated table data from preparetables.js
+// This is using the global variables set in preparetables.js
+
+```
+
+---
+
+getweather.js:
+```
+
+function shouldFetchNewData(cookieTimestamp) {
+  const lastFetchTime = new Date(cookieTimestamp);
+  const currentTime = new Date();
+  const timePassedInMinutes = (currentTime - lastFetchTime) / (1000 * 60);
+  return timePassedInMinutes >= 15;
+}
+let gfsWeatherData;
+let iconWeatherData;
+let weatherData;
+async function getWeathergfs(latitude, longitude) {
+  const lastFetchTimestampGfs = getCookie("gfsLastFetchTimestamp");
+  if (lastFetchTimestampGfs && !shouldFetchNewData(lastFetchTimestampGfs)) {
+    getCookie("gfsWeatherData");
+    return; // Data is recent enough, no need to fetch new data
+  }
+
+  const url = `https://api.open-meteo.com/v1/gfs?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,temperature_80m,temperature_180m,weather_code,relative_humidity_2m,dew_point_2m,visibility,lifted_index,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,cloud_cover_1000hPa,cloud_cover_975hPa,cloud_cover_950hPa,cloud_cover_925hPa,cloud_cover_900hPa,cloud_cover_850hPa,cloud_cover_800hPa,cloud_cover_700hPa,cloud_cover_600hPa,cloud_cover_500hPa,cloud_cover_400hPa,wind_speed_10m,wind_speed_80m,wind_speed_180m,wind_gusts_10m,wind_direction_10m,wind_direction_80m,wind_direction_180m,temperature_1000hPa,temperature_975hPa,temperature_950hPa,temperature_925hPa,temperature_900hPa,temperature_850hPa,temperature_800hPa,temperature_700hPa,temperature_600hPa,temperature_500hPa,temperature_400hPa,windspeed_1000hPa,windspeed_975hPa,windspeed_950hPa,windspeed_925hPa,windspeed_900hPa,windspeed_850hPa,windspeed_800hPa,windspeed_700hPa,windspeed_600hPa,windspeed_500hPa,windspeed_400hPa,winddirection_1000hPa,winddirection_975hPa,winddirection_950hPa,winddirection_925hPa,winddirection_900hPa,winddirection_850hPa,winddirection_800hPa,winddirection_700hPa,winddirection_600hPa,winddirection_500hPa,winddirection_400hPa,cape,is_day,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_sum&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=1`;
+
+  try {
+    const response = await fetch(url);
+    const weatherData = await response.json();
+    gfsWeatherData = processRenameKeys(weatherData, keyMap);
+    console.log("fetched new GFS data:", gfsWeatherData);
+  } catch (error) {
+    console.error(error);
+  }
+  setCookie("gfsWeatherData", JSON.stringify(weatherData), 15); // Save data for 15 minutes
+  setCookie("gfsLastFetchTimestamp", new Date().toISOString(), 15); // Save timestamp
+ 
+}
+
+async function getWeathericon(latitude, longitude) {
+  const lastFetchTimestampIcon = getCookie("iconLastFetchTimestamp");
+  if (lastFetchTimestampIcon && !shouldFetchNewData(lastFetchTimestampIcon)) {
+    getCookie("iconWeatherData");
+    return; // Data is recent enough, no need to fetch new data
+  }
+  const url = `https://api.open-meteo.com/v1/dwd-icon?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,temperature_80m,temperature_180m,precipitation,weather_code,relative_humidity_2m,dew_point_2m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,cloud_cover_1000hPa,cloud_cover_975hPa,cloud_cover_950hPa,cloud_cover_925hPa,cloud_cover_900hPa,cloud_cover_850hPa,cloud_cover_800hPa,cloud_cover_700hPa,cloud_cover_600hPa,cloud_cover_500hPa,cloud_cover_400hPa,wind_speed_10m,wind_speed_80m,wind_speed_180m,wind_gusts_10m,wind_direction_10m,wind_direction_80m,wind_direction_180m,temperature_1000hPa,temperature_975hPa,temperature_950hPa,temperature_925hPa,temperature_900hPa,temperature_850hPa,temperature_800hPa,temperature_700hPa,temperature_600hPa,temperature_500hPa,temperature_400hPa,windspeed_1000hPa,windspeed_975hPa,windspeed_950hPa,windspeed_925hPa,windspeed_900hPa,windspeed_850hPa,windspeed_800hPa,windspeed_700hPa,windspeed_600hPa,windspeed_500hPa,windspeed_400hPa,winddirection_1000hPa,winddirection_975hPa,winddirection_950hPa,winddirection_925hPa,winddirection_900hPa,winddirection_850hPa,winddirection_800hPa,winddirection_700hPa,winddirection_600hPa,winddirection_500hPa,winddirection_400hPa,cape,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_sum&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=1`;
+  let weatherData;
+  try {
+    const response = await fetch(url);
+    const weatherData = await response.json();
+    iconWeatherData = processRenameKeys(weatherData, keyMap);
+    console.log("fetched new ICON data", iconWeatherData);
+    // Now that we have the weather data, we can prepare and display the tables.
+    // Ensure that `prepareTables` and `displayTables` are available before calling them
+    if (window.prepareTables && window.displayTables) {
+      window.prepareTables(); // Process the data for tables
+      window.displayTables(); // Display the tables
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  setCookie("iconWeatherData", JSON.stringify(iconWeatherData), 15); // Save data for 15 minutes
+  setCookie("iconLastFetchTimestamp", new Date().toISOString(), 15); // Save timestamp
+  executeAfterWeatherFetch(latitude, longitude); // Pass the appropriate latitude and longitude here.
+}
+
+/**
+ * Rename object keys using a map of old keys to new keys.
+ * @param {Object} obj - The original object.
+ * @param {Object} keyMap - An object mapping old key names to new key names.
+ * @return {Object} The object with renamed keys.
+ */
+function renameKeys(obj, keyMap) {
+  return _.mapKeys(obj, (value, key) => keyMap[key] || key);
+}
+/**
+ * Recursively processes the object to rename keys.
+ * @param {Object} data - The object or array of objects to process.
+ * @param {Object} keyMap - An object mapping old key names to new key names.
+ * @return {Object} The processed data with renamed keys.
+ */
+function processRenameKeys(data, keyMap) {
+  if (_.isArray(data)) {
+    return data.map((item) => processRenameKeys(item, keyMap));
+    
+  } else if (_.isPlainObject(data)) {
+    const renamedObject = renameKeys(data, keyMap);
+    _.forEach(renamedObject, (value, key) => {
+      renamedObject[key] = processRenameKeys(value, keyMap);
+    });
+    return renamedObject;
+  }
+  return data;
+}
+
+window.executeAfterWeatherFetch = (latitude, longitude) => {
+  // Call your API or perform the necessary operations
+  // Once done, trigger the table preparation and display.
+  window.prepareTables && window.prepareTables(); // Check if the function exists
+  window.displayTables && window.displayTables(); // Check if the function exists
+  console.log(window.prepareTables);
+  console.log(window.displayTables);
+};
+
+
+```
+
+---
+
+gfsWeatherData:
+```
+{
+  "latitude": 26.635376,
+  "longitude": -81.87778,
+  "generationtime_ms": 0.48804283142089844,
+  "utc_offset_seconds": -18000,
+  "timezone": "America/New_York",
+  "timezone_abbreviation": "EST",
+  "elevation": 5,
+  "hourly_units": {
+    "time": "iso8601",
+    "temperature_7ft": "°F",
+    "temperature_262ft": "°F",
+    "weather_code": "wmo code",
+    "relative_humidity_7ft": "%",
+    "dew_point_7ft": "°F",
+    "visibility": "ft",
+    "lifted_index": "",
+    "cloud_cover": "%",
+    "cloud_cover_low": "%",
+    "cloud_cover_mid": "%",
+    "cloud_cover_high": "%",
+    "cloud_cover_361ft": "%",
+    "cloud_cover_1050ft": "%",
+    "cloud_cover_1640ft": "%",
+    "cloud_cover_2625ft": "%",
+    "cloud_cover_3281ft": "%",
+    "cloud_cover_4921ft": "%",
+    "cloud_cover_6234ft": "%",
+    "cloud_cover_9843ft": "%",
+    "cloud_cover_13780ft": "%",
+    "cloud_cover_18373ft": "%",
+    "cloud_cover_23622ft": "%",
+    "wind_speed_33ft": "mp/h",
+    "wind_speed_262ft": "mp/h",
+    "wind_gusts_33ft": "mp/h",
+    "wind_direction_33ft": "°",
+    "wind_direction_262ft": "°",
+    "temperature_361ft": "°F",
+    "temperature_1050ft": "°F",
+    "temperature_1640ft": "°F",
+    "temperature_2625ft": "°F",
+    "temperature_3281ft": "°F",
+    "temperature_4921ft": "°F",
+    "temperature_6234ft": "°F",
+    "temperature_9843ft": "°F",
+    "temperature_13780ft": "°F",
+    "temperature_18373ft": "°F",
+    "temperature_23622ft": "°F",
+    "windspeed_361ft": "mp/h",
+    "windspeed_1050ft": "mp/h",
+    "windspeed_1640ft": "mp/h",
+    "windspeed_2625ft": "mp/h",
+    "windspeed_3281ft": "mp/h",
+    "windspeed_4921ft": "mp/h",
+    "windspeed_6234ft": "mp/h",
+    "windspeed_9843ft": "mp/h",
+    "windspeed_13780ft": "mp/h",
+    "windspeed_18373ft": "mp/h",
+    "windspeed_23622ft": "mp/h",
+    "winddirection_361ft": "°",
+    "winddirection_1050ft": "°",
+    "winddirection_1640ft": "°",
+    "winddirection_2625ft": "°",
+    "winddirection_3281ft": "°",
+    "winddirection_4921ft": "°",
+    "winddirection_6234ft": "°",
+    "winddirection_9843ft": "°",
+    "winddirection_13780ft": "°",
+    "winddirection_18373ft": "°",
+    "winddirection_23622ft": "°",
+    "cape": "J/kg",
+    "is_day": "",
+    "precipitation_probability": "%"
+  },
+  "hourly": {
+    "time": [
+      "2024-01-22T00:00",
+      "2024-01-22T01:00",
+      "2024-01-22T02:00",
+      "2024-01-22T03:00",
+      "2024-01-22T04:00",
+      "2024-01-22T05:00",
+      "2024-01-22T06:00",
+      "2024-01-22T07:00",
+      "2024-01-22T08:00",
+      "2024-01-22T09:00",
+      "2024-01-22T10:00",
+      "2024-01-22T11:00",
+      "2024-01-22T12:00",
+      "2024-01-22T13:00",
+      "2024-01-22T14:00",
+      "2024-01-22T15:00",
+      "2024-01-22T16:00",
+      "2024-01-22T17:00",
+      "2024-01-22T18:00",
+      "2024-01-22T19:00",
+      "2024-01-22T20:00",
+      "2024-01-22T21:00",
+      "2024-01-22T22:00",
+      "2024-01-22T23:00"
+    ],
+    "temperature_7ft": [
+      53, 52.5, 52.6, 52.7, 52.6, 52, 52.2, 52.4, 54.3, 57.7, 62.8, 65.6, 68.8,
+      70, 69.4, 70.4, 67.8, 66.8, 65.8, 64.5, 62.7, 61.8, 61.2, 60.9
+    ],
+    "temperature_262ft": [
+      55.3, 55.1, 55.3, 55.7, 56.1, 56.4, 56.8, 57.3, 57.5, 59.1, 63.1, 64.6,
+      65.5, 67, 67.4, 68.2, 67.9, 66.7, 65.6, 65.3, 65.4, 65.4, 65.6, 65.6
+    ],
+    "weather_code": [
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+    ],
+    "relative_humidity_7ft": [
+      83, 86, 87, 86, 87, 88, 87, 88, 86, 82, 75, 73, 70, 67, 70, 68, 71, 73,
+      74, 76, 80, 84, 85, 83
+    ],
+    "dew_point_7ft": [
+      48, 48.5, 48.9, 48.6, 48.9, 48.5, 48.4, 49, 50.2, 52.2, 54.8, 56.7, 58.6,
+      58.5, 59.2, 59.3, 58.1, 57.9, 57.2, 56.8, 56.4, 56.9, 56.6, 55.7
+    ],
+    "visibility": [
+      54133.859, 52821.523, 55774.277, 50853.02, 51181.102, 49540.684, 48556.43,
+      48884.516, 50853.02, 57086.613, 65944.883, 66272.969, 70866.141,
+      72834.648, 73162.727, 76115.484, 48884.516, 48884.516, 67913.383,
+      64960.629, 58398.949, 53805.773, 52165.355, 54790.027
+    ],
+    "lifted_index": [
+      17, 17.1, 16.9, 16.4, 16.8, 16.8, 16.6, 15.9, 14.9, 13.3, 10.8, 8.6, 6.8,
+      6.3, 5.6, 5.8, 6.3, 6.3, 6, 6.7, 7.5, 8.2, 9, 9.5
+    ],
+    "cloud_cover": [
+      100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 94, 100, 100, 100, 100,
+      100, 100, 100, 100, 100, 100, 100, 100, 100
+    ],
+    "cloud_cover_low": [
+      94, 68, 20, 29, 92, 34, 7, 10, 1, 7, 2, 4, 5, 17, 60, 100, 100, 100, 100,
+      39, 3, 0, 0, 0
+    ],
+    "cloud_cover_mid": [
+      18, 4, 13, 94, 84, 19, 100, 100, 100, 100, 78, 100, 100, 100, 100, 100,
+      100, 88, 100, 6, 0, 0, 0, 0
+    ],
+    "cloud_cover_high": [
+      73, 81, 100, 24, 27, 12, 85, 8, 100, 99, 100, 100, 100, 100, 100, 100,
+      100, 100, 11, 100, 100, 100, 100, 100
+    ],
+    "cloud_cover_361ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "cloud_cover_1050ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 17, 0, 0, 0, 0, 0, 0
+    ],
+    "cloud_cover_1640ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 4, 15, 19, 27, 64, 37, 0, 11, 0, 0, 0,
+      0
+    ],
+    "cloud_cover_2625ft": [
+      46, 6, 3, 13, 20, 10, 6, 3, 0, 6, 0, 13, 6, 24, 41, 66, 76, 58, 24, 20, 0,
+      0, 0, 0
+    ],
+    "cloud_cover_3281ft": [
+      54, 44, 17, 14, 60, 35, 28, 28, 0, 17, 0, 8, 6, 28, 49, 77, 77, 77, 49, 3,
+      0, 0, 0, 0
+    ],
+    "cloud_cover_4921ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45, 79, 79, 79, 79, 34, 11, 0,
+      0, 0
+    ],
+    "cloud_cover_6234ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 44, 29, 0, 0, 0, 0, 0, 0
+    ],
+    "cloud_cover_9843ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "cloud_cover_13780ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    "cloud_cover_18373ft": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 15, 35, 35, 35, 31, 51, 47, 51, 24, 5,
+      0, 0, 0
+    ],
+    "cloud_cover_23622ft": [
+      9, 3, 12, 15, 12, 18, 22, 12, 29, 33, 25, 25, 22, 22, 29, 18, 25, 33, 0,
+      0, 0, 0, 0, 0
+    ],
+    "wind_speed_33ft": [
+      8.1, 7.3, 7.5, 8.6, 7.4, 7.4, 6.9, 7.8, 7.6, 8.8, 11.1, 11.9, 13.8, 14.5,
+      12.3, 15.7, 13.3, 11.7, 9.5, 10.6, 9.3, 9.5, 9, 10.9
+    ],
+    "wind_speed_262ft": [
+      17.2, 13.4, 15.9, 13.8, 14.7, 12.8, 12.9, 13.1, 16.1, 13.6, 17.1, 17.2,
+      17.9, 16.5, 16.6, 18.3, 17.3, 14.8, 15.9, 19.1, 18.9, 19.4, 18, 21.6
+    ],
+    "wind_gusts_33ft": [
+      15.4, 14.1, 14.3, 15.7, 13.9, 13.6, 11.2, 13.9, 13.2, 23, 22.4, 24.4,
+      21.5, 21.9, 21.3, 24.6, 23.9, 24.4, 19.7, 19.2, 16.6, 17, 15.4, 19
+    ],
+    "wind_direction_33ft": [
+      39, 31, 30, 33, 35, 35, 33, 37, 47, 58, 56, 58, 70, 70, 71, 79, 76, 73,
+      75, 72, 79, 81, 77, 81
+    ],
+    "wind_direction_262ft": [
+      34, 38, 40, 29, 33, 33, 26, 20, 32, 45, 57, 69, 70, 65, 66, 70, 73, 65,
+      74, 74, 80, 82, 79, 80
+    ],
+    "temperature_361ft": [
+      55.6, 55.8, 57.4, 57, 57.4, 57.4, 57.7, 58.3, 59, 58.8, 58.6, 60.3, 62.1,
+      63, 64.4, 65.5, 63, 62.6, 64.4, 64.6, 64, 63.3, 63.9, 64.4
+    ],
+    "temperature_1050ft": [
+      55, 55.2, 55.9, 56.1, 56.1, 56.1, 56.6, 57, 57.4, 57.6, 57.9, 57.2, 58.5,
+      59.4, 60.5, 61.6, 59.8, 60, 61.3, 61.5, 61.6, 61.1, 62.4, 62.6
+    ],
+    "temperature_1640ft": [
+      52, 52.2, 52.2, 52.6, 53, 53, 53.2, 53.4, 54, 54.3, 55.3, 55.1, 55.9,
+      56.4, 57.2, 58, 57, 57, 58.2, 58.2, 58.5, 58.7, 59.5, 59.9
+    ],
+    "temperature_2625ft": [
+      48.5, 48.5, 48.7, 48.9, 49.1, 49.3, 49.5, 49.7, 50.7, 51.1, 52.1, 52.5,
+      53.5, 54.1, 54.4, 54.6, 54.4, 54.1, 55.2, 55.4, 56.2, 56.6, 56.6, 56.6
+    ],
+    "temperature_3281ft": [
+      45.6, 45.4, 45.8, 45.8, 45.6, 45.8, 46.2, 46.2, 47.9, 48.1, 49.5, 50.1,
+      51.1, 51.7, 51.9, 52.1, 52.3, 51.9, 52.5, 52.9, 53.7, 53.5, 53.5, 52.9
+    ],
+    "temperature_4921ft": [
+      47.9, 48.9, 47.9, 48.1, 48.3, 48.7, 48.7, 47.4, 47.9, 48.1, 49.4, 49.4,
+      48.5, 46.8, 46.1, 47.6, 48.3, 48.5, 48.1, 47.6, 48.5, 48.5, 48.5, 48.1
+    ],
+    "temperature_6234ft": [
+      50.2, 50.2, 49.3, 49.7, 50.4, 49.7, 49, 47.4, 46.9, 48.1, 49, 50, 50,
+      49.7, 47.9, 45.1, 44.6, 44.8, 45.8, 48.3, 48.6, 48.3, 48.3, 49.3
+    ],
+    "temperature_9843ft": [
+      43.2, 43, 43.2, 43, 42.4, 41.6, 41.6, 41, 41, 41.9, 42.1, 42.4, 42.7,
+      42.7, 42.4, 42.4, 43.2, 44.3, 44.1, 44.3, 44.6, 45.4, 45.4, 45.4
+    ],
+    "temperature_13780ft": [
+      29.7, 30.3, 30.3, 30, 30, 30, 30, 29.7, 30.3, 30.7, 30.3, 29.3, 29.3, 29,
+      29.3, 29.7, 30.3, 30.3, 30, 30.3, 31, 31, 31.3, 31.7
+    ],
+    "temperature_18373ft": [
+      14.4, 15.6, 16, 15.6, 15.6, 15.2, 15.2, 15.6, 15.2, 14.4, 14.4, 14.4,
+      14.8, 14.4, 14.4, 14.8, 13.9, 13.9, 13.5, 13.9, 13.9, 14.8, 16, 15.6
+    ],
+    "temperature_23622ft": [
+      -5.8, -5.8, -5.8, -6.4, -5.8, -5.2, -5.2, -5.2, -5.2, -5.2, -4.7, -4.1,
+      -2.9, -2.9, -2.9, -2.4, -2.9, -2.9, -2.9, -2.4, -2.4, -2.4, -2.4, -2.9
+    ],
+    "windspeed_361ft": [
+      26.3, 25, 26.4, 24.4, 25.5, 24.9, 23.8, 23.1, 24.7, 25.4, 23.5, 21.7,
+      20.4, 18.7, 18.5, 20.6, 21.7, 20.8, 23.5, 27.8, 29.5, 30.7, 31.4, 34
+    ],
+    "windspeed_1050ft": [
+      34.4, 32.5, 31.8, 28.3, 29.8, 28.7, 27, 26.5, 25.9, 29.1, 28, 26.3, 23.1,
+      20.5, 20.1, 22.5, 24.1, 26.1, 29, 33, 34.6, 37.1, 38, 39
+    ],
+    "windspeed_1640ft": [
+      33.4, 33.1, 32.7, 29.9, 30.8, 29.6, 27.6, 26.9, 25.7, 29.7, 30.1, 30.4,
+      27.7, 24.4, 22.1, 23.7, 25.1, 29, 31.5, 34.2, 35.8, 36.8, 38.2, 38.5
+    ],
+    "windspeed_2625ft": [
+      29.5, 31.2, 32.7, 31.1, 31.1, 29.5, 27.8, 27.1, 27, 29.3, 31.3, 32.6,
+      31.1, 28.3, 24.5, 24.3, 25.2, 30.3, 32.1, 33.4, 33.8, 32.6, 33.5, 35.5
+    ],
+    "windspeed_3281ft": [
+      27.4, 26.5, 29.4, 29.4, 30.4, 28.4, 26.8, 26, 27.1, 27.9, 30.1, 33.4,
+      33.3, 31.4, 27.1, 24.8, 25, 30.5, 30.6, 31.6, 29, 29.6, 28.8, 31.3
+    ],
+    "windspeed_4921ft": [
+      6.2, 4.9, 8.6, 8.6, 9.8, 9.4, 9.6, 9.9, 11.4, 13.1, 17.3, 20.3, 25.4,
+      29.1, 29, 26.5, 26.8, 26.8, 26.4, 24.1, 21.4, 19.4, 19, 19.1
+    ],
+    "windspeed_6234ft": [
+      6.6, 7.5, 7.2, 7.9, 9.2, 8.1, 7.8, 6.6, 8.4, 10.1, 12.1, 11.3, 10.9, 11.8,
+      16.4, 28.5, 26.5, 24.2, 18.5, 15.4, 15.8, 13.6, 11.4, 10.3
+    ],
+    "windspeed_9843ft": [
+      3.8, 1.9, 1.2, 1.9, 3.3, 4.3, 5.4, 7.3, 7, 8.5, 6.7, 6.4, 7, 7.8, 9.5,
+      10.6, 10.7, 12.1, 16, 17.3, 16, 18.7, 19.5, 20.3
+    ],
+    "windspeed_13780ft": [
+      7.6, 6.1, 4.6, 3.4, 3.6, 3.4, 4.1, 7.6, 8.7, 10.2, 11.8, 10.9, 11.7, 11.2,
+      12.9, 15.8, 19.9, 20.9, 23.9, 25.9, 26.5, 27, 27.6, 26.4
+    ],
+    "windspeed_18373ft": [
+      22.5, 23.2, 23.3, 20.5, 19.7, 17.4, 14.3, 11, 11, 13.7, 17.2, 23.9, 29.9,
+      34.3, 37.3, 38.3, 36.8, 36.8, 39.2, 37.5, 34.4, 32.6, 30.7, 29.7
+    ],
+    "windspeed_23622ft": [
+      48.9, 50.4, 48.1, 44.9, 43.1, 39.8, 35.4, 33.7, 31.7, 31.8, 38, 39.5,
+      41.8, 39.4, 38.5, 39.1, 37.4, 38.8, 40.3, 38.3, 38.1, 37.4, 36.4, 35.1
+    ],
+    "winddirection_361ft": [
+      52, 58, 63, 60, 59, 60, 62, 58, 58, 62, 65, 70, 70, 67, 65, 73, 78, 73,
+      76, 81, 88, 88, 87, 88
+    ],
+    "winddirection_1050ft": [
+      65, 70, 74, 75, 70, 74, 76, 73, 72, 74, 76, 76, 75, 72, 69, 76, 82, 80,
+      83, 87, 93, 92, 91, 93
+    ],
+    "winddirection_1640ft": [
+      69, 77, 80, 82, 80, 83, 83, 79, 83, 85, 88, 86, 86, 84, 76, 79, 85, 84,
+      88, 92, 96, 96, 96, 99
+    ],
+    "winddirection_2625ft": [
+      80, 84, 84, 86, 86, 89, 87, 84, 93, 93, 94, 95, 95, 94, 88, 85, 89, 87,
+      95, 99, 101, 103, 104, 103
+    ],
+    "winddirection_3281ft": [
+      93, 90, 88, 89, 90, 91, 91, 89, 98, 99, 96, 99, 102, 102, 99, 94, 94, 95,
+      104, 107, 106, 108, 110, 110
+    ],
+    "winddirection_4921ft": [
+      90, 77, 81, 82, 80, 83, 87, 88, 86, 86, 85, 99, 109, 111, 111, 115, 108,
+      121, 120, 120, 118, 121, 127, 130
+    ],
+    "winddirection_6234ft": [
+      355, 5, 25, 18, 28, 43, 53, 49, 48, 50, 61, 74, 83, 93, 115, 125, 123,
+      137, 131, 126, 118, 120, 137, 145
+    ],
+    "winddirection_9843ft": [
+      315, 323, 342, 360, 54, 80, 86, 93, 99, 95, 103, 104, 109, 117, 117, 109,
+      111, 107, 105, 107, 127, 143, 155, 159
+    ],
+    "winddirection_13780ft": [
+      274, 275, 270, 243, 225, 207, 180, 160, 173, 177, 187, 191, 185, 177, 171,
+      176, 176, 176, 176, 180, 182, 181, 186, 191
+    ],
+    "winddirection_18373ft": [
+      264, 264, 263, 260, 259, 260, 261, 242, 208, 193, 182, 180, 177, 179, 181,
+      187, 187, 187, 194, 197, 198, 200, 206, 208
+    ],
+    "winddirection_23622ft": [
+      239, 243, 246, 249, 247, 247, 245, 235, 227, 219, 228, 224, 230, 233, 227,
+      228, 226, 218, 219, 213, 211, 209, 208, 209
+    ],
+    "cape": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 30, 50, 30, 10, 0, 0, 10, 0, 0, 0,
+      0
+    ],
+    "is_day": [
+      0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
+    ],
+    "precipitation_probability": [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ]
+  },
+  "daily_units": {
+    "time": "iso8601",
+    "weather_code": "wmo code",
+    "temperature_7ft_max": "°F",
+    "temperature_7ft_min": "°F",
+    "apparent_temperature_max": "°F",
+    "apparent_temperature_min": "°F",
+    "sunrise": "iso8601",
+    "sunset": "iso8601",
+    "uv_index_max": "",
+    "precipitation_sum": "inch"
+  },
+  "daily": {
+    "time": ["2024-01-22"],
+    "weather_code": [3],
+    "temperature_7ft_max": [70.4],
+    "temperature_7ft_min": [52],
+    "apparent_temperature_max": [67.2],
+    "apparent_temperature_min": [48.5],
+    "sunrise": ["2024-01-22T07:16"],
+    "sunset": ["2024-01-22T18:01"],
+    "uv_index_max": [4.6],
+    "precipitation_sum": [0]
+  }
+}
+
+```
+
+---
+
+iconWeatherData:
+```
+{
+    "latitude": 26.625,
+    "longitude": -81.875,
+    "generationtime_ms": 0.8130073547363281,
+    "utc_offset_seconds": -18000,
+    "timezone": "America/New_York",
+    "timezone_abbreviation": "EST",
+    "elevation": 5,
+    "hourly_units": {
+        "time": "iso8601",
+        "temperature_7ft": "°F",
+        "temperature_262ft": "°F",
+        "temperature_590ft": "°F",
+        "precipitation": "inch",
+        "weather_code": "wmo code",
+        "relative_humidity_7ft": "%",
+        "dew_point_7ft": "°F",
+        "cloud_cover": "%",
+        "cloud_cover_low": "%",
+        "cloud_cover_mid": "%",
+        "cloud_cover_high": "%",
+        "cloud_cover_361ft": "%",
+        "cloud_cover_1050ft": "%",
+        "cloud_cover_1640ft": "%",
+        "cloud_cover_2625ft": "%",
+        "cloud_cover_3281ft": "%",
+        "cloud_cover_4921ft": "%",
+        "cloud_cover_6234ft": "%",
+        "cloud_cover_9843ft": "%",
+        "cloud_cover_13780ft": "%",
+        "cloud_cover_18373ft": "%",
+        "cloud_cover_23622ft": "%",
+        "wind_speed_33ft": "mp/h",
+        "wind_speed_262ft": "mp/h",
+        "wind_speed_590ft": "mp/h",
+        "wind_gusts_33ft": "mp/h",
+        "wind_direction_33ft": "°",
+        "wind_direction_262ft": "°",
+        "wind_direction_590ft": "°",
+        "temperature_361ft": "°F",
+        "temperature_1050ft": "°F",
+        "temperature_1640ft": "°F",
+        "temperature_2625ft": "°F",
+        "temperature_3281ft": "°F",
+        "temperature_4921ft": "°F",
+        "temperature_6234ft": "°F",
+        "temperature_9843ft": "°F",
+        "temperature_13780ft": "°F",
+        "temperature_18373ft": "°F",
+        "temperature_23622ft": "°F",
+        "windspeed_361ft": "mp/h",
+        "windspeed_1050ft": "mp/h",
+        "windspeed_1640ft": "mp/h",
+        "windspeed_2625ft": "mp/h",
+        "windspeed_3281ft": "mp/h",
+        "windspeed_4921ft": "mp/h",
+        "windspeed_6234ft": "mp/h",
+        "windspeed_9843ft": "mp/h",
+        "windspeed_13780ft": "mp/h",
+        "windspeed_18373ft": "mp/h",
+        "windspeed_23622ft": "mp/h",
+        "winddirection_361ft": "°",
+        "winddirection_1050ft": "°",
+        "winddirection_1640ft": "°",
+        "winddirection_2625ft": "°",
+        "winddirection_3281ft": "°",
+        "winddirection_4921ft": "°",
+        "winddirection_6234ft": "°",
+        "winddirection_9843ft": "°",
+        "winddirection_13780ft": "°",
+        "winddirection_18373ft": "°",
+        "winddirection_23622ft": "°",
+        "cape": "J/kg",
+        "is_day": ""
+    },
+    "hourly": {
+        "time": [
+            "2024-01-22T00:00",
+            "2024-01-22T01:00",
+            "2024-01-22T02:00",
+            "2024-01-22T03:00",
+            "2024-01-22T04:00",
+            "2024-01-22T05:00",
+            "2024-01-22T06:00",
+            "2024-01-22T07:00",
+            "2024-01-22T08:00",
+            "2024-01-22T09:00",
+            "2024-01-22T10:00",
+            "2024-01-22T11:00",
+            "2024-01-22T12:00",
+            "2024-01-22T13:00",
+            "2024-01-22T14:00",
+            "2024-01-22T15:00",
+            "2024-01-22T16:00",
+            "2024-01-22T17:00",
+            "2024-01-22T18:00",
+            "2024-01-22T19:00",
+            "2024-01-22T20:00",
+            "2024-01-22T21:00",
+            "2024-01-22T22:00",
+            "2024-01-22T23:00"
+        ],
+        "temperature_7ft": [
+            55.7,
+            55.4,
+            55,
+            54.5,
+            54.3,
+            54.7,
+            54.9,
+            55.1,
+            55.9,
+            58.1,
+            61,
+            63.5,
+            65.4,
+            67.4,
+            69.1,
+            69.6,
+            69,
+            67.6,
+            66.1,
+            64.3,
+            62.8,
+            61.9,
+            61.4,
+            61.1
+        ],
+        "temperature_262ft": [
+            54.5,
+            54.1,
+            53.9,
+            53.8,
+            53.6,
+            53.9,
+            53.9,
+            54.3,
+            54.8,
+            56.1,
+            58.8,
+            61,
+            62.8,
+            64.7,
+            66.5,
+            67.1,
+            66.7,
+            65.8,
+            64.9,
+            63.8,
+            62.4,
+            61.3,
+            61.3,
+            60.8
+        ],
+        "temperature_590ft": [
+            55.2,
+            55.6,
+            55.6,
+            55.6,
+            55.7,
+            56.5,
+            56.3,
+            56.8,
+            57.5,
+            57.4,
+            57.5,
+            58.3,
+            59.9,
+            61.7,
+            63.7,
+            64.2,
+            63.8,
+            63.1,
+            62.6,
+            62.6,
+            62,
+            62.4,
+            63.1,
+            62.8
+        ],
+        "precipitation": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "weather_code": [
+            3,
+            3,
+            2,
+            2,
+            3,
+            3,
+            3,
+            3,
+            3,
+            2,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+        ],
+        "relative_humidity_7ft": [
+            75,
+            75,
+            76,
+            78,
+            79,
+            80,
+            82,
+            84,
+            84,
+            81,
+            76,
+            72,
+            69,
+            62,
+            58,
+            58,
+            60,
+            62,
+            65,
+            69,
+            72,
+            76,
+            78,
+            78
+        ],
+        "dew_point_7ft": [
+            47.9,
+            47.6,
+            47.6,
+            47.8,
+            47.9,
+            48.6,
+            49.5,
+            50.4,
+            51.2,
+            52.3,
+            53.4,
+            54.3,
+            54.9,
+            54,
+            53.7,
+            54.2,
+            54.5,
+            54.1,
+            54,
+            53.9,
+            53.7,
+            54.3,
+            54.5,
+            54.2
+        ],
+        "cloud_cover": [
+            100,
+            96,
+            46,
+            57,
+            100,
+            100,
+            100,
+            100,
+            96,
+            77,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100
+        ],
+        "cloud_cover_low": [
+            28,
+            0,
+            0,
+            3,
+            36,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            33,
+            87,
+            56,
+            46,
+            64,
+            62,
+            35,
+            21,
+            4,
+            10,
+            0,
+            0
+        ],
+        "cloud_cover_mid": [
+            100,
+            85,
+            43,
+            55,
+            45,
+            94,
+            54,
+            99,
+            96,
+            77,
+            81,
+            100,
+            100,
+            100,
+            81,
+            66,
+            40,
+            19,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_high": [
+            100,
+            95,
+            31,
+            44,
+            100,
+            100,
+            100,
+            100,
+            82,
+            28,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100
+        ],
+        "cloud_cover_361ft": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_1050ft": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_1640ft": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_2625ft": [
+            6,
+            0,
+            0,
+            0,
+            24,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            24,
+            0,
+            0,
+            6,
+            20,
+            10,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_3281ft": [
+            0,
+            0,
+            0,
+            0,
+            6,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            44,
+            24,
+            28,
+            35,
+            24,
+            17,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_4921ft": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_6234ft": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_9843ft": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_13780ft": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            13,
+            32,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_18373ft": [
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            18,
+            28,
+            42,
+            51,
+            24,
+            56,
+            62,
+            62,
+            56,
+            51,
+            24,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "cloud_cover_23622ft": [
+            29,
+            22,
+            12,
+            18,
+            22,
+            25,
+            25,
+            33,
+            29,
+            0,
+            18,
+            33,
+            22,
+            0,
+            18,
+            18,
+            25,
+            0,
+            3,
+            9,
+            12,
+            15,
+            0,
+            0
+        ],
+        "wind_speed_33ft": [
+            7.4,
+            8.2,
+            7.3,
+            6.2,
+            5.9,
+            6.9,
+            6.3,
+            7.1,
+            7.3,
+            8.1,
+            8.8,
+            9.2,
+            10.9,
+            13.9,
+            13.2,
+            11.6,
+            12.1,
+            11.5,
+            9.1,
+            7.1,
+            7.3,
+            7.1,
+            6.9,
+            7.6
+        ],
+        "wind_speed_262ft": [
+            15.3,
+            16.8,
+            15.1,
+            14.7,
+            14.6,
+            16.6,
+            14.3,
+            16.5,
+            16.6,
+            14.6,
+            14.9,
+            15.2,
+            17.9,
+            23.5,
+            22.7,
+            19.5,
+            20.6,
+            20,
+            17.2,
+            15.8,
+            16.8,
+            16.2,
+            16.8,
+            18.2
+        ],
+        "wind_speed_590ft": [
+            29.7,
+            32.2,
+            30.4,
+            26.8,
+            26.4,
+            27.5,
+            25.4,
+            26.8,
+            28.2,
+            28.7,
+            27.2,
+            18.8,
+            20.3,
+            26.4,
+            25.2,
+            21.7,
+            22.6,
+            22.9,
+            22.5,
+            26,
+            28.4,
+            32.2,
+            30.8,
+            30.7
+        ],
+        "wind_gusts_33ft": [
+            15.4,
+            16.8,
+            16.8,
+            14.8,
+            12.8,
+            13.9,
+            14.3,
+            14.3,
+            15,
+            16.6,
+            18.3,
+            19,
+            22.4,
+            28.6,
+            29.1,
+            27.1,
+            25.7,
+            24.8,
+            23.3,
+            18.3,
+            14.5,
+            15,
+            14.5,
+            15.4
+        ],
+        "wind_direction_33ft": [
+            49,
+            55,
+            47,
+            44,
+            53,
+            54,
+            42,
+            44,
+            52,
+            56,
+            66,
+            76,
+            81,
+            91,
+            95,
+            88,
+            89,
+            83,
+            74,
+            72,
+            72,
+            77,
+            77,
+            76
+        ],
+        "wind_direction_262ft": [
+            51,
+            56,
+            50,
+            48,
+            54,
+            57,
+            50,
+            49,
+            55,
+            58,
+            66,
+            76,
+            81,
+            91,
+            95,
+            87,
+            89,
+            84,
+            74,
+            72,
+            74,
+            78,
+            81,
+            79
+        ],
+        "wind_direction_590ft": [
+            64,
+            69,
+            68,
+            66,
+            70,
+            76,
+            74,
+            71,
+            74,
+            74,
+            76,
+            78,
+            82,
+            91,
+            96,
+            88,
+            88,
+            84,
+            77,
+            82,
+            83,
+            88,
+            96,
+            91
+        ],
+        "temperature_361ft": [
+            55,
+            55.4,
+            55.4,
+            55.4,
+            55.6,
+            56.3,
+            56.1,
+            56.7,
+            57.4,
+            57.4,
+            57.6,
+            58.5,
+            60.3,
+            62.4,
+            64.2,
+            64.9,
+            64.6,
+            63.9,
+            63.1,
+            63,
+            62.2,
+            62.2,
+            63,
+            62.4
+        ],
+        "temperature_1050ft": [
+            53,
+            53.4,
+            53.6,
+            53.8,
+            53.7,
+            54.4,
+            54.5,
+            54.8,
+            55.5,
+            55.6,
+            55.9,
+            56.9,
+            57.4,
+            58.7,
+            60.5,
+            61,
+            60.7,
+            60.1,
+            59.7,
+            59.9,
+            60,
+            60.2,
+            61.1,
+            61
+        ],
+        "temperature_1640ft": [
+            50.9,
+            51.5,
+            51.9,
+            52.2,
+            51.9,
+            52.4,
+            52.8,
+            53,
+            53.6,
+            53.8,
+            54.3,
+            55.3,
+            54.5,
+            54.9,
+            56.8,
+            57,
+            56.8,
+            56.2,
+            56.2,
+            56.8,
+            57.8,
+            58.2,
+            59.3,
+            59.5
+        ],
+        "temperature_2625ft": [
+            47.8,
+            48.7,
+            49.1,
+            49.5,
+            48.5,
+            49.5,
+            50.1,
+            50.3,
+            51.3,
+            51.9,
+            52.7,
+            53.3,
+            53.3,
+            52.1,
+            54.1,
+            54.1,
+            54.1,
+            53.1,
+            53.5,
+            54.1,
+            55,
+            55,
+            56.8,
+            56.8
+        ],
+        "temperature_3281ft": [
+            45.6,
+            47.2,
+            47.9,
+            47.9,
+            46.8,
+            47.6,
+            48.1,
+            49.1,
+            50.5,
+            51.3,
+            51.3,
+            51.3,
+            51.9,
+            49.9,
+            50.5,
+            51.1,
+            51.5,
+            52.1,
+            51.9,
+            52.3,
+            52.9,
+            53.1,
+            54.8,
+            55.4
+        ],
+        "temperature_4921ft": [
+            49.2,
+            51.1,
+            51.6,
+            49.6,
+            49.4,
+            50.2,
+            48.5,
+            48.7,
+            49.8,
+            51.6,
+            52.4,
+            52,
+            52,
+            51.6,
+            51.3,
+            50.5,
+            48.9,
+            50,
+            52.4,
+            52.9,
+            54.6,
+            54.8,
+            53.9,
+            54.8
+        ],
+        "temperature_6234ft": [
+            50.2,
+            51.1,
+            50.9,
+            50.4,
+            50.4,
+            50.9,
+            49.5,
+            49.5,
+            49.7,
+            50.4,
+            51.4,
+            52.1,
+            52.3,
+            53,
+            53.5,
+            53.7,
+            53.7,
+            53.2,
+            53.2,
+            53.5,
+            53.9,
+            53.9,
+            53,
+            53.9
+        ],
+        "temperature_9843ft": [
+            42.7,
+            42.4,
+            41.6,
+            41.9,
+            41.6,
+            42.1,
+            42.1,
+            42.7,
+            42.4,
+            41.6,
+            42.1,
+            43.5,
+            44.3,
+            44.9,
+            45.1,
+            45.1,
+            45.1,
+            45.4,
+            44.9,
+            44.9,
+            45.1,
+            46.8,
+            46.5,
+            46
+        ],
+        "temperature_13780ft": [
+            29.7,
+            29.7,
+            30,
+            30.3,
+            29.7,
+            29.3,
+            30,
+            30.3,
+            30,
+            29.3,
+            28.4,
+            29,
+            30.3,
+            30,
+            30.7,
+            31,
+            30.7,
+            30.7,
+            31,
+            31,
+            31.3,
+            31.3,
+            31.3,
+            31.3
+        ],
+        "temperature_18373ft": [
+            13.1,
+            14.8,
+            15.6,
+            15.6,
+            16.5,
+            14.8,
+            13.5,
+            14.4,
+            15.6,
+            14.8,
+            15.6,
+            16,
+            16,
+            15.6,
+            15.6,
+            15.2,
+            16,
+            16,
+            16,
+            16,
+            16.5,
+            15.2,
+            16.5,
+            17.3
+        ],
+        "temperature_23622ft": [
+            -4.1,
+            -5.8,
+            -5.2,
+            -5.2,
+            -4.7,
+            -4.1,
+            -3.5,
+            -3.5,
+            -4.7,
+            -3.5,
+            -2.4,
+            -2.9,
+            -2.4,
+            -2.4,
+            -2.4,
+            -2.9,
+            -2.9,
+            -2.4,
+            -1.8,
+            -1.8,
+            -2.4,
+            -2.4,
+            -1.2,
+            -1.8
+        ],
+        "windspeed_361ft": [
+            28.9,
+            30.9,
+            28.8,
+            25.5,
+            25.2,
+            26.5,
+            24.5,
+            26.3,
+            27.6,
+            28.2,
+            25.9,
+            18.2,
+            20.1,
+            26.2,
+            24.7,
+            21.3,
+            22.4,
+            22.5,
+            21.5,
+            24.5,
+            26.9,
+            30,
+            28.9,
+            28.9
+        ],
+        "windspeed_1050ft": [
+            31.2,
+            33.2,
+            31.6,
+            28.9,
+            29,
+            30.2,
+            28,
+            29.2,
+            30.3,
+            30.9,
+            30.5,
+            26.5,
+            27.4,
+            28.6,
+            26,
+            22.3,
+            23.1,
+            24.1,
+            25.5,
+            28.3,
+            29.6,
+            32.7,
+            33,
+            32.4
+        ],
+        "windspeed_1640ft": [
+            34.8,
+            36.6,
+            35.6,
+            33.7,
+            33.9,
+            34.7,
+            32.5,
+            33.2,
+            33.9,
+            34.4,
+            35.6,
+            35.5,
+            35.1,
+            31,
+            27.4,
+            23.3,
+            23.8,
+            25.8,
+            29.8,
+            32.7,
+            33.6,
+            36.5,
+            37.7,
+            37.3
+        ],
+        "windspeed_2625ft": [
+            33.3,
+            34.8,
+            33.8,
+            33.5,
+            32.1,
+            32.1,
+            29.8,
+            29.5,
+            28.8,
+            29,
+            29.9,
+            30.2,
+            30.4,
+            26.5,
+            25.2,
+            27.3,
+            25.8,
+            29.1,
+            31.8,
+            35,
+            36.6,
+            36.3,
+            37.3,
+            37.6
+        ],
+        "windspeed_3281ft": [
+            28.2,
+            28.1,
+            27.1,
+            30,
+            27.8,
+            26.1,
+            24.4,
+            21.6,
+            19.1,
+            18.5,
+            20.7,
+            24.3,
+            27.5,
+            26.2,
+            23.9,
+            25.3,
+            21.5,
+            24.4,
+            28.4,
+            31.7,
+            34,
+            32.8,
+            32.8,
+            31.4
+        ],
+        "windspeed_4921ft": [
+            3.4,
+            4.2,
+            4.2,
+            6.6,
+            6.5,
+            7.4,
+            7.7,
+            7.4,
+            7.7,
+            8.2,
+            10,
+            10.5,
+            11.3,
+            13.8,
+            17.5,
+            20.6,
+            21,
+            20,
+            19.4,
+            16.9,
+            15,
+            14.6,
+            14.9,
+            11.4
+        ],
+        "windspeed_6234ft": [
+            5.6,
+            4.5,
+            5.4,
+            4.8,
+            5.8,
+            6.3,
+            7.2,
+            8.8,
+            9.1,
+            9.5,
+            10.3,
+            12.8,
+            14.3,
+            14.3,
+            14.7,
+            13.2,
+            12.4,
+            11.8,
+            11,
+            8.4,
+            8.2,
+            7.5,
+            5.7,
+            8.2
+        ],
+        "windspeed_9843ft": [
+            0.9,
+            0.4,
+            3.3,
+            3.8,
+            4.2,
+            4.6,
+            3,
+            5.5,
+            5.2,
+            6.8,
+            7.6,
+            6.6,
+            7.2,
+            7.7,
+            8.5,
+            10.9,
+            13.4,
+            16,
+            16.6,
+            16.1,
+            15.1,
+            16.2,
+            18.2,
+            20.1
+        ],
+        "windspeed_13780ft": [
+            8.9,
+            8.2,
+            7.2,
+            9.2,
+            6.5,
+            9,
+            8.7,
+            10.7,
+            11.6,
+            11.3,
+            16.4,
+            21.2,
+            17.1,
+            17.6,
+            21.8,
+            23.3,
+            23.3,
+            23.4,
+            24.1,
+            24.4,
+            22.8,
+            20.5,
+            21.1,
+            22.1
+        ],
+        "windspeed_18373ft": [
+            21.4,
+            19.4,
+            15.4,
+            11.4,
+            8.2,
+            9,
+            6.4,
+            11.4,
+            20,
+            24.8,
+            21.2,
+            31.5,
+            37.5,
+            37.6,
+            34.9,
+            35.8,
+            34.8,
+            33.3,
+            34,
+            32.7,
+            30,
+            28.7,
+            30.4,
+            31.9
+        ],
+        "windspeed_23622ft": [
+            45.1,
+            45.3,
+            46.8,
+            42.2,
+            40.1,
+            46,
+            47.5,
+            49.6,
+            40.4,
+            44.6,
+            46,
+            34,
+            30.3,
+            31.4,
+            33.6,
+            36.6,
+            35.1,
+            32.5,
+            35.3,
+            42.2,
+            42.1,
+            41.2,
+            44.1,
+            42
+        ],
+        "winddirection_361ft": [
+            63,
+            67,
+            65,
+            63,
+            68,
+            73,
+            70,
+            68,
+            72,
+            72,
+            75,
+            76,
+            82,
+            91,
+            95,
+            88,
+            88,
+            84,
+            76,
+            80,
+            81,
+            87,
+            93,
+            88
+        ],
+        "winddirection_1050ft": [
+            75,
+            78,
+            77,
+            78,
+            80,
+            83,
+            83,
+            81,
+            82,
+            83,
+            85,
+            89,
+            91,
+            91,
+            96,
+            88,
+            88,
+            85,
+            83,
+            89,
+            94,
+            98,
+            101,
+            101
+        ],
+        "winddirection_1640ft": [
+            85,
+            87,
+            87,
+            89,
+            90,
+            92,
+            93,
+            91,
+            90,
+            91,
+            92,
+            95,
+            96,
+            91,
+            97,
+            89,
+            88,
+            87,
+            89,
+            96,
+            105,
+            107,
+            108,
+            112
+        ],
+        "winddirection_2625ft": [
+            92,
+            93,
+            91,
+            93,
+            94,
+            94,
+            95,
+            93,
+            92,
+            93,
+            96,
+            104,
+            110,
+            98,
+            98,
+            99,
+            98,
+            99,
+            100,
+            105,
+            113,
+            113,
+            111,
+            114
+        ],
+        "winddirection_3281ft": [
+            100,
+            98,
+            94,
+            94,
+            101,
+            99,
+            102,
+            103,
+            104,
+            104,
+            108,
+            117,
+            125,
+            110,
+            98,
+            107,
+            105,
+            115,
+            115,
+            114,
+            120,
+            121,
+            119,
+            123
+        ],
+        "winddirection_4921ft": [
+            66,
+            62,
+            53,
+            59,
+            61,
+            58,
+            88,
+            97,
+            94,
+            86,
+            83,
+            95,
+            115,
+            121,
+            124,
+            127,
+            128,
+            133,
+            138,
+            140,
+            148,
+            167,
+            172,
+            186
+        ],
+        "winddirection_6234ft": [
+            27,
+            74,
+            100,
+            75,
+            65,
+            70,
+            65,
+            72,
+            82,
+            101,
+            106,
+            108,
+            120,
+            124,
+            134,
+            141,
+            143,
+            145,
+            133,
+            141,
+            155,
+            180,
+            193,
+            171
+        ],
+        "winddirection_9843ft": [
+            333,
+            180,
+            135,
+            156,
+            158,
+            185,
+            140,
+            129,
+            132,
+            133,
+            135,
+            130,
+            126,
+            143,
+            141,
+            132,
+            134,
+            143,
+            155,
+            163,
+            161,
+            162,
+            176,
+            178
+        ],
+        "winddirection_13780ft": [
+            246,
+            266,
+            262,
+            236,
+            231,
+            227,
+            220,
+            205,
+            203,
+            188,
+            187,
+            204,
+            210,
+            202,
+            192,
+            191,
+            200,
+            204,
+            205,
+            211,
+            219,
+            210,
+            207,
+            209
+        ],
+        "winddirection_18373ft": [
+            282,
+            286,
+            284,
+            281,
+            265,
+            228,
+            234,
+            247,
+            225,
+            221,
+            219,
+            216,
+            221,
+            219,
+            220,
+            211,
+            211,
+            207,
+            206,
+            204,
+            207,
+            205,
+            208,
+            213
+        ],
+        "winddirection_23622ft": [
+            248,
+            250,
+            256,
+            253,
+            252,
+            262,
+            248,
+            249,
+            247,
+            252,
+            250,
+            232,
+            232,
+            242,
+            233,
+            231,
+            232,
+            233,
+            226,
+            224,
+            217,
+            215,
+            217,
+            213
+        ],
+        "cape": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "is_day": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    "daily_units": {
+        "time": "iso8601",
+        "weather_code": "wmo code",
+        "temperature_7ft_max": "°F",
+        "temperature_7ft_min": "°F",
+        "apparent_temperature_max": "°F",
+        "apparent_temperature_min": "°F",
+        "sunrise": "iso8601",
+        "sunset": "iso8601",
+        "precipitation_sum": "inch"
+    },
+    "daily": {
+        "time": [
+            "2024-01-22"
+        ],
+        "weather_code": [
+            3
+        ],
+        "temperature_7ft_max": [
+            69.6
+        ],
+        "temperature_7ft_min": [
+            54.3
+        ],
+        "apparent_temperature_max": [
+            66
+        ],
+        "apparent_temperature_min": [
+            51.3
+        ],
+        "sunrise": [
+            "2024-01-22T07:16"
+        ],
+        "sunset": [
+            "2024-01-22T18:01"
+        ],
+        "precipitation_sum": [
+            0
+        ]
+    }
+}
+```
+
+---
+
+keymap.js:
+```
+const keyMap = {
+  temperature_2m: "temperature_7ft",
+  temperature_80m: "temperature_262ft",
+  relative_humidity_2m: "relative_humidity_7ft",
+  dew_point_2m: "dew_point_7ft",
+  cloud_cover_1000hPa: "cloud_cover_361ft",
+  cloud_cover_975hPa: "cloud_cover_1050ft",
+  cloud_cover_950hPa: "cloud_cover_1640ft",
+  cloud_cover_925hPa: "cloud_cover_2625ft",
+  cloud_cover_900hPa: "cloud_cover_3281ft",
+  cloud_cover_850hPa: "cloud_cover_4921ft",
+  cloud_cover_800hPa: "cloud_cover_6234ft",
+  cloud_cover_700hPa: "cloud_cover_9843ft",
+  cloud_cover_600hPa: "cloud_cover_13780ft",
+  cloud_cover_500hPa: "cloud_cover_18373ft",
+  cloud_cover_400hPa: "cloud_cover_23622ft",
+  wind_speed_10m: "wind_speed_33ft",
+  wind_speed_80m: "wind_speed_262ft",
+  wind_speed_180m: "wind_speed_590ft",
+  temperature_180m: "temperature_590ft",
+  wind_direction_180m: "wind_direction_590ft",
+  wind_gusts_10m: "wind_gusts_33ft",
+  wind_direction_10m: "wind_direction_33ft",
+  wind_direction_80m: "wind_direction_262ft",
+  temperature_1000hPa: "temperature_361ft",
+  temperature_975hPa: "temperature_1050ft",
+  temperature_950hPa: "temperature_1640ft",
+  temperature_925hPa: "temperature_2625ft",
+  temperature_900hPa: "temperature_3281ft",
+  temperature_850hPa: "temperature_4921ft",
+  temperature_800hPa: "temperature_6234ft",
+  temperature_700hPa: "temperature_9843ft",
+  temperature_600hPa: "temperature_13780ft",
+  temperature_500hPa: "temperature_18373ft",
+  temperature_400hPa: "temperature_23622ft",
+  windspeed_1000hPa: "windspeed_361ft",
+  windspeed_975hPa: "windspeed_1050ft",
+  windspeed_950hPa: "windspeed_1640ft",
+  windspeed_925hPa: "windspeed_2625ft",
+  windspeed_900hPa: "windspeed_3281ft",
+  windspeed_850hPa: "windspeed_4921ft",
+  windspeed_800hPa: "windspeed_6234ft",
+  windspeed_700hPa: "windspeed_9843ft",
+  windspeed_600hPa: "windspeed_13780ft",
+  windspeed_500hPa: "windspeed_18373ft",
+  windspeed_400hPa: "windspeed_23622ft",
+  winddirection_1000hPa: "winddirection_361ft",
+  winddirection_975hPa: "winddirection_1050ft",
+  winddirection_950hPa: "winddirection_1640ft",
+  winddirection_925hPa: "winddirection_2625ft",
+  winddirection_900hPa: "winddirection_3281ft",
+  winddirection_850hPa: "winddirection_4921ft",
+  winddirection_800hPa: "winddirection_6234ft",
+  winddirection_700hPa: "winddirection_9843ft",
+  winddirection_600hPa: "winddirection_13780ft",
+  winddirection_500hPa: "winddirection_18373ft",
+  winddirection_400hPa: "winddirection_23622ft",
+  temperature_2m_max: "temperature_7ft_max",
+  temperature_2m_min: "temperature_7ft_min",
+};
+```
+
+---
+
+preparetables.js:
+```
+window.prepareTables = () => {
+  // Your code for preparing tables
+console.log('preparetables');
+  
+  // Extract the wind speed data and timestamps for ICON and GFS models
+  const iconData = iconWeatherData.hourly;
+  const gfsData = gfsWeatherData.hourly;
+
+  // Identifying the altitude parameters for ICON and GFS by filtering the keys
+  // that contain 'windspeed' and 'wind_speed' respectively.
+  const iconAltitudes = Object.keys(iconData).filter(key => key.startsWith('windspeed_'));
+  const gfsAltitudes = Object.keys(gfsData).filter(key => key.startsWith('wind_speed_'));
+
+  // Preparing tables for ICON and GFS wind speed data using the altitudes and timestamps
+  const iconTable = prepareDataTable(iconData, iconAltitudes, 'icon');
+  const gfsTable = prepareDataTable(gfsData, gfsAltitudes, 'gfs');
+
+  return { iconTable, gfsTable };
+}
+
+// Convert the wind speed data for each altitude and timestamp into a format suitable for DataTables
+function prepareDataTable(data, altitudes, modelId) {
+  const timestamps = data.time;
+  let tableData = {
+    columns: [{ title: 'Timestamp' }], // Start with a single Timestamp column
+    data: []
+  };
+
+  // Create column headers based on the altitude markers, and push them into the tableData
+  altitudes.forEach(altitude => {
+    const friendlyAltitudeName = altitude.replace('_', ' ').toUpperCase();
+    tableData.columns.push({ title: friendlyAltitudeName });
+  });
+
+  // Create the table data by looping over each timestamp and collecting the wind speed for each altitude
+  timestamps.forEach((timestamp, timestampIndex) => {
+    let row = [timestamp]; // First column is the timestamp
+    altitudes.forEach(altitude => {
+      row.push(data[altitude][timestampIndex]);
+    });
+    tableData.data.push(row); // Add the row to the table data
+  });
+
+  // Attaching the prepared data to the corresponding HTML table element by modelId
+  $(`#${modelId}WindSpeedTable`).dataTable(tableData);
+
+  return tableData;
+}
+
+// Call the function to prepare the tables when this script is loaded
+const { iconTable, gfsTable } = prepareTables();
+
+// Expose the generated table data for use by other scripts (e.g., displaytable.js)
+window.iconTableData = iconTable;
+window.gfsTableData = gfsTable;
+```
+
+---
+
+weather.html:
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+<!-- DataTables JS (including jQuery since DataTables requires it) -->
+<script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
+<script src="autocomplete.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location Autocomplete and Weather Information</title>
+<link rel="stylesheet" type="text/css" href="autocomplete.css">
+<script src="cookies.js" defer></script>
+<script src="keymap.js" defer></script>
+<script src="autocomplete.js" defer></script>
+<script src="getweather.js" defer></script>
+</head>
+<body>
+
+<div style="position: relative;">
+  <label for="locationInput">Enter a location:</label>
+  <input type="text" id="locationInput" placeholder="Type a location..." onkeyup="debounceGetSuggestions()">
+  <div id="autocomplete-list"></div>
+</div>
+
+<h2>Selected Location</h2>
+<p id="selectedLocation"></p>
+
+<h2>Wind Speed Information by Altitude and Time</h2>
+<table id="windSpeedTable" class="display">
+    <thead>
+        <tr>
+            <!-- The headers will be populated dynamically -->
+        </tr>
+    </thead>
+</table>
+
+<!-- Add the Clear Cookies button -->
+<button id="clearCookiesButton" onclick="clearAllCookies()">Clear Cookies</button>
+
+
+
+
+
+<script>
+  // Function to clear all cookies
+  function clearAllCookies() {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie.trim();
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    }
+    console.log('All cookies have been cleared.');
+  }
+  let timeout = null;
+</script>
+
+</body>
+</html>
+```
+

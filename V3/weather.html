@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+<!-- DataTables JS (including jQuery since DataTables requires it) -->
+<script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
+<script src="autocomplete.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location Autocomplete and Weather Information</title>
+<link rel="stylesheet" type="text/css" href="autocomplete.css">
+<script src="cookies.js" defer></script>
+<script src="keymap.js" defer></script>
+<script src="autocomplete.js" defer></script>
+<script src="getweather.js" defer></script>
+</head>
+<body>
+
+<div style="position: relative;">
+  <label for="locationInput">Enter a location:</label>
+  <input type="text" id="locationInput" placeholder="Type a location..." onkeyup="debounceGetSuggestions()">
+  <div id="autocomplete-list"></div>
+</div>
+
+<h2>Selected Location</h2>
+<p id="selectedLocation"></p>
+
+<h2>Wind Speed Information by Altitude and Time</h2>
+<table id="windSpeedTable" class="display">
+    <thead>
+        <tr>
+            <!-- The headers will be populated dynamically -->
+        </tr>
+    </thead>
+</table>
+
+<!-- Add the Clear Cookies button -->
+<button id="clearCookiesButton" onclick="clearAllCookies()">Clear Cookies</button>
+
+
+
+
+
+<script>
+  // Function to clear all cookies
+  function clearAllCookies() {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie.trim();
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    }
+    console.log('All cookies have been cleared.');
+  }
+  let timeout = null;
+</script>
+
+</body>
+</html>

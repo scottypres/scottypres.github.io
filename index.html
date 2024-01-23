@@ -105,6 +105,12 @@
 .cape-cell {
     font-size: 12px; /* Adjust to whatever size you prefer for the CAPE cell text */
 }
+.fetchbutton {
+    width: 150px; /* Adjust as needed */
+    /* ...other styles... */
+    visibility: hidden;
+    display: none;
+}
 .button {
     width: 150px; /* Adjust as needed */
     /* ...other styles... */
@@ -380,7 +386,7 @@
             <div id="zipcode-section" class="button-row">
                 <input type="text" id="location-input" placeholder="Enter location" autocomplete="off">
                 <ul id="autocomplete-results"></ul>
-                <button id="fetchCoordinatesButton" class="button">Fetch Weather</button>
+                <button id="fetchCoordinatesButton" class="fetchbutton">Fetch Weather</button>
                 <button id="savedLocationsButton" class="button">Saved Locations</button>
                 <div id="savedLocationsPopup" class="config-popup" style="display: none;">
                     
@@ -1367,6 +1373,7 @@
                         console.log(`Processing model: ${model}`);
                         await checkAndFetchData(baseUrl, model); // await added here
                         console.log(`Finished processing model: ${model}`);
+                        
                     }));
 
                     console.log('All models data fetched');
@@ -2039,7 +2046,7 @@ console.log(requestUrl);
         
         function createTable(tableId, weatherData, model) {
             console.log('createTable');
-            //console.log(globalWeatherData);
+            console.log(globalWeatherData);
             const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
             const timestamps = weatherData.hourly.time;
             const dataTable = document.getElementById(tableId);
@@ -2138,6 +2145,7 @@ console.log(requestUrl);
                     // Display wind data
                     fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
                     dataTable.dataset.showing = 'winds';
+                    
                 } else {
                     // Display cloud cover data
                     fillTableWithCloudCover(dataTable, globalWeatherData[model]);
