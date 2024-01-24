@@ -706,7 +706,11 @@ setCookie('cityName', cityName, 365); // Update the cookie with the new city nam
                 userLocation.longitude = coords.lon;
                 setCookie('userLatitude', userLocation.latitude, 365);
                 setCookie('userLongitude', userLocation.longitude, 365);
-                
+                const bestDaysButton = document.getElementById('bestDaysButton');
+    if (bestDaysButton) {
+        bestDaysButton.textContent = 'Best Hours'; // Reset the button text
+    }
+    
                 fetchAllModelsData();
             }
             function getSavedLocations() {
@@ -747,6 +751,7 @@ setCookie('cityName', cityName, 365); // Update the cookie with the new city nam
                         loadWeatherDataForLocation(location.coords);
                         toggleSavedLocationsPopup(); // Close the saved locations popup
                         clickCollapseButton();
+                        
                     });
 
                     locationItem.appendChild(locationLink);
