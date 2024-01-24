@@ -2647,10 +2647,24 @@ console.log(requestUrl);
 
       
          function fillTableWithCloudCover(table, weatherData) {
+            // Add original cloud cover rows (e.g. 1000hPa, 975hPa, etc.)
+               
                 const model = table.dataset.model;
                 table.dataset.showing = 'clouds'; // Update showing attribute here
                 let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
-
+ const originalAltitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
+               
+            originalAltitudeLabels.forEach(hPa => {
+                    const cloudCoverKey = `cloud_cover_${hPa}hPa`;
+                    if (weatherData.hourly.hasOwnProperty(cloudCoverKey)) {
+                        tableHtml += `<tr><th class="sticky-header">${hPaToFeet(hPa)} ft</th>`;
+                        weatherData.hourly[cloudCoverKey].forEach(cloudCover => {
+                            const bgColor = `rgba(0, 0, 0, ${cloudCover * 0.75 / 100})`;
+                            tableHtml += `<td class="grey-bg" style="background-color: ${bgColor}"></td>`;
+                        });
+                        tableHtml += '</tr>';
+                    }
+                });
                 // Define the cloud cover keys for low, mid, and high altitudes
                 const cloudCoverKeys = [
                     'cloud_cover_high',
@@ -2667,19 +2681,7 @@ console.log(requestUrl);
 
                 
 
-                // Add original cloud cover rows (e.g. 1000hPa, 975hPa, etc.)
-                const originalAltitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
-                originalAltitudeLabels.forEach(hPa => {
-                    const cloudCoverKey = `cloud_cover_${hPa}hPa`;
-                    if (weatherData.hourly.hasOwnProperty(cloudCoverKey)) {
-                        tableHtml += `<tr><th class="sticky-header">${hPaToFeet(hPa)} ft</th>`;
-                        weatherData.hourly[cloudCoverKey].forEach(cloudCover => {
-                            const bgColor = `rgba(0, 0, 0, ${cloudCover * 0.75 / 100})`;
-                            tableHtml += `<td class="grey-bg" style="background-color: ${bgColor}"></td>`;
-                        });
-                        tableHtml += '</tr>';
-                    }
-                });
+                 
 
                 // Now, insert a horizontal border before adding high cloud cover rows
                 tableHtml += `<tr><td colspan="${weatherData.hourly.time.length + 1}" style="border-top: 2px solid black;"></td></tr>`;
