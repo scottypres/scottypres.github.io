@@ -464,7 +464,7 @@
                     <div id="forecastLengthPopup" class="config-popup" style="display: none;">
                         <div class="config-content">
                             <label for="gfsOpenMeteoLength">GFS/OpenMeteo (max 14):</label>
-                            <input type="range" id="gfsOpenMeteoLength" value="7" min="1" max="14">
+                            <input type="range" id="gfsOpenMeteoLength" value="14" min="1" max="14">
                             <span id="gfsOpenMeteoLengthValue">14</span><br>
                     
                             <label for="iconLength">ICON (max 7):</label>
@@ -1466,7 +1466,7 @@ document.getElementById('applyBestDaysButton').addEventListener('click', functio
 
             // Check the model to determine the correct forecast_days parameter
             if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
-                const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 7); // Default 7, max 14
+                const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14); // Default 7, max 14
                 additionalParameters += `&forecast_days=${forecastDays}`;
             } else if (model.toLowerCase() === 'icon') {
                 const forecastDays = getCookieValueOrDefault('iconLength', 7); // Default 7, max 7
@@ -1768,7 +1768,7 @@ console.log(requestUrl);
             
             //console.log('Before initializing checkboxes:');
             //console.log(`Cape Checkbox Cookie: ${getCookie('variable_cape')}`);
-            const gfsOpenMeteoLengthValue = getCookieValueOrDefault('gfsOpenMeteoLength', 7);
+            const gfsOpenMeteoLengthValue = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
             const iconLengthValue = getCookieValueOrDefault('iconLength', 7);
             const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
             const capeCheckbox = document.getElementById('capeCheckbox');
