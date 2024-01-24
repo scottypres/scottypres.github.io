@@ -742,7 +742,7 @@ setCookie('cityName', cityName, 365); // Update the cookie with the new city nam
                         // Update the displayed city name
                         document.getElementById('cityName').textContent = location.name;
                         document.getElementById('cityName').style.display = 'block'; // Ensure the city name is visible
-
+                         setCookie('cityName', location.name, 365); // <-- Make sure this line exists
                         // Load weather data for the selected saved location
                         loadWeatherDataForLocation(location.coords);
                         toggleSavedLocationsPopup(); // Close the saved locations popup
