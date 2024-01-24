@@ -411,41 +411,12 @@
             <div class="button-row">
                 <div class="button">
                     <div class="column-header">Table Display/Config:</div>
-                    <button id="toggleButton" class="button" disabled>Wind/Clouds</button>
+                    <button id="toggleButton" class="button" disabled>Clouds</button>
+                    <button id="returnToWindTableButton" class="button" style="display: none;">Return to Wind Table</button>
                     <button id="toggleTemperatureButton" class="button" disabled>Temperature (F)</button>
     
                     <button id="toggleVariableOptionsPopup" class="button" disabled
                         onclick="toggleVariableOptionsPopup()">Additional Variables</button>
-                    <button id="editThresholdsButton" class="button" disabled>Wind Speed Colors</button>
-                <div id="configPopup" class="config-popup" style="display: none;">
-                    <div class="config-content">
-                        <label for="blueThreshold">Low Speed - Blue (mph)</label>
-                        <input type="number" id="blueThreshold" value="7" min="0" /><br />
-                        <label for="greenThreshold">Moderate Speed - Green (mph)</label>
-                        <input type="number" id="greenThreshold" value="12" min="1" /><br />
-                        <label for="redThreshold">High Speed - Red (mph)</label>
-                        <input type="number" id="redThreshold" value="20" min="2" /><br />
-                        <button id="submitThresholds">Submit</button>
-                    </div>
-                </div>
-                    <!-- New Forecast Length Button -->
-                    <button id="forecastLengthButton" class="button" disabled>Forecast Length</button>
-    
-                    <!-- Forecast Length Popup -->
-                    <div id="forecastLengthPopup" class="config-popup" style="display: none;">
-                        <div class="config-content">
-                            <label for="gfsOpenMeteoLength">GFS/OpenMeteo (max 14):</label>
-                            <input type="range" id="gfsOpenMeteoLength" value="7" min="1" max="14">
-                            <span id="gfsOpenMeteoLengthValue">14</span><br>
-                    
-                            <label for="iconLength">ICON (max 7):</label>
-                            <input type="range" id="iconLength" value="7" min="1" max="7">
-                            <span id="iconLengthValue">7</span><br>
-                    
-                            <button id="submitForecastLength">Submit</button>
-                        </div>
-                    </div>
-    
                     <!-- Variable Options Popup -->
                     <div id="variableOptionsPopup" class="config-popup" style="display: none;">
                         <div class="config-content">
@@ -471,6 +442,39 @@
                             <button onclick="toggleVariableOptionsPopup()">Close</button>
                         </div>
                     </div>
+                    <button id="editThresholdsButton" class="button" disabled>Wind Speed Colors</button>
+                <div id="configPopup" class="config-popup" style="display: none;">
+                    <div class="config-content">
+                        <label for="blueThreshold">Low Speed - Blue (mph)</label>
+                        <input type="number" id="blueThreshold" value="7" min="0" /><br />
+                        <label for="greenThreshold">Moderate Speed - Green (mph)</label>
+                        <input type="number" id="greenThreshold" value="12" min="1" /><br />
+                        <label for="redThreshold">High Speed - Red (mph)</label>
+                        <input type="number" id="redThreshold" value="20" min="2" /><br />
+                           <button id="submitThresholds">Submit</button>
+   
+                           
+                    </div>
+                </div>
+                    <!-- New Forecast Length Button -->
+                    <button id="forecastLengthButton" class="button" disabled>Forecast Length</button>
+    
+                    <!-- Forecast Length Popup -->
+                    <div id="forecastLengthPopup" class="config-popup" style="display: none;">
+                        <div class="config-content">
+                            <label for="gfsOpenMeteoLength">GFS/OpenMeteo (max 14):</label>
+                            <input type="range" id="gfsOpenMeteoLength" value="7" min="1" max="14">
+                            <span id="gfsOpenMeteoLengthValue">14</span><br>
+                    
+                            <label for="iconLength">ICON (max 7):</label>
+                            <input type="range" id="iconLength" value="7" min="1" max="7">
+                            <span id="iconLengthValue">7</span><br>
+                    
+                            <button id="submitForecastLength">Submit</button>
+                        </div>
+                    </div>
+    
+                    
                 </div>
     <br>
                 <div class="button">
@@ -813,14 +817,7 @@ setCookie('cityname', cityName, 365); // Update the cookie with the new city nam
                
             //});
 
-            document.addEventListener('DOMContentLoaded', function () {
-                    // Get the submit button by its ID
-                    console.log('DCOMContentLoaded');
-                    const saveAndFetchButton = document.getElementById('saveAndFetchButton');
-
-                    // Register the click event listener for the submit button
-                    saveAndFetchButton.addEventListener('click', saveSettingsAndFetchData);
-                });
+            
 
     // Listen for click events on the "Edit" button
     
@@ -901,7 +898,8 @@ setCookie('cityname', cityName, 365); // Update the cookie with the new city nam
                 // Other relevant functions like toggleDaylightHours might be called, based on your full code structure
                    toggleHighAltitude();
             toggleDaylightHours();
-            disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
+            disableButtonsExcept(['toggleButton', 'toggleTemperatureButton', 'returnToWindTableButton']);
+            
         }
             function getTemperatureColor(temperature) {
                     let backgroundColorRGB;
@@ -1903,6 +1901,15 @@ console.log(requestUrl);
                     document.getElementById('iconLength').addEventListener('input', function () {
                         document.getElementById('iconLengthValue').textContent = this.value;
                     });})
+                    console.log('DCOMContentLoaded');
+                    const saveAndFetchButton = document.getElementById('saveAndFetchButton');
+
+                    // Register the click event listener for the submit button
+                    saveAndFetchButton.addEventListener('click', saveSettingsAndFetchData);
+                    
+
+                    
+                    
             // Event listener for the Submit button in the forecast length popup
             document.getElementById('submitForecastLength').addEventListener('click', function () {
                     // Retrieve the forecast lengths from the input fields.
@@ -1969,23 +1976,23 @@ console.log(requestUrl);
             }
             document.getElementById('toggleFogButton').addEventListener('click', handleFogButtonClick);
         function toggleTemperatureTables() {
-            ////console.log("toggleTemperatureTables");
-                Object.keys(globalWeatherData).forEach(model => {
-                    const tableId = `${model.toLowerCase()}-table`;
-                    const dataTable = document.getElementById(tableId);
+    Object.keys(globalWeatherData).forEach(model => {
+        const tableId = `${model.toLowerCase()}-table`;
+        const dataTable = document.getElementById(tableId);
 
-                    // Check the current state and toggle accordingly
-                     if (dataTable.dataset.showing !== 'temperature') {
-                        // Currently showing something other than temperature, switch to temperature
-                        fillTableWithTemperature(dataTable, globalWeatherData[model]);
-                        dataTable.dataset.showing = 'temperature'; // Indicate that temperature is being shown
-                    } else {
-                        // Currently showing temperature, switch to wind speed
-                        fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
-                        dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
-                    }
-                });
-            }
+        if (dataTable.dataset.showing !== 'temperature') {
+            // Currently showing something other than temperature, switch to temperature
+            fillTableWithTemperature(dataTable, globalWeatherData[model]);
+            dataTable.dataset.showing = 'temperature';
+        } else {
+            // Currently showing temperature, switch to wind speed
+            fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
+            dataTable.dataset.showing = 'winds';
+        }
+    });
+
+    manageViewButtons(); // Update button display
+}
             
 
                 
@@ -2157,33 +2164,29 @@ console.log(requestUrl);
             //////console.log(`Listeners added for ${model} model`);
         }
 
-        document.getElementById('toggleButton').addEventListener('click', toggleWindClouds);
-        document.getElementById('toggleButton').textContent = 'Winds/Clouds'; // Default text
+        document.getElementById('toggleButton').addEventListener('click', function() {
+    toggleWindClouds();
+});
+        
         function toggleWindClouds() {
-            
-            Object.keys(globalWeatherData).forEach(model => {
-                const tableId = `${model.toLowerCase()}-table`;
-                const dataTable = document.getElementById(tableId);
-                const currentDisplay = dataTable.dataset.showing;
+    Object.keys(globalWeatherData).forEach(model => {
+        const tableId = `${model.toLowerCase()}-table`;
+        const dataTable = document.getElementById(tableId);
+        const currentDisplay = dataTable.dataset.showing;
 
-                if (currentDisplay === 'clouds') {
-                    // Display wind data
-                  
-                    fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
-                    dataTable.dataset.showing = 'winds';
-                    
-                    
-                } else {
-                    // Display cloud cover data
-                    
-                    fillTableWithCloudCover(dataTable, globalWeatherData[model]);
-                    dataTable.dataset.showing = 'clouds';
-                    
-                }
-            });
-
-
+        if (currentDisplay === 'clouds') {
+            // Currently showing clouds, switch to wind data
+            fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
+            dataTable.dataset.showing = 'winds';
+        } else {
+            // Currently showing wind, switch to cloud cover data
+            fillTableWithCloudCover(dataTable, globalWeatherData[model]);
+            dataTable.dataset.showing = 'clouds';
         }
+    });
+
+    manageViewButtons(); // Update button display
+}
 
 
 
@@ -2744,7 +2747,7 @@ console.log(requestUrl);
                 toggleHighAltitude();
                 toggleDaylightHours();
                 addVerticalBordersBetweenDays();
-                disableButtonsExcept(['toggleButton', 'toggleTemperatureButton']);
+                disableButtonsExcept(['toggleButton', 'toggleTemperatureButton', 'returnToWindTableButton']);
             }
 
             function disableButtonsExcept(buttonIds) {
@@ -2852,7 +2855,40 @@ console.log(requestUrl);
         // you can assign them a common class and add event listeners based on that.
         
     });
+function manageViewButtons() {
+    const toggleButton = document.getElementById('toggleButton');
+    const toggleTemperatureButton = document.getElementById('toggleTemperatureButton');
+    const returnToWindTableButton = document.getElementById('returnToWindTableButton');
 
+    const isTemperatureTableDisplayed = [...document.querySelectorAll('table[id$="-table"]')]
+        .some(table => table.dataset.showing === 'temperature');
+    const isCloudTableDisplayed = [...document.querySelectorAll('table[id$="-table"]')]
+        .some(table => table.dataset.showing === 'clouds');
+
+    if (isCloudTableDisplayed || isTemperatureTableDisplayed) {
+        // Hide the toggle buttons and show the "Return to Wind Table" button
+        toggleButton.style.display = 'none';
+        toggleTemperatureButton.style.display = 'none';
+        returnToWindTableButton.style.display = 'inline-block'; // Show the return button
+    } else {
+        // Show the toggle buttons and hide the "Return to Wind Table" button
+        toggleButton.style.display = 'inline-block';
+        toggleTemperatureButton.style.display = 'inline-block';
+        returnToWindTableButton.style.display = 'none'; // Hide the return button
+    }
+}
+document.getElementById('returnToWindTableButton').addEventListener('click', function() {
+    // Switch to wind speed for all tables
+    Object.keys(globalWeatherData).forEach(model => {
+        const tableId = `${model.toLowerCase()}-table`;
+        const dataTable = document.getElementById(tableId);
+        fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
+        dataTable.dataset.showing = 'winds';
+    });
+
+    // Update the button visibility
+    manageViewButtons();
+});
     </script>
 
 </body>
