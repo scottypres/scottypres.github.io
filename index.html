@@ -484,18 +484,19 @@
                     <br><br>
                     <div class="column-header">Analysis Options:</div>
                     <button id="bestDaysButton" class="button" disabled>Best Hours</button>
-                    <button id="checkWindShearButton" class="button" disabled>Enable Wind Shear</button>
-                </div>
-    
-                
-    
-                <div id="bestDaysPopup" class="config-popup" style="display: none;">
+                    <div id="bestDaysPopup" class="config-popup" style="display: none;">
                     <div class="config-content">
                         <label for="bestWindSpeed">Max Wind Speed (mph)</label>
                         <input type="number" id="bestWindSpeed" value="15" min="0" /><br />
                         <button id="applyBestDaysButton">Apply</button>
                     </div>
                 </div>
+                    <button id="checkWindShearButton" class="button" disabled>Enable Wind Shear</button>
+                </div>
+    
+                
+    
+                
     
                 <button id="toggleFogButton" class="button" disabled>Fog</button>
     <br>
@@ -1128,6 +1129,7 @@ setCookie('cityName', cityName, 365); // Update the cookie with the new city nam
         document.getElementById('applyBestDaysButton').addEventListener('click', function () {
            
                 const bestDaysPopup = document.getElementById('bestDaysPopup');
+                bestDaysPopup.style.display = 'none';
                 const applyBestDaysButton = this; // "this" refers to the 'applyBestDaysButton'
                 const bestDaysButton = document.getElementById('bestDaysButton'); // Assuming this is the ID of your "Best Days/Reset Best Hours" button
 
@@ -1161,70 +1163,68 @@ setCookie('cityName', cityName, 365); // Update the cookie with the new city nam
    
     cityName.style.display = 'block';
 });
-        function filterBestDaysColumns() {
-            
-            ////console.log('filterBestDaysColumns');
-            // Threshold in mph
-            const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
+       function filterBestDaysColumns() {
+    // Threshold in mph
+    const bestWindSpeedThreshold = parseFloat(document.getElementById('bestWindSpeed').value);
 
-            // Get tables containing wind speeds
-            const tables = document.querySelectorAll('table[id$="-table"]');
+    // Get tables containing wind speeds
+    const tables = document.querySelectorAll('table[id$="-table"]');
 
-            tables.forEach(table => {
-                // Get all header cells (ignoring the first row which contains model names)
-                const headers = table.querySelectorAll('tr:first-child th:not(:first-child)');
-                // Get all rows to access speed values at specified altitudes
-                const rows = table.querySelectorAll('tr:not(:first-child)');
+    tables.forEach(table => {
+        // Get all header cells (ignoring the first row which contains model names)
+        const headers = table.querySelectorAll('tr:first-child th:not(:first-child)');
+        // Get all rows to access speed values at specified altitudes
+        const rows = table.querySelectorAll('tr:not(:first-child)');
 
-                // Determine which rows correspond to altitudes 33, 262, and 361 ft
-                const targetAltitudeRows = [...rows].filter(row => {
-                    const altitudeText = row.cells[0].innerText.trim();
-                    const altitude = parseInt(altitudeText.replace(' ft', ''), 10);
-                    return [33, 262, 361].includes(altitude);
-                });
+        // Determine which rows correspond to altitudes 33, 262, and 361 ft
+        const targetAltitudeRows = [...rows].filter(row => {
+            const altitudeText = row.cells[0].innerText.replace(' ft', '');
+            const altitude = parseInt(altitudeText, 10);
+            return [33, 262, 361].includes(altitude);
+        });
 
-                // Keep track of the last known day of week text to compare days
+        // Iterate over each column (time slot) to build a list of columns to delete
+        const columnsToDelete = new Set();
 
+        headers.forEach((header, columnIndex) => {
+            // Skip if this column is already marked for deletion
+            if (columnsToDelete.has(columnIndex)) return;
 
-                // Iterate over each column (time slot) and check if values exceed the threshold
-                headers.forEach((header, columnIndex) => {
-                    // Extract day of week from the header cell, assuming the format is MM/DD\nDay\nHH\nAM/PM
-                    const dayOfWeek = header.innerText.trim().split('\n')[1]; // Day of week is on the second line
-
-
-
-                    // Check whether any of the wind speeds exceed the threshold
-                    let columnOverThreshold = targetAltitudeRows.some(row => {
-                        const windSpeedText = row.cells[columnIndex + 1].innerText.trim();
-                        const windSpeed = parseFloat(windSpeedText);
-                        return windSpeed > bestWindSpeedThreshold;
-                    });
-
-                    // Hide the whole column if the threshold is exceeded
-                    if (columnOverThreshold) {
-                        headers[columnIndex].style.display = 'none'; // Hide header cell
-                        rows.forEach(row => {
-                            row.cells[columnIndex + 1].style.display = 'none'; // Hide data cell
-                        });
-                    } else {
-                        // Ensure the column is visible if it does not exceed the threshold
-                        headers[columnIndex].style.display = ''; // Show header cell
-                        rows.forEach(row => {
-                            row.cells[columnIndex + 1].style.display = ''; // Show data cell
-                        });
-                    }
-                });
-                  headers.forEach((header, columnIndex) => {
-                    if (!header.classList.contains('daylight')) {
-                        header.style.display = 'none'; // Hide header cell with no 'daylight' class
-                        rows.forEach(row => {
-                            row.cells[columnIndex + 1].style.display = 'none'; // Hide associated data cells
-                        });
-                    }
-                });
+            // Check whether any of the wind speeds exceed the threshold
+            let columnOverThreshold = targetAltitudeRows.some(row => {
+                const windSpeedText = row.cells[columnIndex + 1].innerText.trim();
+                const windSpeed = parseFloat(windSpeedText);
+                return windSpeed > bestWindSpeedThreshold;
             });
-            
-        }
+
+            // Mark the whole column for deletion if the threshold is exceeded
+            if (columnOverThreshold) {
+                columnsToDelete.add(columnIndex);
+            }
+        });
+
+        // Delete marked columns starting from the highest index to avoid index shifting
+        [...columnsToDelete].sort((a, b) => b - a).forEach(columnIndex => {
+            // Iterate over all rows to remove the cell at columnIndex
+            rows.forEach(row => {
+                row.deleteCell(columnIndex + 1); // +1 to account for the sticky header cell
+            });
+            headers[columnIndex].parentNode.removeChild(headers[columnIndex]); // Remove header cell
+        });
+    });
+    addVerticalBordersBetweenDays();
+}
+
+// Event listener for the "Apply Best Days" button
+document.getElementById('applyBestDaysButton').addEventListener('click', function () {
+    const bestDaysPopup = document.getElementById('bestDaysPopup');
+    if (!bestDaysPopup.style.display || bestDaysPopup.style.display === 'none') {
+        bestDaysPopup.style.display = 'flex';
+    } else {
+        filterBestDaysColumns(); // Call the modified function
+        bestDaysPopup.style.display = 'none';
+    }
+});
 
         // After tables have been generated, enable the "Best Days" button
         function enableBestDaysButton() {
@@ -2005,81 +2005,42 @@ console.log(requestUrl);
         
         
     function addVerticalBordersBetweenDays() {
-            // Select all tables that you want to apply the border to
-            const tables = document.querySelectorAll('table');
+    // Select all tables that you want to apply the border to
+    const tables = document.querySelectorAll('table');
 
+    // Iterate over each table
+    tables.forEach(table => {
+        // Get all header cells in the first row that have 'data-day' attribute, excluding the very first cell
+        const dayHeaders = table.querySelectorAll('tr:first-child th:not(:first-child)');
 
+        // Initialize variable to store the previous day
+        let previousDay = null;
 
-        if (daylightHoursShown == false) {
-            tables.forEach(table => {
-                // Get all header cells in the first row
-                const dayHeaders = table.querySelectorAll('tr:first-child th:not(:first-child)');
+        // Iterate through headers to find day transitions
+        dayHeaders.forEach((headerCell, index) => {
+            // Check if the cell is visible (not hidden due to daylight or altitudes toggle)
+            if (headerCell.style.display !== 'none') {
+                const currentDay = headerCell.getAttribute('data-day');
 
-                // Loop through the header cells to check for "daylight" class transitions
-                dayHeaders.forEach((headerCell, index) => {
-                    const isDaylight = headerCell.classList.contains('daylight');
-                    const prevHeader = dayHeaders[index - 1];
-                    const nextHeader = dayHeaders[index + 1];
-
-                    // If it's daylight and the previous header is not, apply a left border
-                    if (isDaylight && (!prevHeader || !prevHeader.classList.contains('daylight'))) {
-                        headerCell.style.borderLeft = '3px solid black';
-                        table.querySelectorAll(`tr:not(:first-child) td:nth-child(${index + 2})`).forEach(cell => {
+                // Add border if the current day is different from the previous day and not the first cell
+                if (previousDay && currentDay !== previousDay) {
+                    // Add a vertical border to the left side of the current header cell
+                    headerCell.style.borderLeft = '3px solid black';
+                    // Also apply the border to all cells in the same column below the header
+                    table.querySelectorAll(`tr:not(:first-child) td:nth-child(${index + 2}):not([style*="display: none"])`).forEach(cell => {
+                        // Check if the cell is visible (not hidden due to daylight or altitudes toggle)
+                        if (cell.style.display !== 'none') {
                             cell.style.borderLeft = '3px solid black';
-                        });
-                    }
-
-                    // If it's daylight and the next header is not, apply a right border
-                    if (isDaylight && (!nextHeader || !nextHeader.classList.contains('daylight'))) {
-                        headerCell.style.borderRight = '3px solid black';
-                        table.querySelectorAll(`tr:not(:first-child) td:nth-child(${index + 2})`).forEach(cell => {
-                            cell.style.borderRight = '3px solid black';
-                        });
-                    }
-                });
-            });
-        }
-
-            if (daylightHoursShown==true){
-            // Iterate over each table
-            tables.forEach(table => {
-                // Get all header cells in the first row that have 'data-day' attribute, excluding the very first cell
-                const dayHeaders = table.querySelectorAll('tr:first-child th[data-day]:not(:first-child)');
-
-                // Initialize variable to store the previous day
-                let previousDay = null;
-
-                // Iterate through headers to find day transitions
-                dayHeaders.forEach((headerCell, index) => {
-                    // Check if the cell is visible (not hidden due to daylight or altitudes toggle)
-                    if (headerCell.style.display !== 'none') {
-                        const currentDay = headerCell.getAttribute('data-day');
-
-                        // Add border if the current day is different from the previous day and not the first cell
-                        if (previousDay && currentDay !== previousDay) {
-                            // Add a vertical border to the left side of the current header cell
-                            headerCell.style.borderLeft = '3px solid black';
-                            // Also apply the border to all cells in the same column below the header
-                            table.querySelectorAll(`tr:not(:first-child) td:nth-child(${index + 2}):not([style*="display: none"])`).forEach(cell => {
-                                // Check if the cell is visible (not hidden due to daylight or altitudes toggle)
-                                if (cell.style.display !== 'none') {
-                                    cell.style.borderLeft = '3px solid black';
-                                }
-                            });
                         }
+                    });
+                }
 
-                        // Update previousDay to the current day for the next iteration
-                        previousDay = currentDay;
-                    }
-                });
-            });
-        }
-
-
-
-        //console.log(`GFS/OpeMeteo length input value after onload: ${document.getElementById('gfsOpenMeteoLength').value}`);
-        //console.log(`ICON length input value after onload: ${document.getElementById('iconLength').value}`);
-    };
+                // Update previousDay to the current day for the next iteration
+                previousDay = currentDay;
+            }
+        });
+    });
+};
 
         
         function createTable(tableId, weatherData, model) {
