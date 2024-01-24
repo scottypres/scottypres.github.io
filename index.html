@@ -588,7 +588,7 @@ $(document).on('click', '.autocomplete-item', function () {
     // Store the city name in a global variable or data attribute
     const cityName = $(this).text().split(',')[0]; // Get the city name (assuming it is the first part of the location string)
     $('#cityName').text(cityName);
-setCookie('cityname', cityName, 365); // Update the cookie with the new city name
+setCookie('cityName', cityName, 365); // Update the cookie with the new city name
     
     // Automatically click the fetch weather data button after selection
     $('#fetchCoordinatesButton').click();
@@ -706,6 +706,7 @@ setCookie('cityname', cityName, 365); // Update the cookie with the new city nam
                 userLocation.longitude = coords.lon;
                 setCookie('userLatitude', userLocation.latitude, 365);
                 setCookie('userLongitude', userLocation.longitude, 365);
+                
                 fetchAllModelsData();
             }
             function getSavedLocations() {
@@ -1738,7 +1739,7 @@ console.log(requestUrl);
 
         window.onload = function () {
             console.log("window.onload");
-             const cityNameFromCookie = getCookie('cityname');
+             const cityNameFromCookie = getCookie('cityName');
     if (cityNameFromCookie) {
         document.getElementById('cityName').textContent = cityNameFromCookie;
     }
