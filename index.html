@@ -278,17 +278,12 @@
         }
 
         table {
-            width: 100%;
             border-collapse: collapse;
 
         }
 
         th,
         td {
-            min-width: 10px;
-            /* Minimum width of cells */
-            max-width: 50px;
-            /* Maximum width of cells */
             border: 1px solid black;
             padding: 1px;
             text-align: center;
@@ -306,7 +301,13 @@
             transform-origin: 50% 50%;
         }
 
-        
+        .column-header2 {
+    /* Your specific width for the headers other than the first column */
+   
+    
+    min-width: 1px; /* Example minimum width */
+    
+}
 
         /* Updated CSS rule for first-column cells under `tbody` to inherit the width */
         td:first-child {
@@ -2075,7 +2076,7 @@ console.log(requestUrl);
                 
 
                 headerClass = '';
-                    tableHtml += `<th class="column-header ${daylightClass}" data-day="${day}">
+                    tableHtml += `<th class="column-header2 ${daylightClass}" data-day="${day}">
                     <span class="smalldate">${month}/${day}</span><br>
                     <span class="small-font">${dayOfWeek}</span><br>
                     <span class="small-font">${hour12}</span><br><span class="small-font">${ampm}</span>
