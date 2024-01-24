@@ -113,35 +113,6 @@ function getCookie(name) {
 
 ---
 
-displaytables.js:
-```
-
-
-function displayTable(tableData, tableElementId) {
-  // Check if DataTables is already initialized for the given tableElementId
-  // to prevent re-initializing it on subsequent calls.
-  if (!$.fn.DataTable.isDataTable(`#${tableElementId}`)) {
-    // Initialize DataTables for the table element using the provided data
-    $(`#${tableElementId}`).DataTable({
-      data: tableData.data,
-      columns: tableData.columns,
-      // Additional DataTables configuration options can go here
-    });
-  }
-}
-window.displayTables = () => {
-  // Assuming you have prepared the data with keys `iconTableData` and `gfsTableData`
-  // and these are objects compatible with DataTables initialization.
-  displayTable(window.iconTableData, 'iconWindSpeedTable');
-  displayTable(window.gfsTableData, 'gfsWindSpeedTable');
-}
-// Call the displayTable function with the generated table data from preparetables.js
-// This is using the global variables set in preparetables.js
-
-```
-
----
-
 getweather.js:
 ```
 
@@ -191,10 +162,7 @@ async function getWeathericon(latitude, longitude) {
     console.log("fetched new ICON data", iconWeatherData);
     // Now that we have the weather data, we can prepare and display the tables.
     // Ensure that `prepareTables` and `displayTables` are available before calling them
-    if (window.prepareTables && window.displayTables) {
-      window.prepareTables(); // Process the data for tables
-      window.displayTables(); // Display the tables
-    }
+
   } catch (error) {
     console.error(error);
   }
@@ -231,15 +199,6 @@ function processRenameKeys(data, keyMap) {
   }
   return data;
 }
-
-window.executeAfterWeatherFetch = (latitude, longitude) => {
-  // Call your API or perform the necessary operations
-  // Once done, trigger the table preparation and display.
-  window.prepareTables && window.prepareTables(); // Check if the function exists
-  window.displayTables && window.displayTables(); // Check if the function exists
-  console.log(window.prepareTables);
-  console.log(window.displayTables);
-};
 
 
 ```

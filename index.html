@@ -570,17 +570,21 @@
                 }
             });
         
-            $(document).on('click', '.autocomplete-item', function () {
+$(document).on('click', '.autocomplete-item', function () {
     // Fill the input with the selected location 
     input.val($(this).text());
     input.data('lat', $(this).data('lat'));
     input.data('lon', $(this).data('lon'));
+    
+    // Also, store the coordinates in cookies
+    setCookie('lastSelectedLat', $(this).data('lat'), 1);
+    setCookie('lastSelectedLon', $(this).data('lon'), 1);
+    
     autocompleteResults.hide();
     // Store the city name in a global variable or data attribute
     const cityName = $(this).text().split(',')[0]; // Get the city name (assuming it is the first part of the location string)
     $('#cityName').text(cityName); // Update the city name element
-    setCookie('cityname',cityName);
-
+    
     // Automatically click the fetch weather data button after selection
     $('#fetchCoordinatesButton').click();
 });
@@ -658,16 +662,33 @@
         addLocationToSavedLocations(cityName, { lat, lon });
     });
 
-    function addLocationToSavedLocations(name, coords) {
-            const savedLocations = getSavedLocations();
-            if (savedLocations.length < 5) {
-                savedLocations.push({ name, coords });
-                setCookie('savedLocations', JSON.stringify(savedLocations), 365);
-                updateSavedLocationsList();
-            } else {
-                alert('Maximum of 5 locations can be saved.');
-            }
-        }
+    function addLocationToSavedLocations(name) {
+    let coords = {
+        lat: $('#location-input').data('lat'),
+        lon: $('#location-input').data('lon')
+    };
+
+    // If coordinates are not present in data attributes, try loading from cookies
+    if (!coords.lat || !coords.lon) {
+        coords.lat = getCookie('lastSelectedLat');
+        coords.lon = getCookie('lastSelectedLon');
+    }
+    
+    // If coordinates are still not available, return and do not attempt to save the location
+    if (!coords.lat || !coords.lon) {
+        alert('Please select a location first.');
+        return;
+    }
+
+    const savedLocations = getSavedLocations();
+    if (savedLocations.length < 5) {
+        savedLocations.push({ name, coords });
+        setCookie('savedLocations', JSON.stringify(savedLocations), 365);
+        updateSavedLocationsList();
+    } else {
+        alert('Maximum of 5 locations can be saved.');
+    }
+}
     function deleteLocationFromSavedLocations(index) {
             // Retrieve existing locations from cookies
             const savedLocations = getSavedLocations();
@@ -1084,7 +1105,7 @@
        ;
         function resetTables() {
             
-            ////console.log('resetTables');
+            console.log('resetTables');
             // Loop over each model to create the tables again using the stored data
             //  ////console.log('resetTables');
             Object.keys(globalWeatherData).forEach(model => {
@@ -1219,16 +1240,16 @@
         function initialTableSetup() {
             
             console.log('Initial Table Setup');
-            if (!isUpdatingTables) {
-                Object.keys(globalWeatherData).forEach(model => {
-                    const tableId = `${model.toLowerCase()}-table`;
-                    const dataTable = document.getElementById(tableId);
-                    fillTableWithWindSpeed(dataTable, globalWeatherData[model]); // Show winds data first
-                    dataTable.dataset.showing = 'winds'; // Indicate that winds are being shown
-                })
-            };
+            const tableIds = ['icon-table', 'gfs-table']; // Add other table IDs as needed
+            tableIds.forEach(tableId => {
+                const table = document.getElementById(tableId);
+                if (table.dataset.showing === 'winds') {
+                    fillTableWithWindSpeed(table, globalWeatherData[table.dataset.model]);
+                }
+            });
+            
             // toggleDaylightHours();
-            submitThresholdsAndRepaint();
+            //submitThresholdsAndRepaint();
             
         }
         function showConfigPopup() {
@@ -2143,13 +2164,17 @@ console.log(requestUrl);
 
                 if (currentDisplay === 'clouds') {
                     // Display wind data
+                  
                     fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
                     dataTable.dataset.showing = 'winds';
                     
+                    
                 } else {
                     // Display cloud cover data
+                    
                     fillTableWithCloudCover(dataTable, globalWeatherData[model]);
                     dataTable.dataset.showing = 'clouds';
+                    
                 }
             });
 

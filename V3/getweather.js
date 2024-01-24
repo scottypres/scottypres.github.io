@@ -45,17 +45,13 @@ async function getWeathericon(latitude, longitude) {
     console.log("fetched new ICON data", iconWeatherData);
     // Now that we have the weather data, we can prepare and display the tables.
     // Ensure that `prepareTables` and `displayTables` are available before calling them
-    if (window.prepareTables && window.displayTables) {
-      window.prepareTables(); // Process the data for tables
-      window.displayTables(); // Display the tables
-    }
+    
   } catch (error) {
     console.error(error);
   }
   setCookie("iconWeatherData", JSON.stringify(iconWeatherData), 15); // Save data for 15 minutes
   setCookie("iconLastFetchTimestamp", new Date().toISOString(), 15); // Save timestamp
-  executeAfterWeatherFetch(latitude, longitude); // Pass the appropriate latitude and longitude here.
-}
+ }
 
 /**
  * Rename object keys using a map of old keys to new keys.
@@ -86,12 +82,4 @@ function processRenameKeys(data, keyMap) {
   return data;
 }
 
-window.executeAfterWeatherFetch = (latitude, longitude) => {
-  // Call your API or perform the necessary operations
-  // Once done, trigger the table preparation and display.
-  window.prepareTables && window.prepareTables(); // Check if the function exists
-  window.displayTables && window.displayTables(); // Check if the function exists
-  console.log(window.prepareTables);
-  console.log(window.displayTables);
-};
-
+;
