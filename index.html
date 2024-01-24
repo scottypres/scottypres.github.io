@@ -583,7 +583,8 @@ $(document).on('click', '.autocomplete-item', function () {
     autocompleteResults.hide();
     // Store the city name in a global variable or data attribute
     const cityName = $(this).text().split(',')[0]; // Get the city name (assuming it is the first part of the location string)
-    $('#cityName').text(cityName); // Update the city name element
+    $('#cityName').text(cityName);
+setCookie('cityname', cityName, 365); // Update the cookie with the new city name
     
     // Automatically click the fetch weather data button after selection
     $('#fetchCoordinatesButton').click();
@@ -1649,11 +1650,12 @@ console.log(requestUrl);
 
                     // Cache the new API data
                     localStorage.setItem(lastApiCallKey, JSON.stringify({
-                        timestamp: now,
-                        data: weatherData,
-                        latitude: userLocation.latitude,
-                       longitude: userLocation.latitude
-                    }));
+    timestamp: now,
+    data: weatherData,
+    latitude: userLocation.latitude,
+    longitude: userLocation.longitude,
+    cityName: $('#cityName').text() // Store the current city name as well
+}));
 
                     // Populate the respective table with the fetched data
                     createTable(`${model.toLowerCase()}-table`, weatherData, model);
@@ -1738,12 +1740,10 @@ console.log(requestUrl);
 
         window.onload = function () {
             console.log("window.onload");
-            const cityNameFromCookie = getCookie('cityname');
-
-            // Update the displayed city name if the cookie exists
-            if (cityNameFromCookie) {
-                document.getElementById('cityName').textContent = cityNameFromCookie;
-            }
+             const cityNameFromCookie = getCookie('cityname');
+    if (cityNameFromCookie) {
+        document.getElementById('cityName').textContent = cityNameFromCookie;
+    }
             
             // Automatically click the edit button when the page loads for the first time
             
@@ -1933,18 +1933,22 @@ console.log(requestUrl);
         
         
         function createTableBasedOnCachedData(latitude, longitude) {
-            console.log('createtablebasedoncacheddata');
-                const lastApiCallKey = `lastApiCall_${latitude}_${longitude}`;
-                const cachedDataStr = localStorage.getItem(lastApiCallKey);
-                if (cachedDataStr) {
-                    const cachedData = JSON.parse(cachedDataStr);
-                    Object.keys(cachedData.data).forEach(model => {
-                        const tableId = `${model.toLowerCase()}-table`;
-                        createTable(tableId, cachedData.data[model], model);
-                    });
-                    initialTableSetup();
-                }
-            }
+    const lastApiCallKey = `lastApiCall_${latitude}_${longitude}`;
+    const cachedDataStr = localStorage.getItem(lastApiCallKey);
+    if (cachedDataStr) {
+        const cachedData = JSON.parse(cachedDataStr);
+        // Set the city name from cached data
+        if (cachedData.cityName) {
+            $('#cityName').text(cachedData.cityName);
+            $('#cityName').show(); // Make sure the city name is visible
+        }
+        Object.keys(cachedData.data).forEach(model => {
+            const tableId = `${model.toLowerCase()}-table`;
+            createTable(tableId, cachedData.data[model], model);
+        });
+        initialTableSetup();
+    }
+}
         
             function handleFogButtonClick() {
                 fogEnabled = !fogEnabled;
