@@ -615,6 +615,7 @@ $(document).on('click', '.autocomplete-item', function () {
     input.val($(this).text());
     input.data('lat', $(this).data('lat'));
     input.data('lon', $(this).data('lon'));
+    console.log("INPUT", input);
     
     // Also, store the coordinates in cookies
     setCookie('lastSelectedLat', $(this).data('lat'), 1);
@@ -1934,6 +1935,10 @@ console.log(requestUrl);
         quickviewButton.disabled = true; // Disable if daylight hours are not shown
         quickviewButton.style.opacity = 0.5; // Optional: Reduced opacity for disabled appearance
     }
+     fetchAllModelsData();
+    setTimeout(function() {
+    document.getElementById('quickviewButton').click();
+}, 15000); // Time in milliseconds (5000 ms = 5 seconds)
         };
         function saveForecastLengthSettings() {
             console.log('forecast length');
