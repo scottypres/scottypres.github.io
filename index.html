@@ -2042,7 +2042,23 @@ console.log(requestUrl);
         });
     });
 };
+function adjustZoomToFitScreenHeight() {
+    // Getting the height of the content in the body
+    const bodyHeight = document.body.scrollHeight;
 
+    // Getting the height of the visible viewport
+    const viewportHeight = window.innerHeight;
+
+    // Calculating the desired scale factor
+    const scaleFactor = viewportHeight / bodyHeight;
+
+    // Updating the body's transform property to scale down/up to fit the viewport
+    document.body.style.transform = `scale(${scaleFactor})`;
+    document.body.style.transformOrigin = 'top left'; // Scale from top left
+
+    // Adjust the width of the body to prevent horizontal scrolling
+    document.body.style.width = `${(1 / scaleFactor) * 100}%`;
+}
         
         function createTable(tableId, weatherData, model) {
             console.log('createTable');
@@ -2859,6 +2875,7 @@ document.getElementById('returnToWindTableButton').addEventListener('click', fun
     // Update the button visibility
     manageViewButtons();
 });
+window.addEventListener('load', adjustZoomToFitScreenHeight);
     </script>
 
 </body>
