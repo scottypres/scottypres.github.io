@@ -10,31 +10,27 @@ webdriver_path = '/usr/local/bin/chromedriver'  # e.g., 'C:/path/to/chromedriver
 # Chrome driver options
 chrome_options = Options()
 
-
 # Set up the Chrome WebDriver
 service = Service(webdriver_path)
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 # URL of the webpage you want to take a screenshot of
-url = 'http://scottypres.github.io/screenshot.html'  # Replace with the actual URL of your webpage
+url = 'http://localhost:8000/screenshot.html'  # Replace with the actual URL of your webpage
+
+# Open the webpage once initially
+driver.get(url)
 
 try:
-    driver.get(url)  # Open the webpage
-
-    # Wait for the page to load (adjust time as necessary)
-    time.sleep(5)
-
-    # Locate and click the Quickview button
-    quickview_button = driver.find_element(By.ID, 'quickviewButton')
-    quickview_button.click()
-
-    # Wait for 5 seconds after clicking the button
-    time.sleep(5)
-
-    # Take a screenshot and save it as 'screenshot.png'
-    driver.save_screenshot('screenshot.png')
-
+    while True:  # Infinite loop to keep the script running
+        # Wait for 15 seconds before refreshing the page
+        
+        driver.refresh()  # Refresh the webpage
+        time.sleep(30)  
+        # Take a screenshot and save it. The timestamp ensures a unique filename for each screenshot.
+        timestamp = int(time.time())
+        screenshot_filename = f'screenshot.png'
+        driver.save_screenshot(screenshot_filename)
 except Exception as e:
     print("Error occurred:", e)
 finally:
-    driver.quit()  # Close the WebDriver
+    driver.quit()  # Close the WebDriver if an exception occurs
