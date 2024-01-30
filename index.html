@@ -1250,9 +1250,9 @@ document.getElementById('applyBestDaysButton').addEventListener('click', functio
             const tableIds = ['icon-table', 'gfs-table']; // Add other table IDs as needed
             tableIds.forEach(tableId => {
                 const table = document.getElementById(tableId);
-                if (table.dataset.showing === 'winds') {
+                
                     fillTableWithWindSpeed(table, globalWeatherData[table.dataset.model]);
-                }
+                
             });
             
             // toggleDaylightHours();
@@ -1321,9 +1321,9 @@ document.getElementById('applyBestDaysButton').addEventListener('click', functio
             const tableIds = ['icon-table', 'gfs-table']; // Add other table IDs as needed
             tableIds.forEach(tableId => {
                 const table = document.getElementById(tableId);
-                if (table.dataset.showing === 'winds') {
+               
                     fillTableWithWindSpeed(table, globalWeatherData[table.dataset.model]);
-                }
+                
             });
             
            
@@ -2089,40 +2089,7 @@ console.log(requestUrl);
             tableHtml += '</tr>';
 
             // Add rows for each altitude
-            altitudeLabels.forEach(hPa => {
-                // Convert hPa to feet for the display label
-                const feet = hPaToFeet(hPa);
-
-                // Start the table row with the altitude label
-                tableHtml += `<tr><th class="sticky-header">${feet} ft</th>`;
-
-                // Presuming the weatherData variable holds your cloud cover data indexed by hPa, 
-                // e.g., `cloud_cover_1000hPa`, `cloud_cover_975hPa`, etc.
-                const cloudCoverKey = `cloud_cover_${hPa}hPa`;
-                const allShearCells = document.querySelectorAll('.shear-detected');
-                allShearCells.forEach(cell => {
-                    cell.classList.remove('shear-detected');
-                });
-                // Check if the cloud cover data exists for this altitude level
-                if (weatherData.hourly.hasOwnProperty(cloudCoverKey)) {
-                    // Add a data cell for each time interval
-                    weatherData.hourly[cloudCoverKey].forEach(cloudCover => {
-                        // Calculate the background color based on cloud cover percentage
-                        const bgColor = `rgba(0, 0, 0, ${cloudCover * 0.75 / 100})`;
-
-                        // Append the data cell with styling for cloud cover
-                        tableHtml += `<td class="grey-bg" style="background-color: ${bgColor}"></td>`;
-                    });
-                } else {
-                    // If cloud cover data does not exist for this pressure altitude (hPa), span across all time intervals
-                    tableHtml += `<td colspan="${weatherData.hourly.time.length}" class="data-cell">Data not available</td>`;
-                    ////console.log('cloud cover data does not exist for this pressure');
-                    ////console.log(cloudCoverKey);
-                }
-
-                // Close the table row
-                tableHtml += '</tr>';
-            });
+            
 
             dataTable.innerHTML = tableHtml;
 
@@ -2649,7 +2616,7 @@ console.log(requestUrl);
       
          function fillTableWithCloudCover(table, weatherData) {
             // Add original cloud cover rows (e.g. 1000hPa, 975hPa, etc.)
-               
+               console.log("fill table with cloud cover");
                 const model = table.dataset.model;
                 table.dataset.showing = 'clouds'; // Update showing attribute here
                 let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
