@@ -14,19 +14,7 @@
     
     position: relative; /* Define a positioning context for sticky children */
 }
-        .location-header {
-    position: sticky;
-    position: -webkit-sticky; /* Required for Safari */
-    position: sticky; /* Use "sticky" positioning */
-    left: 0; /* Keeps the header at the start of the table horizontally */
-    top: 0; /* Adjust top offset as needed, e.g., below your sticky toolbar */
-    z-index: 1000; /* Make sure it's above other table content */
-    background-color: white; /* Background color to cover any content behind */
-    padding: 5px; /* Add some padding for better readability */
-    
-    margin-bottom: 5px; /* Space between header and table */
-    width: max-content; /* Ensures the header doesn't become wider than its content */
-}
+       
         /* Style for the full-screen SweetAlert modal */
     .full-screen-modal .swal2-container {
         height: 100vh;
@@ -2421,7 +2409,8 @@ function copyTablesForAllLocations(numberOfLocations) {
     }
 
             model='gfs';
-            let tableHtml = `<tr><th>${model.replace('Meteo', '<br>Meteo')}</th>`;
+            
+            let tableHtml = `<tr><th style="min-width: 125px;">${locationName}</th>`;
             let currentDay = null; // Variable to store the current day as you loop through the timestamps
             // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
             let isDayArray = weatherData.hourly.is_day;
@@ -2472,8 +2461,7 @@ if (!dataTable) {
        if (tableElement) {
     // Create a header for the table to display the location name
     const locationHeader = document.createElement('h3');
-    locationHeader.textContent = locationName;
-     locationHeader.classList.add('location-header'); // Add the class we defined above
+   
     
     // Fill the table with the generated HTML
     console.log(`Updating innerHTML for table with ID: ${tableId}`);
