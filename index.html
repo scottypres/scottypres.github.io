@@ -2640,7 +2640,7 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
 
             
             
-            if ((table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
+            
               const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
                 if (liftedIndexCheckbox && liftedIndexCheckbox.checked && weatherData.hourly.hasOwnProperty('lifted_index')) {
                     tableHtml += '<tr><th class="sticky-header small-text-cell">Lifted Index</th>';
@@ -2672,7 +2672,7 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
                 }
                 
                
-            }
+            
             if (table.id === 'icon-table' && precipSumCheckbox && precipSumCheckbox.checked) {
                 // Add Precipitation row header
                 tableHtml += '<tr><th class="sticky-header small-text-cell">Precip (in)</th>';
