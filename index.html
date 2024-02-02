@@ -292,6 +292,9 @@
             min-width: 60px;
             max-width: 120px;
         }
+        tr:first-child th:first-child {
+  white-space: normal;
+}
 
         th span {
             font-size: 12px;
@@ -302,17 +305,22 @@
 
         }
 
-        th,
+        th{
+            border: 1px solid black;
+            padding: 1px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+           
+  
+   
+        }
+
         td {
             border: 1px solid black;
             padding: 1px;
             text-align: center;
             font-family: Arial, sans-serif;
-            overflow: hidden;
-            /* If content is too wide, it will be clipped */
-            text-overflow: ellipsis;
-            /* If content is clipped, display an ellipsis ('...') */
-            white-space: nowrap;
+            
             /* Keep text on the same line */
         }
 
@@ -335,6 +343,7 @@
             left: 0;
             background-color: white;
             z-index: 1;
+            
         }
 
         td:not(:first-child) {
@@ -342,12 +351,7 @@
             /* Prevent text wrapping in the data cells */
         }
 
-        th {
-            min-width: 20px;
-            white-space: normal;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+       
 
         .grey-bg {
             /* Max grey level 75% */
