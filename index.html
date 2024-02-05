@@ -731,12 +731,12 @@ document.getElementById('DisplayAllTables').addEventListener('click', function (
     }
 
     const savedLocations = getSavedLocations();
-    if (savedLocations.length < 5) {
+    if (savedLocations.length < 6) {
         savedLocations.push({ name, coords });
         setCookie('savedLocations', JSON.stringify(savedLocations), 365);
         updateSavedLocationsList();
     } else {
-        alert('Maximum of 5 locations can be saved.');
+        alert('Maximum of 6 locations can be saved.');
     }
 }
     function deleteLocationFromSavedLocations(index) {
