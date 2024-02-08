@@ -669,7 +669,10 @@ setCookie('cityName', cityName, 365); // Update the cookie with the new city nam
 
     
 document.getElementById('DisplayAllTables').addEventListener('click', function () {
-    DisplayAllTables();})
+    document.getElementById('savedLocationsPopup').style.display = 'none';
+    DisplayAllTables();
+
+})
 
     document.getElementById('resetAllButton').addEventListener('click', function () {
             // Clear all cookies
@@ -731,12 +734,12 @@ document.getElementById('DisplayAllTables').addEventListener('click', function (
     }
 
     const savedLocations = getSavedLocations();
-    if (savedLocations.length < 6) {
+    if (savedLocations.length < 10) {
         savedLocations.push({ name, coords });
         setCookie('savedLocations', JSON.stringify(savedLocations), 365);
         updateSavedLocationsList();
     } else {
-        alert('Maximum of 6 locations can be saved.');
+        alert('Maximum of 10 locations can be saved.');
     }
 }
     function deleteLocationFromSavedLocations(index) {
