@@ -915,7 +915,7 @@ document.getElementById('DisplayAllTables').addEventListener('click', function (
         function fillTableWithTemperature(table, weatherData) {
                 let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
                 // Adjusted to include values in meters (2m, 10m, 80m, 180m), and their approximate conversion to feet
-                const altitudeLevels = [2, 10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
+                const altitudeLevels = [2, 10, 80, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse();
 
                 // Convert altitude levels to their corresponding temperature keys and display values
                 altitudeLevels.forEach(altitude => {
@@ -2546,7 +2546,7 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
     console.log(`Filling table with ID: ${table.id} using data:`, weatherData);
 
     let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
-            const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
+            const altitudeLevels = [10, 80, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
             altitudeLevels.forEach(alt => {
                 let windSpeedKey, windDirectionKey;
@@ -2831,7 +2831,7 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
     
             //////console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
-            const altitudeLevels = [10, 80, 1000, 180, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
+            const altitudeLevels = [10, 80, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
             altitudeLevels.forEach(alt => {
                 let windSpeedKey, windDirectionKey;
