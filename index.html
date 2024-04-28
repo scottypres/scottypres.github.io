@@ -1704,7 +1704,74 @@ console.log('should fetch data: ',shouldFetchData)
             // Fetch new data if necessary
             if (shouldFetchData) {
 //console.log('fetching new data');
-                if (model.toLowerCase() === 'icon') {
+                
+                if (model.toLowerCase() === 'gfs' || model.toLowerCase() === 'openmeteo') {
+                    commonParameters = [
+                        'temperature_2m', 'temperature_80m', 'temperature_180m',
+                        'weather_code', 'relative_humidity_2m',
+                        'dew_point_2m',
+                        'visibility','lifted_index',
+                        'cloud_cover',
+                        'cloud_cover_low',
+                        'cloud_cover_mid',
+                        'cloud_cover_high',
+                        'cloud_cover_1000hPa',
+                        'cloud_cover_975hPa',
+                        'cloud_cover_950hPa',
+                        'cloud_cover_925hPa',
+                        'cloud_cover_900hPa',
+                        'cloud_cover_850hPa',
+                        'cloud_cover_800hPa',
+                        'cloud_cover_700hPa',
+                        'cloud_cover_600hPa',
+                        'cloud_cover_500hPa',
+                        'cloud_cover_400hPa',
+                        // Add new variables below
+                        'wind_speed_10m',
+                        'wind_speed_80m', 'wind_gusts_10m',
+                        'wind_direction_10m',
+                        'wind_direction_80m',
+                        'wind_direction_180m',
+                        'temperature_1000hPa',
+                        'temperature_975hPa',
+                        'temperature_950hPa',
+                        'temperature_925hPa',
+                        'temperature_900hPa',
+                        'temperature_850hPa',
+                        'temperature_800hPa',
+                        'temperature_700hPa',
+                        'temperature_600hPa',
+                        'temperature_500hPa',
+                        'temperature_400hPa',
+
+                        'windspeed_1000hPa',
+                        'windspeed_975hPa',
+                        'windspeed_950hPa',
+                        'windspeed_925hPa',
+                        'windspeed_900hPa',
+                        'windspeed_850hPa',
+                        'windspeed_800hPa',
+                        'windspeed_700hPa',
+                        'windspeed_600hPa',
+                        'windspeed_500hPa',
+                        'windspeed_400hPa',
+                        'winddirection_1000hPa',
+                        'winddirection_975hPa',
+                        'winddirection_950hPa',
+                        'winddirection_925hPa',
+                        'winddirection_900hPa',
+                        'winddirection_850hPa',
+                        'winddirection_800hPa',
+                        'winddirection_700hPa',
+                        'winddirection_600hPa',
+                        'winddirection_500hPa',
+                        'winddirection_400hPa',
+                        'cape',
+                        'is_day',
+                        'precipitation_probability'
+                    ].join(',');
+                }
+if (model.toLowerCase() === 'icon') {
                     commonParameters = [
                         'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
                         'weather_code', 'relative_humidity_2m',
@@ -1769,74 +1836,6 @@ console.log('should fetch data: ',shouldFetchData)
                         'is_day'
                     ].join(',');
                 }
-                if (model.toLowerCase() === 'gfs' || model.toLowerCase() === 'openmeteo') {
-                    commonParameters = [
-                        'temperature_2m', 'temperature_80m', 'temperature_180m',
-                        'weather_code', 'relative_humidity_2m',
-                        'dew_point_2m',
-                        'visibility','lifted_index',
-                        'cloud_cover',
-                        'cloud_cover_low',
-                        'cloud_cover_mid',
-                        'cloud_cover_high',
-                        'cloud_cover_1000hPa',
-                        'cloud_cover_975hPa',
-                        'cloud_cover_950hPa',
-                        'cloud_cover_925hPa',
-                        'cloud_cover_900hPa',
-                        'cloud_cover_850hPa',
-                        'cloud_cover_800hPa',
-                        'cloud_cover_700hPa',
-                        'cloud_cover_600hPa',
-                        'cloud_cover_500hPa',
-                        'cloud_cover_400hPa',
-                        // Add new variables below
-                        'wind_speed_10m',
-                        'wind_speed_80m',
-                        'wind_speed_180m', 'wind_gusts_10m',
-                        'wind_direction_10m',
-                        'wind_direction_80m',
-                        'wind_direction_180m',
-                        'temperature_1000hPa',
-                        'temperature_975hPa',
-                        'temperature_950hPa',
-                        'temperature_925hPa',
-                        'temperature_900hPa',
-                        'temperature_850hPa',
-                        'temperature_800hPa',
-                        'temperature_700hPa',
-                        'temperature_600hPa',
-                        'temperature_500hPa',
-                        'temperature_400hPa',
-
-                        'windspeed_1000hPa',
-                        'windspeed_975hPa',
-                        'windspeed_950hPa',
-                        'windspeed_925hPa',
-                        'windspeed_900hPa',
-                        'windspeed_850hPa',
-                        'windspeed_800hPa',
-                        'windspeed_700hPa',
-                        'windspeed_600hPa',
-                        'windspeed_500hPa',
-                        'windspeed_400hPa',
-                        'winddirection_1000hPa',
-                        'winddirection_975hPa',
-                        'winddirection_950hPa',
-                        'winddirection_925hPa',
-                        'winddirection_900hPa',
-                        'winddirection_850hPa',
-                        'winddirection_800hPa',
-                        'winddirection_700hPa',
-                        'winddirection_600hPa',
-                        'winddirection_500hPa',
-                        'winddirection_400hPa',
-                        'cape',
-                        'is_day',
-                        'precipitation_probability'
-                    ].join(',');
-                }
-
 
 
 
@@ -2831,7 +2830,7 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
     
             //////console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
-            const altitudeLevels = [10, 80, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
+            const altitudeLevels = [10, 80, 180, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
             altitudeLevels.forEach(alt => {
                 let windSpeedKey, windDirectionKey;
