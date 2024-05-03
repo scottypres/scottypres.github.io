@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -1845,6 +1846,8 @@ console.log(requestUrl);
                 try {
                     ////console.log('fetching new data');
                     // Request data from the weather API using the assembled URL
+                    console.log("REQUEST");
+                    console.log(requestUrl);
                     const response = await fetch(requestUrl);
 
                     // If the response is not okay, throw an error
@@ -2688,12 +2691,13 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
                 weatherData.hourly.precipitation.forEach(precipValue => {
                     const backgroundColor = getPrecipitationColor(precipValue);
                     const textColor = getTextColorForBackground(backgroundColor);
-
+                    if (precipValue !== null) {
                     // Round to two decimal places and convert to string for display
                     const precipValueDisplay = precipValue.toFixed(2);
 
                     // Add the Precipitation data cell with fading blue background based on the value
                     tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipValueDisplay}</td>`;
+                } else {}
                 });
                 
                  
@@ -2972,12 +2976,13 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
                 weatherData.hourly.precipitation.forEach(precipValue => {
                     const backgroundColor = getPrecipitationColor(precipValue);
                     const textColor = getTextColorForBackground(backgroundColor);
-
+                    if (precipValue !== null) {
                     // Round to two decimal places and convert to string for display
                     const precipValueDisplay = precipValue.toFixed(2);
 
                     // Add the Precipitation data cell with fading blue background based on the value
                     tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipValueDisplay}</td>`;
+                } else {}
                 });
                 
                  
