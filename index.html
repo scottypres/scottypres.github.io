@@ -11,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soar Forecaster</title>
     <style>
+        
         #tables-container {
     
     position: relative; /* Define a positioning context for sticky children */
@@ -511,6 +512,7 @@
                     <button id="toggleHighAltitudeButton" class="button" disabled>High Altitude</button>
                     <br>
                     <div class="column-header">Analysis Options:</div>
+                    
                     <button id="bestDaysButton" class="button" disabled>Best Hours</button>
                     <div id="bestDaysPopup" class="config-popup" style="display: none;">
                     <div class="config-content">
@@ -572,7 +574,8 @@
 
 
     <script>
-        
+        //Following line removes best days / hours button
+        document.getElementById('bestDaysButton').style.display = 'none';
         allTableWeatherData=[];
             $(document).ready(function () {
                     // Existing event handlers...
