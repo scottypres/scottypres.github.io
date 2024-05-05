@@ -2834,7 +2834,7 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
     
             //////console.log(new Error('Stack trace for fillTableWithWindSpeed call').stack);
             let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
-            const altitudeLevels = [10, 80, 180, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
+            const altitudeLevels = [10, 80, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400].reverse(); // Order hPa values and feet values in descending order
             let gustRowAdded = false; // Flag to control the addition of the gust row
             altitudeLevels.forEach(alt => {
                 let windSpeedKey, windDirectionKey;
