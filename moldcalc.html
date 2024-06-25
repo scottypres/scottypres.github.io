@@ -7,6 +7,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
         }
         #calculator-form, #sheet-calculator-form, #saved-calculations {
             max-width: 800px;
@@ -22,32 +25,37 @@
         }
         .form-group {
             margin-bottom: 15px;
-            display: flex;
-            align-items: center;
         }
         .form-group label {
             font-weight: bold;
-            margin-right: 10px;
-            min-width: 200px;
+            margin-bottom: 5px;
         }
         .form-group input, .form-group select {
-            flex: 1;
+            width: 100%;
             padding: 8px;
             box-sizing: border-box;
         }
-        .form-group.row {
-            flex-direction: row;
+        .row {
+            display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
         }
-        .form-group.row .form-group {
+        .row .form-group {
             flex: 1;
-            margin-right: 10px;
+            min-width: 200px; 
+            margin-right: 15px;
         }
-        .form-group.row .form-group:last-child {
+        .row .form-group:last-child {
             margin-right: 0;
         }
         .result {
             margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .row .form-group {
+                flex: 100%; 
+                margin-right: 0;
+            }
         }
         ul {
             list-style-type: none;
@@ -86,13 +94,12 @@
 <div id="calculator-form" class="active">
     <h2>Cut Mold Calculator</h2>
     <form onsubmit="calculateVolume(event)">
-        <div class="form-group row">
+        <div class="row">
             <div class="form-group">
                 <label for="master-shape">Master Shape:</label>
                 <select id="master-shape" name="master-shape">
                     <option value="rectangle">Rectangle</option>
                     <option value="cylinder">Cylinder</option>
-                    
                 </select>
             </div>
             <div class="form-group">
@@ -105,7 +112,7 @@
         </div>
         <div class="form-group">
             <label for="master-dimensions">Master Dimensions:</label>
-            <div class="form-group row">
+            <div class="row">
                 <input type="text" id="master-length" name="master-length" placeholder="Length">
                 <input type="text" id="master-width" name="master-width" placeholder="Width">
                 <input type="text" id="master-height" name="master-height" placeholder="Height">
@@ -121,7 +128,7 @@
         </div>
         <div class="form-group">
             <label for="shell-dimensions">Shell Dimensions:</label>
-            <div class="form-group row">
+            <div class="row">
                 <input type="text" id="shell-length" name="shell-length" placeholder="Length">
                 <input type="text" id="shell-width" name="shell-width" placeholder="Width">
                 <input type="text" id="shell-height" name="shell-height" placeholder="Height">
@@ -140,14 +147,14 @@
 <div id="sheet-calculator-form">
     <h2>Sheet Mold Calculator</h2>
     <form onsubmit="calculateSheetVolume(event)">
-        <div class="form-group row">
+        <div class="row">
             <div class="form-group">
                 <label for="sheet-cavity-shape">Cavity Shape:</label>
                 <select id="sheet-cavity-shape" name="sheet-cavity-shape">
-                    
+                    <option value="circle">Circle</option>
                     <option value="ellipse">Ellipse</option>
                     <option value="rectangle">Rectangle</option>
-                    
+                    <option value="bounding-box">Bounding Box</option>
                 </select>
             </div>
             <div class="form-group">
@@ -161,7 +168,7 @@
         </div>
         <div class="form-group">
             <label for="sheet-cavity-dimensions">Cavity Dimensions:</label>
-            <div class="form-group row">
+            <div class="row">
                 <input type="text" id="sheet-cavity-length" name="sheet-cavity-length" placeholder="Length">
                 <input type="text" id="sheet-cavity-width" name="sheet-cavity-width" placeholder="Width">
                 <input type="text" id="sheet-cavity-depth" name="sheet-cavity-depth" placeholder="Depth">
@@ -169,13 +176,13 @@
         </div>
         <div class="form-group">
             <label for="sheet-shell-dimensions">Shell Dimensions:</label>
-            <div class="form-group row">
+            <div class="row">
                 <input type="text" id="sheet-shell-length" name="sheet-shell-length" placeholder="Length">
                 <input type="text" id="sheet-shell-width" name="sheet-shell-width" placeholder="Width">
                 <input type="text" id="sheet-shell-height" name="sheet-shell-height" placeholder="Height">
             </div>
         </div>
-        <div class="form-group row">
+        <div class="row">
             <div class="form-group">
                 <label for="sheet-additional-space">Additional Space Between Cavities:</label>
                 <input type="number" id="sheet-additional-space" name="sheet-additional-space" value="0">
