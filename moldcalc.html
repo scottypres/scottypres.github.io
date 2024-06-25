@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mold Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #calculator-form, #sheet-calculator-form, #saved-calculations {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+        #calculator-form.active, #sheet-calculator-form.active, #saved-calculations.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <ul>
+        <li><a href="javascript:void(0);" onclick="showSection('cut')">Cut Mold Calc</a></li>
+        <li><a href="javascript:void(0);" onclick="showSection('sheet')">Sheet Mold Calc</a></li>
+        <li><a href="javascript:void(0);" onclick="showSection('list')">List</a></li>
+    </ul>
+</nav>
+
+<div id="calculator-form" class="active">
+    <h2>Cut Mold Calculator</h2>
+    <form onsubmit="calculateVolume(event)">
+        <div class="form-group">
+            <label for="master-shape">Master Shape:</label>
+            <select id="master-shape" name="master-shape">
+                <option value="rectangle">Rectangle</option>
+                <option value="cylinder">Cylinder</option>
+                
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="master-dimensions">Master Dimensions:</label>
+            <input type="text" id="master-length" name="master-length" placeholder="Length">
+            <input type="text" id="master-width" name="master-width" placeholder="Width">
+            <input type="text" id="master-height" name="master-height" placeholder="Height">
+        </div>
+        <div class="form-group">
+            <label for="units">Units:</label>
+            <select id="units" name="units">
+                <option value="inches">Inches</option>
+                <option value="cm">CM</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="shell-shape">Shell Shape:</label>
+            <select id="shell-shape" name="shell-shape">
+                <option value="rectangle">Rectangle</option>
+                <option value="cylinder">Cylinder</option>
+                <option value="elliptical-cylinder">Elliptical Cylinder</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="shell-dimensions">Shell Dimensions:</label>
+            <input type="text" id="shell-length" name="shell-length" placeholder="Length">
+            <input type="text" id="shell-width" name="shell-width" placeholder="Width">
+            <input type="text" id="shell-height" name="shell-height" placeholder="Height">
+        </div>
+        <div class="form-group">
+            <label for="silicone-cost">Cost of Silicone per Gallon:</label>
+            <input type="text" id="silicone-cost" name="silicone-cost" value="110">
+        </div>
+        <button type="submit">Calculate</button>
+        <button type="button" onclick="saveCalculation()">Save</button>
+    </form>
+    <div class="result" id="result"></div>
+</div>
+
+<div id="sheet-calculator-form">
+    <h2>Sheet Mold Calculator</h2>
+    <form onsubmit="calculateSheetVolume(event)">
+        <div class="form-group">
+            <label for="sheet-cavity-shape">Cavity Shape:</label>
+            <select id="sheet-cavity-shape" name="sheet-cavity-shape">
+                
+                <option value="ellipse">Ellipse</option>
+                <option value="rectangle">Rectangle</option>
+                
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sheet-cavity-dimensions">Cavity Dimensions:</label>
+            <input type="text" id="sheet-cavity-length" name="sheet-cavity-length" placeholder="Length">
+            <input type="text" id="sheet-cavity-width" name="sheet-cavity-width" placeholder="Width">
+            <input type="text" id="sheet-cavity-depth" name="sheet-cavity-depth" placeholder="Depth">
+        </div>
+        <div class="form-group">
+            <label for="sheet-units">Units:</label>
+            <select id="sheet-units" name="sheet-units">
+                <option value="inches">Inches</option>
+                <option value="cm">CM</option>
+                <option value="mm">MM</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sheet-shell-dimensions">Shell Dimensions:</label>
+            <input type="text" id="sheet-shell-length" name="sheet-shell-length" placeholder="Length">
+            <input type="text" id="sheet-shell-width" name="sheet-shell-width" placeholder="Width">
+            <input type="text" id="sheet-shell-height" name="sheet-shell-height" placeholder="Height">
+        </div>
+        <div class="form-group">
+            <label for="sheet-additional-space">Additional Space Between Cavities:</label><input type="number" id="sheet-additional-space" name="sheet-additional-space" value="0">
+
+            
+        </div>
+        <div class="form-group">
+            <label for="sheet-perimeter-offset">Perimeter Offset:</label><input type="text" id="sheet-perimeter-offset" name="sheet-perimeter-offset" value="0">
+
+        </div>
+        <div class="form-group">
+            <label for="sheet-silicone-cost">Cost of Silicone per Gallon:</label>
+            <input type="text" id="sheet-silicone-cost" name="sheet-silicone-cost" value="110">
+        </div>
+        <button type="submit">Calculate</button>
+    </form>
+    <div class="result" id="sheet-result"></div>
+</div>
+
+<div id="saved-calculations">
+    <h2>Saved Calculations</h2>
+    <ul id="calculation-list">
+        <!-- Saved calculations will be displayed here -->
+    </ul>
+</div>
+
+<script>
+    function showSection(section) {
+        document.getElementById('calculator-form').classList.remove('active');
+        document.getElementById('sheet-calculator-form').classList.remove('active');
+        document.getElementById('saved-calculations').classList.remove('active');
+        if (section === 'cut') {
+            document.getElementById('calculator-form').classList.add('active');
+        } else if (section === 'sheet') {
+            document.getElementById('sheet-calculator-form').classList.add('active');
+        } else if (section === 'list') {
+            document.getElementById('saved-calculations').classList.add('active');
+            displaySavedCalculations();
+        }
+    }
+
+    function calculateVolume(event) {
+        event.preventDefault();
+
+        const masterShape = document.getElementById('master-shape').value;
+        const masterLength = parseFloat(document.getElementById('master-length').value);
+        const masterWidth = parseFloat(document.getElementById('master-width').value);
+        const masterHeight = parseFloat(document.getElementById('master-height').value);
+
+        const shellShape = document.getElementById('shell-shape').value;
+        const shellLength = parseFloat(document.getElementById('shell-length').value);
+        const shellWidth = parseFloat(document.getElementById('shell-width').value);
+        const shellHeight = parseFloat(document.getElementById('shell-height').value);
+
+        const siliconeCost = parseFloat(document.getElementById('silicone-cost').value);
+
+        const units = document.getElementById('units').value;
+
+        let masterVolume = 0;
+        let shellVolume = 0;
+
+        if (masterShape === 'rectangle') {
+            masterVolume = masterLength * masterWidth * masterHeight;
+        } else if (masterShape === 'cylinder') {
+            masterVolume = Math.PI * Math.pow(masterLength / 2, 2) * masterHeight;
+        } else if (masterShape === 'elliptical-cylinder') {
+            masterVolume = Math.PI * (masterLength / 2) * (masterWidth / 2) * masterHeight;
+        }
+
+        if (shellShape === 'rectangle') {
+            shellVolume = shellLength * shellWidth * shellHeight;
+        } else if (shellShape === 'cylinder') {
+            shellVolume = Math.PI * Math.pow(shellLength / 2, 2) * shellHeight;
+        } else if (shellShape === 'elliptical-cylinder') {
+            shellVolume = Math.PI * (shellLength / 2) * (shellWidth / 2) * shellHeight;
+        }
+
+        const moldVolume = shellVolume - masterVolume;
+
+        let masterVolumeCubicInches = masterVolume;
+        let shellVolumeCubicInches = shellVolume;
+        let moldVolumeCubicInches = moldVolume;
+        let masterVolumeCubicCm = masterVolume * 16.3871;
+        let shellVolumeCubicCm = shellVolume * 16.3871;
+        let moldVolumeCubicCm = moldVolume * 16.3871;
+
+        if (units === 'cm') {
+            masterVolumeCubicInches = masterVolume / 16.3871;
+            shellVolumeCubicInches = shellVolume / 16.3871;
+            moldVolumeCubicInches = moldVolume / 16.3871;
+            masterVolumeCubicCm = masterVolume;
+            shellVolumeCubicCm = shellVolume;
+            moldVolumeCubicCm = moldVolume;
+        }
+
+        const masterVolumeGallons = masterVolumeCubicInches / 231; // 231 cubic inches in a gallon
+        const shellVolumeGallons = shellVolumeCubicInches / 231;
+        const moldVolumeGallons = moldVolumeCubicInches / 231;
+        const moldCost = moldVolumeGallons * siliconeCost;
+
+        document.getElementById('result').innerHTML = `
+          <p>Master Volume: ${masterVolumeCubicInches.toFixed(2)} in³ (${masterVolumeCubicCm.toFixed(2)} cm³) (${masterVolumeGallons.toFixed(2)} gallons)</p>
+          <p>Shell Volume: ${shellVolumeCubicInches.toFixed(2)} in³ (${shellVolumeCubicCm.toFixed(2)} cm³) (${shellVolumeGallons.toFixed(2)} gallons)</p>
+          <p>Mold Volume: ${moldVolumeCubicInches.toFixed(2)} in³ (${moldVolumeCubicCm.toFixed(2)} cm³) (${moldVolumeGallons.toFixed(2)} gallons)</p>
+          <p>Mold Cost: $${moldCost.toFixed(2)}</p>
+        `;
+    }
+
+    function calculateSheetVolume(event) {
+        event.preventDefault();
+
+        const shape = document.getElementById('sheet-cavity-shape').value;
+        const length = parseFloat(document.getElementById('sheet-cavity-length').value);
+        const width = parseFloat(document.getElementById('sheet-cavity-width').value || 0); // Default to 0 if not provided
+        const depth = parseFloat(document.getElementById('sheet-cavity-depth').value);
+
+        const shellLength = parseFloat(document.getElementById('sheet-shell-length').value);
+        const shellWidth = parseFloat(document.getElementById('sheet-shell-width').value);
+        const shellHeight = parseFloat(document.getElementById('sheet-shell-height').value);
+
+        const additionalSpace = parseFloat(document.getElementById('sheet-additional-space').value);
+        const perimeterOffset = parseFloat(document.getElementById('sheet-perimeter-offset').value);
+        const siliconeCost = parseFloat(document.getElementById('sheet-silicone-cost').value);
+
+        const units = document.getElementById('sheet-units').value;
+
+        // Convert units to cm for consistency
+        const unitConversions = {
+            inches: 2.54,
+            cm: 1,
+            mm: 0.1,
+        };
+        const conversionFactor = unitConversions[units];
+
+        const cavityLengthCm = length * conversionFactor;
+        const cavityWidthCm = width * conversionFactor;
+        const cavityDepthCm = depth * conversionFactor;
+        const shellLengthCm = shellLength * conversionFactor;
+        const shellWidthCm = shellWidth * conversionFactor;
+        const shellHeightCm = shellHeight * conversionFactor;
+        const additionalSpaceCm = additionalSpace * conversionFactor;
+        const perimeterOffsetCm = perimeterOffset * conversionFactor;
+
+        let cavityVolume = 0;
+        if (shape === 'circle') {
+            cavityVolume = Math.PI * Math.pow(cavityLengthCm / 2, 2) * cavityDepthCm;
+        } else if (shape === 'ellipse') {
+            cavityVolume = Math.PI * (cavityLengthCm / 2) * (cavityWidthCm / 2) * cavityDepthCm;
+        } else if (shape === 'rectangle' || shape === 'bounding-box') {
+            cavityVolume = cavityLengthCm * cavityWidthCm * cavityDepthCm;
+        }
+
+        const cavitiesPerRow = Math.floor((shellLengthCm - 2 * perimeterOffsetCm + additionalSpaceCm) / (cavityLengthCm + additionalSpaceCm));
+        const rowsPerColumn = Math.floor((shellWidthCm - 2 * perimeterOffsetCm + additionalSpaceCm) / (cavityWidthCm + additionalSpaceCm));
+        const totalCavities = cavitiesPerRow * rowsPerColumn;
+
+        const totalCavitiesVolume = totalCavities * cavityVolume;
+        const shellVolume = shellLengthCm * shellWidthCm * shellHeightCm;
+        const moldVolume = shellVolume - totalCavitiesVolume;
+
+        const moldVolumeGallons = moldVolume / 3785.41; // 1 gallon = 3785.41 cubic cm
+        const moldCost = moldVolumeGallons * siliconeCost;
+
+        document.getElementById('sheet-result').innerHTML = `
+          <p>Number of Cavities: ${totalCavities}</p>
+          <p>Volume of Each Cavity: ${cavityVolume.toFixed(2)} cm³</p>
+          <p>Total Volume of Cavities: ${totalCavitiesVolume.toFixed(2)} cm³</p>
+          <p>Volume of Shell: ${shellVolume.toFixed(2)} cm³</p>
+          <p>Mold Volume: ${moldVolume.toFixed(2)} cm³ (${moldVolumeGallons.toFixed(2)} gallons)</p>
+          <p>Mold Cost: $${moldCost.toFixed(2)}</p>
+        `;
+    }
+
+    function saveCalculation() {
+        const calculationResult = document.getElementById('result').innerHTML;
+        const masterShape = document.getElementById('master-shape').value;
+        const masterLength = document.getElementById('master-length').value;
+        const masterWidth = document.getElementById('master-width').value;
+        const masterHeight = document.getElementById('master-height').value;
+        const shellShape = document.getElementById('shell-shape').value;
+        const shellLength = document.getElementById('shell-length').value;
+        const shellWidth = document.getElementById('shell-width').value;
+        const shellHeight = document.getElementById('shell-height').value;
+        const units = document.getElementById('units').value;
+        const siliconeCost = document.getElementById('silicone-cost').value;
+
+        const calculationName = prompt("Enter a name for this calculation:");
+        if (!calculationName) return;
+
+        const savedCalculations = getSavedCalculations();
+        savedCalculations.push({ 
+            name: calculationName, 
+            result: calculationResult,
+            masterShape,
+            masterDimensions: { length: masterLength, width: masterWidth, height: masterHeight },
+            shellShape,
+            shellDimensions: { length: shellLength, width: shellWidth, height: shellHeight },
+            units,
+            siliconeCost
+        });
+        document.cookie = "calculations=" + encodeURIComponent(JSON.stringify(savedCalculations)) + ";path=/";
+    }
+
+    function getSavedCalculations() {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('calculations='));
+        if (cookie) {
+            return JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+        } else {
+            return [];
+        }
+    }
+
+    function displaySavedCalculations() {
+        const savedCalculations = getSavedCalculations();
+        const calculationList = document.getElementById('calculation-list');
+        calculationList.innerHTML = '';
+        savedCalculations.forEach((calculation, index) => {
+            // Validate the entry to ensure it has all required properties
+            if (
+                calculation.masterDimensions && calculation.masterDimensions.length !== undefined &&
+                calculation.masterDimensions.width !== undefined &&
+                calculation.masterDimensions.height !== undefined &&
+                calculation.shellDimensions && calculation.shellDimensions.length !== undefined &&
+                calculation.shellDimensions.width !== undefined &&
+                calculation.shellDimensions.height !== undefined
+            ) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong>${calculation.name}</strong>
+                    <p>Master Shape: ${calculation.masterShape}</p>
+                    <p>Master Dimensions: Length: ${calculation.masterDimensions.length}, Width: ${calculation.masterDimensions.width}, Height: ${calculation.masterDimensions.height}</p>
+                    <p>Shell Shape: ${calculation.shellShape}</p>
+                    <p>Shell Dimensions: Length: ${calculation.shellDimensions.length}, Width: ${calculation.shellDimensions.width}, Height: ${calculation.shellDimensions.height}</p>
+                    <p>Units: ${calculation.units}</p>
+                    <p>Silicone Cost per Gallon: $${calculation.siliconeCost}</p>
+                    <p>${calculation.result}</p>
+                    <button onclick="deleteCalculation(${index})">Delete</button>
+                `;
+                calculationList.appendChild(li);
+            } else {
+                console.error('Invalid calculation entry', calculation);
+            }
+        });
+    }
+
+    function deleteCalculation(index) {
+        const savedCalculations = getSavedCalculations();
+        savedCalculations.splice(index, 1);
+        document.cookie = "calculations=" + encodeURIComponent(JSON.stringify(savedCalculations)) + ";path=/";
+        displaySavedCalculations();
+    }
+</script>
+
+</body>
+</html>
