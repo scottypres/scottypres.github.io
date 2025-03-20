@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Paramotor Efficiency Calculator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f7;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .selected-wing-display {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .data-display {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007AFF;
+        }
+        .label {
+            color: #666;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            flex: 1;
+        }
+        button:active {
+            background-color: #0051a8;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #messageBox {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 350px;
+            margin: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        #wingList {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+            max-height: 60vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        li {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f5f5f7;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        li span {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        li div {
+            display: flex;
+            gap: 8px;
+        }
+        li button {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 6px;
+        }
+        li button:nth-child(1) {
+            background-color: #007AFF;
+            color: white;
+        }
+        li button:nth-child(2) {
+            background-color: #E5E5EA;
+            color: #000;
+        }
+        li button:nth-child(3) {
+            background-color: #FF3B30;
+            color: white;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #E5E5EA;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="button-group">
+            <button id="startBtn">Start</button>
+            <button id="logRpmBtn">Log Cruise RPMs</button>
+            <button id="wingsBtn">Wings</button>
+            <button id="calcSpeedsBtn">Calculate Speeds</button>
+        </div>
+        
+        <div class="selected-wing-display">
+            <div class="value" id="selectedWing">--</div>
+        </div>
+        
+        <div class="data-grid">
+            <div class="data-display">
+                <div class="label">Timer</div>
+                <div class="value" id="timer">00:00:00</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Altitude</div>
+                <div class="value" id="altitude">-- ft</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Ground Speed</div>
+                <div class="value" id="speed">-- mph</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Vertical Speed</div>
+                <div class="value" id="vspeed">-- ft/sec</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Cruise RPM Trimmed In</div>
+                <div class="value" id="trimmedInRpm">-- RPM</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Cruise RPM Trimmed Out</div>
+                <div class="value" id="trimmedOutRpm">-- RPM</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Wing Speed</div>
+                <div class="value" id="wingSpeed">-- mph</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Wind Speed</div>
+                <div class="value" id="windSpeed">-- mph</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="overlay">
+        <div id="messageBox">
+            <h2 style="margin: 0 0 15px 0; color: #1c1c1e;">Wing Selection</h2>
+            <ul id="wingList"></ul>
+            <input type="text" id="wingName" placeholder="Enter wing name">
+            <button onclick="showWingInput()" id="addNewWingBtn" style="width: 100%; padding: 12px; background-color: #34C759; color: white; border: none; border-radius: 8px; font-size: 15px; margin-top: 10px;">Add New Wing</button>
+            <button onclick="addWing()" id="saveWingBtn" style="display: none; width: 100%; padding: 12px; background-color: #34C759; color: white; border: none; border-radius: 8px; font-size: 15px; margin-top: 10px;">Save Wing</button>
+            <button onclick="hideOverlay()" style="width: 100%; padding: 12px; background-color: #8E8E93; color: white; border: none; border-radius: 8px; font-size: 15px; margin-top: 10px;">Close</button>
+        </div>
+    </div>
+
+    <div id="rpmOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="messageBox" style="background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <div id="rpmMessage" style="margin-bottom: 20px; font-size: 16px;"></div>
+            <div id="rpmVspeedDisplay" style="display: none;">
+                <div class="label">Vertical Speed</div>
+                <div class="value" id="rpmVspeed">-- ft/sec</div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="rpmReadyBtn" style="display: none;">Ready</button>
+                <button id="rpmDoneBtn" style="display: none;">Done</button>
+                <button id="rpmSkipBtn" style="display: none;">Skip</button>
+                <button id="rpmExitBtn" style="background-color: #FF3B30;">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isTracking = false;
+        let startTime;
+        let timerInterval;
+        let lastAltitude = null;
+        let lastTimestamp = null;
+        let countdownInterval;
+        let wings = JSON.parse(localStorage.getItem('wings')) || {};
+        let speedCalculatorWindow = null;
+        let selectedWing = localStorage.getItem('selectedWing') || null;
+        let rpmWatchId = null;
+        let currentRpmStep = '';
+
+        function saveWings() {
+            localStorage.setItem('wings', JSON.stringify(wings));
+        }
+
+        function displayWings() {
+            console.log('displayWings called');
+            const overlay = document.getElementById('overlay');
+            const wingList = document.getElementById('wingList');
+            const wingNameInput = document.getElementById('wingName');
+            const addNewWingBtn = document.getElementById('addNewWingBtn');
+            const saveWingBtn = document.getElementById('saveWingBtn');
+            
+            // Reset the overlay state
+            wingNameInput.style.display = 'none';
+            wingNameInput.value = '';
+            addNewWingBtn.style.display = 'block';
+            saveWingBtn.style.display = 'none';
+            
+            wingList.innerHTML = '';
+            console.log('Overlay state reset');
+            
+            Object.keys(wings).forEach((wing) => {
+                const li = document.createElement('li');
+                const escapedWing = wing.replace(/'/g, "\\'");
+                li.innerHTML = `
+                    <span>${wing}</span>
+                    <div>
+                        <button onclick="handleWingSelect('${escapedWing}')">Select</button>
+                        <button onclick="renameWing('${escapedWing}')">Rename</button>
+                        <button onclick="removeWing('${escapedWing}')">Remove</button>
+                    </div>`;
+                wingList.appendChild(li);
+            });
+            console.log('Wing list populated');
+
+            overlay.style.display = 'flex';
+            console.log('Overlay displayed');
+        }
+
+        function handleWingSelect(wingName) {
+            console.log('handleWingSelect called with:', wingName);
+            selectedWing = wingName;
+            localStorage.setItem('selectedWing', wingName);
+            
+            // Load wing data first
+            loadWingData(wingName);
+            
+            // Then hide the overlay
+            console.log('About to hide overlay in handleWingSelect');
+            const overlay = document.getElementById('overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                console.log('Overlay display style set to none');
+            } else {
+                console.warn('Overlay element not found');
+            }
+        }
+
+        function loadWingData(wingName) {
+            console.log('loadWingData called with:', wingName);
+            
+            if (!wings[wingName]) {
+                wings[wingName] = {
+                    trimmedInRpm: null,
+                    trimmedOutRpm: null,
+                    wingSpeed: null,
+                    windSpeed: null
+                };
+                saveWings();
+            }
+            
+            const wingData = wings[wingName];
+            
+            // Safely update elements with null checks
+            const elements = {
+                'selectedWing': wingData ? wingName : '--',
+                'trimmedInRpm': wingData.trimmedInRpm ? `${wingData.trimmedInRpm} RPM` : '-- RPM',
+                'trimmedOutRpm': wingData.trimmedOutRpm ? `${wingData.trimmedOutRpm} RPM` : '-- RPM',
+                'wingSpeed': wingData.wingSpeed ? `${Math.round(wingData.wingSpeed)} mph` : '-- mph',
+                'windSpeed': wingData.windSpeed ? `${Math.round(wingData.windSpeed)} mph` : '-- mph'
+            };
+            
+            // Safely update each element
+            Object.keys(elements).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    console.log(`Updating ${id} with value:`, elements[id]);
+                    element.textContent = elements[id];
+                } else {
+                    console.warn(`Element with id '${id}' not found`);
+                }
+            });
+        }
+
+        function hideOverlay() {
+            console.log('hideOverlay called');
+            const overlay = document.getElementById('overlay');
+            const wingNameInput = document.getElementById('wingName');
+            const addNewWingBtn = document.getElementById('addNewWingBtn');
+            const saveWingBtn = document.getElementById('saveWingBtn');
+            
+            overlay.style.display = 'none';
+            console.log('Overlay display style set to none');
+            
+            wingNameInput.style.display = 'none';
+            wingNameInput.value = '';
+            addNewWingBtn.style.display = 'block';
+            saveWingBtn.style.display = 'none';
+            console.log('All overlay elements reset');
+        }
+
+        function showWingInput() {
+            const wingNameInput = document.getElementById('wingName');
+            const addNewWingBtn = document.getElementById('addNewWingBtn');
+            const saveWingBtn = document.getElementById('saveWingBtn');
+            
+            wingNameInput.style.display = 'block';
+            addNewWingBtn.style.display = 'none';
+            saveWingBtn.style.display = 'block';
+            wingNameInput.focus();
+        }
+
+        function addWing() {
+            console.log('addWing called');
+            const wingNameInput = document.getElementById('wingName');
+            const newWingName = wingNameInput.value.trim();
+            
+            if (newWingName && !wings[newWingName]) {
+                console.log('Adding new wing:', newWingName);
+                wings[newWingName] = {
+                    trimmedInRpm: null,
+                    trimmedOutRpm: null,
+                    wingSpeed: null,
+                    windSpeed: null
+                };
+                saveWings();
+                handleWingSelect(newWingName);
+                console.log('Wing added and selected');
+            } else if (wings[newWingName]) {
+                console.log('Wing already exists');
+                alert('A wing with this name already exists');
+            } else {
+                console.log('No wing name provided');
+                alert('Please enter a wing name');
+            }
+        }
+
+        // Add event listener for the Enter key on the wing name input
+        document.getElementById('wingName').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                addWing();
+            }
+        });
+
+        function renameWing(oldName) {
+            const newName = prompt(`Enter new name for ${oldName}:`);
+            if (newName && newName.trim() && !wings[newName]) {
+                wings[newName] = wings[oldName];
+                delete wings[oldName];
+                if (selectedWing === oldName) {
+                    handleWingSelect(newName);
+                }
+                saveWings();
+                displayWings();
+            } else if (wings[newName]) {
+                alert('A wing with this name already exists');
+            }
+        }
+
+        function removeWing(wingName) {
+            if (confirm(`Are you sure you want to remove ${wingName}?`)) {
+                delete wings[wingName];
+                if (selectedWing === wingName) {
+                    selectedWing = null;
+                    localStorage.removeItem('selectedWing');
+                    document.getElementById('selectedWing').textContent = '--';
+                    document.getElementById('trimmedInRpm').textContent = '-- RPM';
+                    document.getElementById('trimmedOutRpm').textContent = '-- RPM';
+                    document.getElementById('wingSpeed').textContent = '-- mph';
+                    document.getElementById('windSpeed').textContent = '-- mph';
+                }
+                saveWings();
+                displayWings();
+            }
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const elapsed = new Date(now - startTime);
+            const hours = String(elapsed.getUTCHours()).padStart(2, '0');
+            const minutes = String(elapsed.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(elapsed.getUTCSeconds()).padStart(2, '0');
+            document.getElementById('timer').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function calculateVerticalSpeed(currentAlt, prevAlt, timeDiff) {
+            const altChange = (currentAlt - prevAlt) * 3.28084; // Convert to feet
+            const secondsFraction = timeDiff / 1000;
+            return Math.round(altChange / secondsFraction);
+        }
+
+        function handleLocation(position) {
+            const altitude = position.coords.altitude;
+            const speed = position.coords.speed;
+            const timestamp = position.timestamp;
+
+            // Update altitude display
+            document.getElementById('altitude').textContent = 
+                altitude ? `${Math.round(altitude * 3.28084)} ft` : '-- ft';
+
+            // Update speed display
+            document.getElementById('speed').textContent = 
+                speed ? `${Math.round(speed * 2.23694)} mph` : '-- mph';
+
+            // Calculate vertical speed
+            if (lastAltitude !== null && lastTimestamp !== null) {
+                const vspeed = calculateVerticalSpeed(altitude, lastAltitude, timestamp - lastTimestamp);
+                document.getElementById('vspeed').textContent = `${vspeed} ft/sec`;
+            }
+
+            lastAltitude = altitude;
+            lastTimestamp = timestamp;
+        }
+
+        function handleError(error) {
+            console.error('Error getting location:', error);
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+
+        function startCountdown(message, callback, showSkip = false) {
+            let countdown = 10;
+            const overlay = document.getElementById('overlay');
+            const messageText = document.getElementById('messageText');
+            const skipBtn = document.getElementById('skipBtn');
+
+            messageText.style.display = 'block';
+            skipBtn.style.display = showSkip ? 'inline-block' : 'none';
+            overlay.style.display = 'flex';
+            updateMessage();
+
+            skipBtn.onclick = () => {
+                clearInterval(countdownInterval);
+                overlay.style.display = 'none';
+                callback(true);
+            };
+
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                countdown -= 1;
+                if (countdown < 0) {
+                    clearInterval(countdownInterval);
+                    overlay.style.display = 'none';
+                    callback(false);
+                } else {
+                    updateMessage();
+                }
+            }, 1000);
+
+            function updateMessage() {
+                messageText.textContent = `${message} (${countdown} seconds)`;
+            }
+        }
+
+        function startRpmLogging() {
+            if (!selectedWing) {
+                alert("Please select a wing first.");
+                return;
+            }
+
+            showRpmStep('trimIn');
+        }
+
+        function showRpmStep(step) {
+            currentRpmStep = step;
+            const overlay = document.getElementById('rpmOverlay');
+            const message = document.getElementById('rpmMessage');
+            const vspeedDisplay = document.getElementById('rpmVspeedDisplay');
+            const readyBtn = document.getElementById('rpmReadyBtn');
+            const doneBtn = document.getElementById('rpmDoneBtn');
+            const skipBtn = document.getElementById('rpmSkipBtn');
+            
+            overlay.style.display = 'flex';
+            vspeedDisplay.style.display = 'none';
+            readyBtn.style.display = 'none';
+            doneBtn.style.display = 'none';
+            skipBtn.style.display = 'none';
+
+            if (step === 'trimIn') {
+                message.textContent = "Please trim all the way in. Then please fly at cruise speed where vertical speed is 0";
+                readyBtn.style.display = 'block';
+            } else if (step === 'trimInMonitor') {
+                message.textContent = "Monitoring vertical speed for trimmed in position";
+                vspeedDisplay.style.display = 'block';
+                doneBtn.style.display = 'block';
+                startVspeedMonitoring();
+            } else if (step === 'trimOut') {
+                message.textContent = "Please trim out and fly at cruise speed where vertical speed is 0";
+                readyBtn.style.display = 'block';
+                skipBtn.style.display = 'block';
+            } else if (step === 'trimOutMonitor') {
+                message.textContent = "Monitoring vertical speed for trimmed out position";
+                vspeedDisplay.style.display = 'block';
+                doneBtn.style.display = 'block';
+                startVspeedMonitoring();
+            }
+        }
+
+        function startVspeedMonitoring() {
+            if ('geolocation' in navigator) {
+                rpmWatchId = navigator.geolocation.watchPosition(
+                    handleRpmLocation,
+                    handleError,
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 0,
+                        timeout: 5000
+                    }
+                );
+            } else {
+                alert('Geolocation is not supported by your browser');
+            }
+        }
+
+        function stopVspeedMonitoring() {
+            if (rpmWatchId !== null) {
+                navigator.geolocation.clearWatch(rpmWatchId);
+                rpmWatchId = null;
+            }
+        }
+
+        function handleRpmLocation(position) {
+            const altitude = position.coords.altitude;
+            const timestamp = position.timestamp;
+
+            if (lastAltitude !== null && lastTimestamp !== null) {
+                const vspeed = calculateVerticalSpeed(altitude, lastAltitude, timestamp - lastTimestamp);
+                document.getElementById('rpmVspeed').textContent = `${vspeed} ft/sec`;
+            }
+
+            lastAltitude = altitude;
+            lastTimestamp = timestamp;
+        }
+
+        function handleRpmStep(action) {
+            stopVspeedMonitoring();
+
+            if (action === 'ready') {
+                if (currentRpmStep === 'trimIn') {
+                    showRpmStep('trimInMonitor');
+                } else if (currentRpmStep === 'trimOut') {
+                    showRpmStep('trimOutMonitor');
+                }
+            } else if (action === 'done') {
+                if (currentRpmStep === 'trimInMonitor') {
+                    const rpm = prompt("Enter trimmed in cruise RPM:");
+                    if (rpm !== null) {
+                        const rpmValue = parseInt(rpm);
+                        if (!isNaN(rpmValue)) {
+                            wings[selectedWing].trimmedInRpm = rpmValue;
+                            document.getElementById('trimmedInRpm').textContent = `${rpmValue} RPM`;
+                            saveWings();
+                            showRpmStep('trimOut');
+                        } else {
+                            alert("Please enter a valid number");
+                            showRpmStep('trimInMonitor');
+                        }
+                    }
+                } else if (currentRpmStep === 'trimOutMonitor') {
+                    const rpm = prompt("Enter trimmed out cruise RPM:");
+                    if (rpm !== null) {
+                        const rpmValue = parseInt(rpm);
+                        if (!isNaN(rpmValue)) {
+                            wings[selectedWing].trimmedOutRpm = rpmValue;
+                            document.getElementById('trimmedOutRpm').textContent = `${rpmValue} RPM`;
+                            saveWings();
+                            hideRpmOverlay();
+                        } else {
+                            alert("Please enter a valid number");
+                            showRpmStep('trimOutMonitor');
+                        }
+                    }
+                }
+            } else if (action === 'skip') {
+                // Clear trimmed out RPM value when skipping
+                if (selectedWing && wings[selectedWing]) {
+                    wings[selectedWing].trimmedOutRpm = null;
+                    document.getElementById('trimmedOutRpm').textContent = '-- RPM';
+                    saveWings();
+                }
+                hideRpmOverlay();
+            } else if (action === 'exit') {
+                hideRpmOverlay();
+            }
+        }
+
+        function hideRpmOverlay() {
+            stopVspeedMonitoring();
+            document.getElementById('rpmOverlay').style.display = 'none';
+            currentRpmStep = '';
+        }
+
+        function updateSpeeds(wingSpeed, windSpeed) {
+            document.getElementById('wingSpeed').textContent = `${Math.round(wingSpeed)} mph`;
+            document.getElementById('windSpeed').textContent = `${Math.round(windSpeed)} mph`;
+            
+            if (selectedWing && wings[selectedWing]) {
+                wings[selectedWing].wingSpeed = wingSpeed;
+                wings[selectedWing].windSpeed = windSpeed;
+                saveWings();
+            }
+        }
+
+        document.getElementById('startBtn').addEventListener('click', function() {
+            if (!selectedWing) {
+                alert("Please select a wing first.");
+                return;
+            }
+            if (!isTracking) {
+                if ('geolocation' in navigator) {
+                    isTracking = true;
+                    startTime = new Date();
+                    this.textContent = 'Stop';
+                    
+                    // Start timer
+                    timerInterval = setInterval(updateTimer, 1000);
+                    
+                    // Start GPS tracking
+                    navigator.geolocation.watchPosition(handleLocation, handleError, {
+                        enableHighAccuracy: true,
+                        maximumAge: 0,
+                        timeout: 5000
+                    });
+                } else {
+                    alert('Geolocation is not supported by your browser');
+                }
+            } else {
+                isTracking = false;
+                this.textContent = 'Start';
+                clearInterval(timerInterval);
+            }
+        });
+
+        document.getElementById('logRpmBtn').addEventListener('click', startRpmLogging);
+        document.getElementById('wingsBtn').addEventListener('click', displayWings);
+        document.getElementById('calcSpeedsBtn').addEventListener('click', function() {
+            if (!selectedWing) {
+                alert("Please select a wing first.");
+                return;
+            }
+            
+            speedCalculatorWindow = window.open('speedcalculator.html', 'SpeedCalculator', 
+                'width=400,height=600,menubar=no,toolbar=no,location=no,status=no');
+        });
+
+        // Initialize
+        if (selectedWing) {
+            loadWingData(selectedWing);
+        }
+
+        // Add event listener for the Escape key to close overlay
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideOverlay();
+            }
+        });
+
+        // Add event listener for overlay clicks
+        document.getElementById('overlay').addEventListener('click', function(event) {
+            console.log('Overlay clicked, target:', event.target.id);
+            // Only close if clicking the actual overlay background
+            if (event.target.id === 'overlay') {
+                console.log('Closing overlay from background click');
+                hideOverlay();
+            }
+        });
+
+        // Update event listeners
+        document.getElementById('rpmReadyBtn').addEventListener('click', () => handleRpmStep('ready'));
+        document.getElementById('rpmDoneBtn').addEventListener('click', () => handleRpmStep('done'));
+        document.getElementById('rpmSkipBtn').addEventListener('click', () => handleRpmStep('skip'));
+        document.getElementById('rpmExitBtn').addEventListener('click', () => handleRpmStep('exit'));
+    </script>
+</body>
+</html>
