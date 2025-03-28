@@ -1871,8 +1871,7 @@ table.id = tableId;
     model='gfs';
     
     let tableHtml = `<tr><th style="min-width: 125px;">${locationName}</th>`;
-    let currentDay = null; // Variable to store the current day as you loop through the timestamps
-    // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
+    let currentDay = null; // Variable to store the current day as you loop through the timestamps    // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
     let isDayArray = weatherData.hourly.is_day;
     ////console.log(isDayArray);
     isDayArray = extendDaylightHours(isDayArray);
@@ -1966,8 +1965,10 @@ function toggleWindClouds() {
             Object.keys(globalWeatherData).forEach(model => {
                 const tableId = `${model.toLowerCase()}-table`;
                 const dataTable = document.getElementById(tableId);
-                fillTableWithCloudCover(dataTable, globalWeatherData[model]);
-                dataTable.dataset.showing = 'clouds';
+                if (globalWeatherData[model]) {
+                    fillTableWithCloudCover(dataTable, globalWeatherData[model]);
+                    dataTable.dataset.showing = 'clouds';
+                }
             });
             manageViewButtons();
         });
@@ -1982,12 +1983,16 @@ function toggleWindClouds() {
 
         if (currentDisplay === 'clouds') {
             // Currently showing clouds, switch to wind data
-            fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
-            dataTable.dataset.showing = 'winds';
+            if (globalWeatherData[model]) {
+                fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
+                dataTable.dataset.showing = 'winds';
+            }
         } else {
             // Currently showing wind, switch to cloud cover data
-            fillTableWithCloudCover(dataTable, globalWeatherData[model]);
-            dataTable.dataset.showing = 'clouds';
+            if (globalWeatherData[model]) {
+                fillTableWithCloudCover(dataTable, globalWeatherData[model]);
+                dataTable.dataset.showing = 'clouds';
+            }
         }
     });
 
@@ -2770,6 +2775,12 @@ function interpolateColorRGB(color1, color2, percentage) {
 
 
  function fillTableWithCloudCover(table, weatherData) {
+    // Safety check for weatherData
+    if (!weatherData || !weatherData.hourly) {
+        console.error("Invalid weatherData passed to fillTableWithCloudCover");
+        return;
+    }
+
     console.log("=== Starting fillTableWithCloudCover ===");
     console.log("Table model:", table.dataset.model);
     
@@ -2781,8 +2792,8 @@ function interpolateColorRGB(color1, color2, percentage) {
     console.log("Available hourly keys:", Object.keys(weatherData.hourly));
     console.log("Time array length:", weatherData.hourly.time?.length);
     
-    // Get boundary layer height data
-    const boundaryLayerHeight = weatherData.hourly.boundary_layer_height;
+    // Get boundary layer height data only if it exists and only for GFS model
+    const boundaryLayerHeight = model.toLowerCase() === 'gfs' ? weatherData.hourly?.boundary_layer_height : null;
     console.log("=== Boundary Layer Height Data ===");
     console.log("Model:", model);
     console.log("Boundary layer height data:", boundaryLayerHeight);
@@ -2820,27 +2831,25 @@ function interpolateColorRGB(color1, color2, percentage) {
                 
                 // Check if this cell should be highlighted based on boundary layer height
                 let cellStyle = `color: ${textColor};`;
-                if (boundaryLayerHeight && Array.isArray(boundaryLayerHeight)) {
+                if (boundaryLayerHeight && Array.isArray(boundaryLayerHeight) && boundaryLayerHeight[index] !== null) {
                     const boundaryHeight = boundaryLayerHeight[index];
-                    if (boundaryHeight !== null) {
-                        // Find the closest altitude below the boundary layer height
-                        const closestAltitudeBelow = allAltitudes.find(alt => alt <= boundaryHeight) || allAltitudes[allAltitudes.length - 1];
-                        
-                        // Only highlight if this row's altitude matches the closest altitude below
-                        if (altitude === closestAltitudeBelow) {
-                            columnsWithBorders.add(index);
-                            // Check if current hour is between 10am and 5pm
-                            const currentHour = new Date(weatherData.hourly.time[index]).getHours();
-                            if (currentHour >= 10 && currentHour < 17) {
-                                cellStyle = 'border-left: 2px solid red; border-right: 2px solid red;';
-                            }
-                        } else if (columnsWithBorders.has(index)) {
-                            // Add vertical borders for cells below the boundary layer cell
-                            // Check if current hour is between 10am and 5pm
-                            const currentHour = new Date(weatherData.hourly.time[index]).getHours();
-                            if (currentHour >= 10 && currentHour < 17) {
-                                cellStyle = 'border-left: 2px solid red; border-right: 2px solid red;';
-                            }
+                    // Find the closest altitude below the boundary layer height
+                    const closestAltitudeBelow = allAltitudes.find(alt => alt <= boundaryHeight) || allAltitudes[allAltitudes.length - 1];
+                    
+                    // Only highlight if this row's altitude matches the closest altitude below
+                    if (altitude === closestAltitudeBelow) {
+                        columnsWithBorders.add(index);
+                        // Check if current hour is between 10am and 5pm
+                        const currentHour = new Date(weatherData.hourly.time[index]).getHours();
+                        if (currentHour >= 10 && currentHour < 17) {
+                            cellStyle = 'border-left: 2px solid red; border-right: 2px solid red;';
+                        }
+                    } else if (columnsWithBorders.has(index)) {
+                        // Add vertical borders for cells below the boundary layer cell
+                        // Check if current hour is between 10am and 5pm
+                        const currentHour = new Date(weatherData.hourly.time[index]).getHours();
+                        if (currentHour >= 10 && currentHour < 17) {
+                            cellStyle = 'border-left: 2px solid red; border-right: 2px solid red;';
                         }
                     }
                 }
@@ -2851,6 +2860,32 @@ function interpolateColorRGB(color1, color2, percentage) {
             tableHtml += '</tr>';
         }
     });
+    
+    // Add boundary layer height row only for GFS model
+    if (model.toLowerCase() === 'gfs' && weatherData.hourly.hasOwnProperty('boundary_layer_height')) {
+        console.log("=== Adding Boundary Layer Height Row ===");
+        console.log("Table model:", table.dataset.model);
+        console.log("Boundary layer height data:", weatherData.hourly.boundary_layer_height);
+        
+        tableHtml += '<tr><th class="sticky-header small-text-cell" style="min-width: 15px;">Thermals (ft)</th>';
+        weatherData.hourly.boundary_layer_height.forEach((height, index) => {
+            if (height === null || height === undefined) {
+                height = 0;
+            }
+            // Round to nearest integer since it's already in feet
+            const heightInFeet = Math.round(height);
+            console.log(`Boundary layer height: ${heightInFeet}ft`);
+            
+            // Check if current hour is between 10am and 5pm
+            const currentHour = new Date(weatherData.hourly.time[index]).getHours();
+            if (currentHour >= 10 && currentHour < 17) {
+                tableHtml += `<td class="data-cell boundary-data-cell" style="background-color: #f0f0f0; color: black;">${heightInFeet}</td>`;
+            } else {
+                tableHtml += `<td class="data-cell small-text-cell" style="background-color: #f0f0f0; color: black;"></td>`;
+            }
+        });
+        tableHtml += '</tr>';
+    }
     
     // Add summary rows for high, mid, and low cloud cover
     if (weatherData.hourly.hasOwnProperty('cloud_cover_high')) {
@@ -3013,52 +3048,52 @@ buttonIdsToTriggerCollapse.forEach(buttonId => {
 
 });
 function manageViewButtons() {
-const toggleButton = document.getElementById('cloudsButton');
-const toggleTemperatureButton = document.getElementById('toggleTemperatureButton');
-const returnToWindTableButton = document.getElementById('returnToWindTableButton');
-
-const isTemperatureTableDisplayed = [...document.querySelectorAll('table[id$="-table"]')]
-.some(table => table.dataset.showing === 'temperature');
-const isCloudTableDisplayed = [...document.querySelectorAll('table[id$="-table"]')]
-.some(table => table.dataset.showing === 'clouds');
-
-if (isCloudTableDisplayed || isTemperatureTableDisplayed) {
-// Hide the toggle buttons and show the "Return to Wind Table" button
-toggleButton.style.display = 'none';
-toggleTemperatureButton.style.display = 'none';
-returnToWindTableButton.style.display = 'inline-block'; // Show the return button
-} else {
-// Show the toggle buttons and hide the "Return to Wind Table" button
-toggleButton.style.display = 'inline-block';
-toggleTemperatureButton.style.display = 'inline-block';
-returnToWindTableButton.style.display = 'none'; // Hide the return button
-}
-}
-document.getElementById('returnToWindTableButton').addEventListener('click', function() {
-    console.log('Return to wind table clicked');
-    // Restore the previous state of highAltitudeVisible
-    highAltitudeVisible = previousHighAltitudeState;
-    const highAltitudeButton = document.getElementById('toggleHighAltitudeButton');
-    if (highAltitudeButton) {
-        highAltitudeButton.textContent = highAltitudeVisible ? 'Hide High Altitudes' : 'Show High Altitudes';
+    const toggleButton = document.getElementById('cloudsButton');
+    const toggleTemperatureButton = document.getElementById('toggleTemperatureButton');
+    const returnToWindTableButton = document.getElementById('returnToWindTableButton');
+    
+    const isTemperatureTableDisplayed = [...document.querySelectorAll('table[id$="-table"]')]
+    .some(table => table.dataset.showing === 'temperature');
+    const isCloudTableDisplayed = [...document.querySelectorAll('table[id$="-table"]')]
+    .some(table => table.dataset.showing === 'clouds');
+    
+    if (isCloudTableDisplayed || isTemperatureTableDisplayed) {
+    // Hide the toggle buttons and show the "Return to Wind Table" button
+    toggleButton.style.display = 'none';
+    toggleTemperatureButton.style.display = 'none';
+    returnToWindTableButton.style.display = 'inline-block'; // Show the return button
+    } else {
+    // Show the toggle buttons and hide the "Return to Wind Table" button
+    toggleButton.style.display = 'inline-block';
+    toggleTemperatureButton.style.display = 'inline-block';
+    returnToWindTableButton.style.display = 'none'; // Hide the return button
     }
-    // Fetch new data with the restored high altitudes state
-    fetchAllModelsData().then(() => {
-        // After data is fetched, proceed with wind display
-        Object.keys(globalWeatherData).forEach(model => {
-            const tableId = `${model.toLowerCase()}-table`;
-            const dataTable = document.getElementById(tableId);
-            fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
-            dataTable.dataset.showing = 'winds';
+    }
+    document.getElementById('returnToWindTableButton').addEventListener('click', function() {
+        console.log('Return to wind table clicked');
+        // Restore the previous state of highAltitudeVisible
+        highAltitudeVisible = previousHighAltitudeState;
+        const highAltitudeButton = document.getElementById('toggleHighAltitudeButton');
+        if (highAltitudeButton) {
+            highAltitudeButton.textContent = highAltitudeVisible ? 'Hide High Altitudes' : 'Show High Altitudes';
+        }
+        // Fetch new data with the restored high altitudes state
+        fetchAllModelsData().then(() => {
+            // After data is fetched, proceed with wind display
+            Object.keys(globalWeatherData).forEach(model => {
+                const tableId = `${model.toLowerCase()}-table`;
+                const dataTable = document.getElementById(tableId);
+                fillTableWithWindSpeed(dataTable, globalWeatherData[model]);
+                dataTable.dataset.showing = 'winds';
+            });
+            manageViewButtons();
         });
-        manageViewButtons();
     });
-});
-
-// Add this function before fillTableWithCloudCover
-function getCloudCoverColor(cloudCover) {
-    // Convert cloud cover percentage to opacity (0 to 0.75)
-    const maxDarkness = 0.75;
-    const opacity = (cloudCover / 100) * maxDarkness;
-    return `rgba(0, 0, 0, ${opacity})`;
-}
+    
+    // Add this function before fillTableWithCloudCover
+    function getCloudCoverColor(cloudCover) {
+        // Convert cloud cover percentage to opacity (0 to 0.75)
+        const maxDarkness = 0.75;
+        const opacity = (cloudCover / 100) * maxDarkness;
+        return `rgba(0, 0, 0, ${opacity})`;
+    }
