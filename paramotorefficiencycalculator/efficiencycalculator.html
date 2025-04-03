@@ -4,145 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Paramotor Efficiency Calculator</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f7;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .selected-wing-display {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        .data-display {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007AFF;
-        }
-        .label {
-            color: #666;
-            font-size: 14px;
-        }
-        button {
-            background-color: #007AFF;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 15px;
-            cursor: pointer;
-            flex: 1;
-        }
-        button:active {
-            background-color: #0051a8;
-        }
-        #overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        #messageBox {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 350px;
-            margin: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        #wingList {
-            list-style-type: none;
-            padding: 0;
-            margin: 0 0 15px 0;
-            max-height: 60vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        li {
-            padding: 12px;
-            margin: 8px 0;
-            background: #f5f5f7;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        li span {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        li div {
-            display: flex;
-            gap: 8px;
-        }
-        li button {
-            flex: 1;
-            padding: 8px;
-            font-size: 14px;
-            border-radius: 6px;
-        }
-        li button:nth-child(1) {
-            background-color: #007AFF;
-            color: white;
-        }
-        li button:nth-child(2) {
-            background-color: #E5E5EA;
-            color: #000;
-        }
-        li button:nth-child(3) {
-            background-color: #FF3B30;
-            color: white;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #E5E5EA;
-            border-radius: 8px;
-            font-size: 15px;
-            box-sizing: border-box;
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <div class="button-group">
-            <button id="startBtn">Start</button>
-            <button id="logRpmBtn">Log Cruise RPMs</button>
-            <button id="wingsBtn">Wings</button>
-            <button id="calcSpeedsBtn">Calculate Speeds</button>
+            <div class="button-row">
+                <button id="startBtn">Start</button>
+                <button id="wingsBtn">Wings</button>
+                <button id="editBtn">Edit</button>
+                <button id="exportBtn">Export</button>
+            </div>
+            <div class="button-row">
+                <button id="logRpmBtn">Log Cruise RPMs</button>
+                <button id="calcSpeedsBtn">Calc Trim Speed</button>
+                <button id="calcMaxSpeedBtn">Calc Max Speed</button>
+            </div>
         </div>
         
         <div class="selected-wing-display">
@@ -171,18 +48,23 @@
             </div>
             
             <div class="data-display">
-                <div class="label">Cruise RPM Trimmed In</div>
+                <div class="label">Cruise RPM Trim In</div>
                 <div class="value" id="trimmedInRpm">-- RPM</div>
             </div>
             
             <div class="data-display">
-                <div class="label">Cruise RPM Trimmed Out</div>
+                <div class="label">Cruise RPM Trim Out</div>
                 <div class="value" id="trimmedOutRpm">-- RPM</div>
             </div>
             
             <div class="data-display">
-                <div class="label">Wing Speed</div>
+                <div class="label">Trim Speed</div>
                 <div class="value" id="wingSpeed">-- mph</div>
+            </div>
+            
+            <div class="data-display">
+                <div class="label">Max Speed</div>
+                <div class="value" id="maxSpeed">-- mph</div>
             </div>
             
             <div class="data-display">
@@ -194,27 +76,57 @@
     
     <div id="overlay">
         <div id="messageBox">
-            <h2 style="margin: 0 0 15px 0; color: #1c1c1e;">Wing Selection</h2>
+            <h2>Wing Selection</h2>
             <ul id="wingList"></ul>
             <input type="text" id="wingName" placeholder="Enter wing name">
-            <button onclick="showWingInput()" id="addNewWingBtn" style="width: 100%; padding: 12px; background-color: #34C759; color: white; border: none; border-radius: 8px; font-size: 15px; margin-top: 10px;">Add New Wing</button>
-            <button onclick="addWing()" id="saveWingBtn" style="display: none; width: 100%; padding: 12px; background-color: #34C759; color: white; border: none; border-radius: 8px; font-size: 15px; margin-top: 10px;">Save Wing</button>
-            <button onclick="hideOverlay()" style="width: 100%; padding: 12px; background-color: #8E8E93; color: white; border: none; border-radius: 8px; font-size: 15px; margin-top: 10px;">Close</button>
+            <button id="addNewWingBtn">Add New Wing</button>
+            <button id="saveWingBtn">Save Wing</button>
+            <button onclick="hideOverlay()" class="close-button">Close</button>
         </div>
     </div>
 
-    <div id="rpmOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000;">
-        <div class="messageBox" style="background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <div id="rpmMessage" style="margin-bottom: 20px; font-size: 16px;"></div>
-            <div id="rpmVspeedDisplay" style="display: none;">
+    <div id="rpmOverlay">
+        <div class="messageBox">
+            <div id="rpmMessage"></div>
+            <div id="rpmVspeedDisplay">
                 <div class="label">Vertical Speed</div>
                 <div class="value" id="rpmVspeed">-- ft/sec</div>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="rpmReadyBtn" style="display: none;">Ready</button>
-                <button id="rpmDoneBtn" style="display: none;">Done</button>
-                <button id="rpmSkipBtn" style="display: none;">Skip</button>
-                <button id="rpmExitBtn" style="background-color: #FF3B30;">Exit</button>
+            <div>
+                <button id="rpmReadyBtn">Ready</button>
+                <button id="rpmDoneBtn">Done</button>
+                <button id="rpmSkipBtn">Skip</button>
+                <button id="rpmExitBtn">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editOverlay">
+        <div class="messageBox">
+            <h2>Edit Values</h2>
+            <div>
+                <div class="label">Trim Speed (mph)</div>
+                <input type="number" id="editTrimSpeed" class="edit-input" placeholder="Enter trim speed">
+            </div>
+            <div>
+                <div class="label">Max Speed (mph)</div>
+                <input type="number" id="editMaxSpeed" class="edit-input" placeholder="Enter max speed">
+            </div>
+            <div>
+                <div class="label">Wind Speed (mph)</div>
+                <input type="number" id="editWindSpeed" class="edit-input" placeholder="Enter wind speed">
+            </div>
+            <div>
+                <div class="label">Trimmed In RPM</div>
+                <input type="number" id="editTrimmedInRpm" class="edit-input" placeholder="Enter trimmed in RPM">
+            </div>
+            <div>
+                <div class="label">Trimmed Out RPM</div>
+                <input type="number" id="editTrimmedOutRpm" class="edit-input" placeholder="Enter trimmed out RPM">
+            </div>
+            <div class="button-container">
+                <button id="saveEditBtn">Save</button>
+                <button id="cancelEditBtn">Cancel</button>
             </div>
         </div>
     </div>
@@ -298,6 +210,7 @@
                     trimmedInRpm: null,
                     trimmedOutRpm: null,
                     wingSpeed: null,
+                    maxSpeed: null,
                     windSpeed: null
                 };
                 saveWings();
@@ -311,6 +224,7 @@
                 'trimmedInRpm': wingData.trimmedInRpm ? `${wingData.trimmedInRpm} RPM` : '-- RPM',
                 'trimmedOutRpm': wingData.trimmedOutRpm ? `${wingData.trimmedOutRpm} RPM` : '-- RPM',
                 'wingSpeed': wingData.wingSpeed ? `${Math.round(wingData.wingSpeed)} mph` : '-- mph',
+                'maxSpeed': wingData.maxSpeed ? `${Math.round(wingData.maxSpeed)} mph` : '-- mph',
                 'windSpeed': wingData.windSpeed ? `${Math.round(wingData.windSpeed)} mph` : '-- mph'
             };
             
@@ -365,6 +279,7 @@
                     trimmedInRpm: null,
                     trimmedOutRpm: null,
                     wingSpeed: null,
+                    maxSpeed: null,
                     windSpeed: null
                 };
                 saveWings();
@@ -430,7 +345,9 @@
         function calculateVerticalSpeed(currentAlt, prevAlt, timeDiff) {
             const altChange = (currentAlt - prevAlt) * 3.28084; // Convert to feet
             const secondsFraction = timeDiff / 1000;
-            return Math.round(altChange / secondsFraction);
+            const vspeed = altChange / secondsFraction;
+            // Round to nearest 0.5
+            return Math.round(vspeed * 2) / 2;
         }
 
         function handleLocation(position) {
@@ -449,7 +366,7 @@
             // Calculate vertical speed
             if (lastAltitude !== null && lastTimestamp !== null) {
                 const vspeed = calculateVerticalSpeed(altitude, lastAltitude, timestamp - lastTimestamp);
-                document.getElementById('vspeed').textContent = `${vspeed} ft/sec`;
+                document.getElementById('vspeed').textContent = `${vspeed.toFixed(1)} ft/sec`;
             }
 
             lastAltitude = altitude;
@@ -533,7 +450,7 @@
             skipBtn.style.display = 'none';
 
             if (step === 'trimIn') {
-                message.textContent = "Please trim all the way in. Then please fly at cruise speed where vertical speed is 0";
+                message.innerHTML = "-Trim in<br>-Maintain altitude/vertical speed of 0";
                 readyBtn.style.display = 'block';
             } else if (step === 'trimInMonitor') {
                 message.textContent = "Monitoring vertical speed for trimmed in position";
@@ -541,7 +458,7 @@
                 doneBtn.style.display = 'block';
                 startVspeedMonitoring();
             } else if (step === 'trimOut') {
-                message.textContent = "Please trim out and fly at cruise speed where vertical speed is 0";
+                message.innerHTML = "-Trim out<br>-Maintain altitude/vertical speed of 0";
                 readyBtn.style.display = 'block';
                 skipBtn.style.display = 'block';
             } else if (step === 'trimOutMonitor') {
@@ -581,7 +498,14 @@
 
             if (lastAltitude !== null && lastTimestamp !== null) {
                 const vspeed = calculateVerticalSpeed(altitude, lastAltitude, timestamp - lastTimestamp);
-                document.getElementById('rpmVspeed').textContent = `${vspeed} ft/sec`;
+                const vspeedElement = document.getElementById('rpmVspeed');
+                vspeedElement.textContent = `${vspeed.toFixed(1)} ft/sec`;
+                // Change color based on vertical speed
+                if (vspeed === 0) {
+                    vspeedElement.style.color = '#34C759'; // Green
+                } else {
+                    vspeedElement.style.color = '#FF3B30'; // Red
+                }
             }
 
             lastAltitude = altitude;
@@ -657,6 +581,15 @@
             }
         }
 
+        function updateMaxSpeed(maxSpeed) {
+            document.getElementById('maxSpeed').textContent = `${Math.round(maxSpeed)} mph`;
+            
+            if (selectedWing && wings[selectedWing]) {
+                wings[selectedWing].maxSpeed = maxSpeed;
+                saveWings();
+            }
+        }
+
         document.getElementById('startBtn').addEventListener('click', function() {
             if (!selectedWing) {
                 alert("Please select a wing first.");
@@ -699,6 +632,16 @@
                 'width=400,height=600,menubar=no,toolbar=no,location=no,status=no');
         });
 
+        document.getElementById('calcMaxSpeedBtn').addEventListener('click', function() {
+            if (!selectedWing) {
+                alert("Please select a wing first.");
+                return;
+            }
+            
+            maxSpeedCalculatorWindow = window.open('maxspeedcalculator.html', 'MaxSpeedCalculator', 
+                'width=400,height=600,menubar=no,toolbar=no,location=no,status=no');
+        });
+
         // Initialize
         if (selectedWing) {
             loadWingData(selectedWing);
@@ -726,6 +669,104 @@
         document.getElementById('rpmDoneBtn').addEventListener('click', () => handleRpmStep('done'));
         document.getElementById('rpmSkipBtn').addEventListener('click', () => handleRpmStep('skip'));
         document.getElementById('rpmExitBtn').addEventListener('click', () => handleRpmStep('exit'));
+
+        function showEditOverlay() {
+            if (!selectedWing) {
+                alert("Please select a wing first.");
+                return;
+            }
+
+            const wingData = wings[selectedWing];
+            document.getElementById('editTrimSpeed').value = wingData.wingSpeed || '';
+            document.getElementById('editMaxSpeed').value = wingData.maxSpeed || '';
+            document.getElementById('editWindSpeed').value = wingData.windSpeed || '';
+            document.getElementById('editTrimmedInRpm').value = wingData.trimmedInRpm || '';
+            document.getElementById('editTrimmedOutRpm').value = wingData.trimmedOutRpm || '';
+            
+            document.getElementById('editOverlay').style.display = 'flex';
+        }
+
+        function hideEditOverlay() {
+            document.getElementById('editOverlay').style.display = 'none';
+        }
+
+        function saveEditedValues() {
+            const wingData = wings[selectedWing];
+            
+            const trimSpeed = parseFloat(document.getElementById('editTrimSpeed').value);
+            const maxSpeed = parseFloat(document.getElementById('editMaxSpeed').value);
+            const windSpeed = parseFloat(document.getElementById('editWindSpeed').value);
+            const trimmedInRpm = parseInt(document.getElementById('editTrimmedInRpm').value);
+            const trimmedOutRpm = parseInt(document.getElementById('editTrimmedOutRpm').value);
+
+            if (!isNaN(trimSpeed)) {
+                wingData.wingSpeed = trimSpeed;
+                document.getElementById('wingSpeed').textContent = `${Math.round(trimSpeed)} mph`;
+            }
+            
+            if (!isNaN(maxSpeed)) {
+                wingData.maxSpeed = maxSpeed;
+                document.getElementById('maxSpeed').textContent = `${Math.round(maxSpeed)} mph`;
+            }
+            
+            if (!isNaN(windSpeed)) {
+                wingData.windSpeed = windSpeed;
+                document.getElementById('windSpeed').textContent = `${Math.round(windSpeed)} mph`;
+            }
+            
+            if (!isNaN(trimmedInRpm)) {
+                wingData.trimmedInRpm = trimmedInRpm;
+                document.getElementById('trimmedInRpm').textContent = `${trimmedInRpm} RPM`;
+            }
+            
+            if (!isNaN(trimmedOutRpm)) {
+                wingData.trimmedOutRpm = trimmedOutRpm;
+                document.getElementById('trimmedOutRpm').textContent = `${trimmedOutRpm} RPM`;
+            }
+            
+            saveWings();
+            hideEditOverlay();
+        }
+
+        function exportToCSV() {
+            if (!selectedWing) {
+                alert("Please select a wing first.");
+                return;
+            }
+
+            const wingData = wings[selectedWing];
+            const csvContent = [
+                ['Wing Name', 'Trim Speed (mph)', 'Max Speed (mph)', 'Wind Speed (mph)', 'Trimmed In RPM', 'Trimmed Out RPM'],
+                [
+                    selectedWing,
+                    wingData.wingSpeed || '',
+                    wingData.maxSpeed || '',
+                    wingData.windSpeed || '',
+                    wingData.trimmedInRpm || '',
+                    wingData.trimmedOutRpm || ''
+                ]
+            ].map(row => row.join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${selectedWing}_data.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Add event listeners for new buttons
+        document.getElementById('editBtn').addEventListener('click', showEditOverlay);
+        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+        document.getElementById('saveEditBtn').addEventListener('click', saveEditedValues);
+        document.getElementById('cancelEditBtn').addEventListener('click', hideEditOverlay);
+        document.getElementById('addNewWingBtn').addEventListener('click', showWingInput);
+        document.getElementById('saveWingBtn').addEventListener('click', addWing);
     </script>
 </body>
 </html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Planning Instructions</title>
+    <style>
+        /* Add your styles here */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        .instruction {
+            margin-bottom: 20px;
+        }
+
+        .button {
+            margin-bottom: 10px;
+        }
+
+        /* You can include more styles for responsive design and better appearance */
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Instructions:</h2>
+
+        <div class="instruction button">
+            <strong>Edit Wind Speed Thresholds:</strong>
+            
+        <button>Edit Wind Speed Thresholds</button>
+            This feature lets you customize the color-coding for various wind speeds on the visualization. By assigning specific RGB
+            colors to defined wind speed ranges, you can create a personalized, multi-level view of wind conditions across different
+            altitudes over an extended time frame. The primary objective of this webpage is to offer an intuitive and interactive
+            method to graphically represent and monitor wind patterns that are critical for flight planning.
+
+        </div>
+
+        <div class="instruction button">
+            <strong>Wind/Clouds Toggle:</strong>
+            <button>Wind/Clouds</button>
+            By clicking this button, you can switch the view between displaying the wind speed/direction and the cloud cover
+            information. This allows you to assess the flying conditions more comprehensively by considering both wind behavior at
+            different altitudes and cloud coverage.
+            
+        </div>
+        <div class="instruction button">
+            <strong>Cloud Cover Representation:</strong>
+            Cloud cover is visualized with varying shades of grey in the cells. Darker shades represent heavier cloud cover,
+            while lighter shades indicate lighter cloud cover or clear skies.
+        </div>
+
+        <div class="instruction button">
+            <strong>Temperature Toggle:</strong>
+            <button>Temperature</button>
+            Use this button to toggle between viewing wind/cloud data and temperature data across different altitudes. This feature
+            helps you to visualize the temperature conditions and make informed decisions for your flight.
+        </div>
+
+        <div class="instruction button">
+            <strong>Enable/Disable Wind Shear:</strong>
+            <button>Wind Shear</button>
+            Wind shear can present significant hazards to flight. This button allows you to enable an analysis which visually
+            indicates where wind shear conditions are detected based on the threshold settings for wind speed and direction change.
+            They are 10mph and 90 degrees. This analysis is a work in progress and is only applied to ICON data and altitudes up to
+            6000ft.
+        </div>
+
+        <div class="instruction button">
+            <strong>Daylight/Night Toggle:</strong>
+            <button>All Hours</button><button>Daylight Hours</button>
+            This functionality filters the displayed data to show only the daylight hours (calculated from sunrise sunset values and column headers circled in orange).
+            Piloting during dark hours can be risky, so you may use this filter to focus on the relevant flight times.
+        </div>
+
+        <div class="instruction button">
+            <strong>Show High Altitude:</strong>
+            <button>High Altitude</button>
+            You can toggle the visibility of high altitude data by clicking this button. If you're interested in flying at higher
+            elevations, this can help you plan ahead and avoid potentially dangerous zones.
+        </div>
+
+        <div class="instruction button">
+            <strong>Additional Variables Toggle:</strong>
+            <button>Additional Variables</button>
+            This feature adds or removes additional weather variables such as Convective Available Potential Energy (CAPE) or
+            precipitation probability, which can be crucial for understanding developing weather conditions that might affect your
+            flight. Precipitation probability is only available for the ICON model.
+        </div>
+
+        <div class="instruction button">
+            <strong>Best Hours:</strong>
+            <button>Best Hours</button>
+            Upon clicking this button, a popup will appear allowing you to input values for maximum wind speed you are comfortable
+            flying in. The system will then highlight the hours in which wind speeds are below this threshold at 0-400ft. This does
+            not yet consider precipitation probability.
+        </div>
+
+        <div class="instruction buton">
+            <strong>Wind Arrows:</strong>
+            Wind direction is indicated by arrows within the data cells. These arrows rotate to point in the direction the wind is
+            going.
+        </div>
+
+        
+
+       
+
+
+        <div class="instruction button">
+            <strong>Refresh Weather Data:</strong>
+            <button>Get Weather</button>
+        </div>
+
+        <div class="instruction">
+            <p><em>Note: Always review the latest weather forecasts and consult with flight regulations and safety
+                    guidelines before flight planning.</em></p>
+        </div>
+<div class="instruction">
+    <p><em>For more information contact us: <a href="http://www.flyhighflorida.com">Fly High Florida</a></em></p>
+    <p><em>For more information on ICON and GFS forecasting models <a href="https://scottypres.github.io/models.html">Click Here</a></em></p>
+</div>
+    </div>
+
+</body>
+
+</html>
+

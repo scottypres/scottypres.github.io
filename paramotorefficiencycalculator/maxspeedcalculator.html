@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Speed Calculator</title>
+    <title>Max Speed Calculator</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -63,7 +63,7 @@
     <div class="container">
         <div id="upwindPhase">
             <div class="message-box">
-                <div class="instruction">We are going to calculate your trim speed by measuring ground speeds in both directions. Please watch your ground speed and monitor it while you change direction.<br><br>For accurate measurements, it's important that you maintain level flight by monitoring your vertical speed.</div>
+                <div class="instruction">We are going to calculate your max speed by measuring ground speeds in both directions. Please watch your ground speed and monitor it while you change direction.<br><br>For accurate measurements, it's important that you maintain level flight by monitoring your vertical speed.</div>
                 <div style="display: flex; gap: 10px; justify-content: center;">
                     <button id="startUpwindBtn">Ready</button>
                     <button id="initialExitBtn" style="background-color: #FF3B30;">Exit</button>
@@ -120,12 +120,38 @@
                 </div>
             </div>
         </div>
+
+        <div id="maxSpeedMeasurement" style="display: none;">
+            <div style="display: flex; justify-content: space-between; gap: 10px;">
+                <div class="speed-display" style="flex: 1;">
+                    <div class="label">Current Speed</div>
+                    <div class="value" id="currentSpeedMax">-- mph</div>
+                </div>
+                <div class="speed-display" style="flex: 1;">
+                    <div class="label">Max Speed</div>
+                    <div class="value" id="maxSpeedWithBar">-- mph</div>
+                </div>
+            </div>
+            <div class="speed-display" style="margin-top: 10px;">
+                <div class="label">Vertical Speed</div>
+                <div class="value"><span id="verticalSpeedMax">--</span> ft/sec</div>
+            </div>
+            <div class="instruction" style="text-align: center;">-Full bar/trim out<br>-Maintain elevation<br>-Fly directly upwind until your max speed is reached</div>
+            <div class="message-box">
+                <button id="resetMaxWithBarBtn" style="width: 100%; margin-bottom: 10px;">Reset Max Speed</button>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="maxSpeedDoneBtn">Done</button>
+                    <button id="maxSpeedExitBtn" style="background-color: #FF3B30;">Exit</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         let watchId = null;
         let minSpeedValue = Infinity;
         let maxSpeedValue = 0;
+        let maxSpeedWithBarValue = 0;
         let lastPosition = null;
         let updateInterval = null;
         let lastAltitude = null;
@@ -144,6 +170,7 @@
 
             const verticalSpeedElement = document.getElementById('verticalSpeed');
             const verticalSpeedDownElement = document.getElementById('verticalSpeedDown');
+            const verticalSpeedMaxElement = document.getElementById('verticalSpeedMax');
             
             if (verticalSpeedElement) {
                 verticalSpeedElement.textContent = currentVerticalSpeed;
@@ -153,6 +180,11 @@
             if (verticalSpeedDownElement) {
                 verticalSpeedDownElement.textContent = currentVerticalSpeed;
                 verticalSpeedDownElement.style.color = Number(currentVerticalSpeed) === 0 ? '#34C759' : '#FF3B30';
+            }
+
+            if (verticalSpeedMaxElement) {
+                verticalSpeedMaxElement.textContent = currentVerticalSpeed;
+                verticalSpeedMaxElement.style.color = Number(currentVerticalSpeed) === 0 ? '#34C759' : '#FF3B30';
             }
 
             if (document.getElementById('upwindMeasurement').style.display === 'block') {
@@ -172,6 +204,16 @@
                 if (speed > maxSpeedValue) {
                     maxSpeedValue = speed;
                     document.getElementById('maxSpeed').textContent = `${speed.toFixed(1)} mph`;
+                }
+            }
+
+            if (document.getElementById('maxSpeedMeasurement').style.display === 'block') {
+                const currentSpeedMaxElement = document.getElementById('currentSpeedMax');
+                currentSpeedMaxElement.textContent = `${speed} mph`;
+                
+                if (speed > maxSpeedWithBarValue) {
+                    maxSpeedWithBarValue = speed;
+                    document.getElementById('maxSpeedWithBar').textContent = `${speed.toFixed(1)} mph`;
                 }
             }
             
@@ -245,27 +287,58 @@
         document.getElementById('downwindDoneBtn').addEventListener('click', function() {
             stopGPS();
             
-            if (minSpeedValue === Infinity || maxSpeedValue === 0) {
+            maxSpeedWithBarValue = 0;
+            lastPosition = null;
+            lastAltitude = null;
+            
+            document.getElementById('downwindMeasurement').style.display = 'none';
+            document.getElementById('maxSpeedMeasurement').style.display = 'block';
+            
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    lastPosition = position;
+                    lastAltitude = position.coords.altitude;
+                    startGPS();
+                }, handleError, {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 5000
+                });
+            } else {
+                startGPS();
+            }
+        });
+
+        document.getElementById('maxSpeedDoneBtn').addEventListener('click', function() {
+            stopGPS();
+            
+            if (minSpeedValue === Infinity || maxSpeedValue === 0 || maxSpeedWithBarValue === 0) {
                 alert('Please take valid speed measurements before completing.');
                 return;
             }
             
             const minSpeed = minSpeedValue;
             const maxSpeed = maxSpeedValue;
+            const maxSpeedWithBar = maxSpeedWithBarValue;
             
-            // Calculate wind speed
+            // Calculate wind speed from neutral measurements
             const windSpeed = (maxSpeed - minSpeed) / 2;
             
-            // Calculate wing speed
+            // Calculate trim speed (wingSpeed) from neutral measurements
             const wingSpeed = maxSpeed - windSpeed;
+            
+            // Calculate true max speed by adding wind speed to the value measured with full bar
+            const trueMaxSpeed = maxSpeedWithBar + windSpeed;
             
             if (isNaN(wingSpeed) || !isFinite(wingSpeed)) {
                 alert('Invalid speed measurements. Please try again.');
                 return;
             }
             
-            // Update values in the main window
+            // Update trim speed and wind speed in the main window
             window.opener.updateSpeeds(wingSpeed, windSpeed);
+            // Update max speed to the true max speed (value with full bar + wind speed)
+            window.opener.updateMaxSpeed(trueMaxSpeed);
             window.close();
         });
 
@@ -279,8 +352,14 @@
             document.getElementById('maxSpeed').textContent = '-- mph';
         });
 
+        document.getElementById('resetMaxWithBarBtn').addEventListener('click', function() {
+            maxSpeedWithBarValue = 0;
+            document.getElementById('maxSpeedWithBar').textContent = '-- mph';
+        });
+
         document.getElementById('upwindExitBtn').addEventListener('click', exitToMainPage);
         document.getElementById('downwindExitBtn').addEventListener('click', exitToMainPage);
+        document.getElementById('maxSpeedExitBtn').addEventListener('click', exitToMainPage);
         document.getElementById('initialExitBtn').addEventListener('click', exitToMainPage);
     </script>
 </body>

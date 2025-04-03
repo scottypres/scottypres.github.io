@@ -1,0 +1,326 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f7;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.button-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.button-row:last-child {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.selected-wing-display {
+    background: white;
+    border-radius: 12px;
+    padding: 5px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.data-display {
+    background: white;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007AFF;
+    text-align: center;
+}
+
+.label {
+    color: #666;
+    font-size: 14px;
+    text-align: center;
+}
+
+button {
+    background-color: #007AFF;
+    color: white;
+    border: none;
+    padding: 12px 8px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 40px;
+    line-height: 1.2;
+}
+
+button:active {
+    background-color: #0051a8;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #E5E5EA;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+#overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#messageBox {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 350px;
+    margin: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#messageBox h2 {
+    margin: 0 0 15px 0;
+    color: #1c1c1e;
+}
+
+.messageBox > div {
+    margin-bottom: 15px;
+}
+
+.messageBox .button-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#cancelEditBtn {
+    background-color: #FF3B30;
+}
+
+#wingList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+li {
+    padding: 12px;
+    margin: 8px 0;
+    background: #f5f5f7;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+li span {
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+}
+
+li div {
+    display: flex;
+    gap: 3px;
+    height: 44px;
+}
+
+li button {
+    flex: 1;
+    padding: 0;
+    font-size: 14px;
+    border-radius: 6px;
+    border: none;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+li button:nth-child(1) {
+    background-color: #007AFF;
+    color: white;
+}
+
+li button:nth-child(2) {
+    background-color: #E5E5EA;
+    color: #000;
+}
+
+li button:nth-child(3) {
+    background-color: #FF3B30;
+    color: white;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #E5E5EA;
+    border-radius: 8px;
+    font-size: 15px;
+    box-sizing: border-box;
+    display: none;
+}
+
+#rpmOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#editOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#addNewWingBtn, #saveWingBtn {
+    width: 100%;
+    padding: 12px;
+    background-color: #34C759;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-top: 10px;
+    height: auto;
+}
+
+#saveWingBtn {
+    display: none;
+}
+
+.close-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #8E8E93;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-top: 10px;
+    height: auto;
+}
+
+#editOverlay .messageBox {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+}
+
+#editOverlay h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #000;
+    text-align: center;
+}
+
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.edit-form label {
+    color: #000;
+    font-size: 14px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.edit-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #E5E5EA;
+    border-radius: 8px;
+    font-size: 15px;
+    box-sizing: border-box;
+    margin-top: 5px;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-container button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    border: none;
+    height: 44px;
+}
+
+#saveEditBtn {
+    background-color: #34C759;
+    color: white;
+}
+
+#cancelEditBtn {
+    background-color: #FF3B30;
+    color: white;
+} 
