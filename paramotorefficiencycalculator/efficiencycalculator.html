@@ -453,7 +453,9 @@
                 message.innerHTML = "-Trim in<br>-Maintain altitude/vertical speed of 0";
                 readyBtn.style.display = 'block';
             } else if (step === 'trimInMonitor') {
-                message.textContent = "Monitoring vertical speed for trimmed in position";
+                message.innerHTML = "-Maintain altitude/vertical speed of 0<br>-Make note of RPMs at level flight";
+
+                
                 vspeedDisplay.style.display = 'block';
                 doneBtn.style.display = 'block';
                 startVspeedMonitoring();
@@ -462,7 +464,7 @@
                 readyBtn.style.display = 'block';
                 skipBtn.style.display = 'block';
             } else if (step === 'trimOutMonitor') {
-                message.textContent = "Monitoring vertical speed for trimmed out position";
+                message.innerHTML = "-Maintain altitude/vertical speed of 0<br>-Make note of RPMs at level flight";
                 vspeedDisplay.style.display = 'block';
                 doneBtn.style.display = 'block';
                 startVspeedMonitoring();
@@ -500,11 +502,11 @@
                 const vspeed = calculateVerticalSpeed(altitude, lastAltitude, timestamp - lastTimestamp);
                 const vspeedElement = document.getElementById('rpmVspeed');
                 vspeedElement.textContent = `${vspeed.toFixed(1)} ft/sec`;
-                // Change color based on vertical speed
+                // Change color based on vertical speed using CSS class
                 if (vspeed === 0) {
-                    vspeedElement.style.color = '#34C759'; // Green
+                    vspeedElement.classList.add('zero');
                 } else {
-                    vspeedElement.style.color = '#FF3B30'; // Red
+                    vspeedElement.classList.remove('zero');
                 }
             }
 

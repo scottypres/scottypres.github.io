@@ -220,6 +220,57 @@ input[type="text"] {
     z-index: 1000;
 }
 
+#rpmOverlay .messageBox {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 350px;
+    margin: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    text-align: center;
+}
+
+#rpmOverlay .messageBox > div {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+#rpmOverlay .messageBox > div:last-child {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#rpmOverlay .messageBox #rpmMessage {
+    text-align: center;
+}
+
+#rpmOverlay .messageBox #rpmVspeedDisplay {
+    text-align: center;
+}
+
+#rpmOverlay .messageBox #rpmVspeed {
+    color: #FF3B30; /* Default red color */
+}
+
+#rpmOverlay .messageBox #rpmVspeed.zero {
+    color: #34C759; /* Green color when vertical speed is 0 */
+}
+
+#rpmOverlay .messageBox button {
+    flex: 1;
+    padding: 12px 24px;
+    font-size: 16px;
+    height: auto;
+    margin: 0;
+}
+
+#rpmOverlay .messageBox #rpmExitBtn {
+    background-color: #FF3B30;
+}
+
 #editOverlay {
     display: none;
     position: fixed;
