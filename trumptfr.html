@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FAA TFR Viewer</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    ul { padding-left: 1em; }
+    li { margin-bottom: 1em; }
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .status-message {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin: 20px 0;
+      text-align: center;
+      border-top: 2px solid #ccc;
+      padding-top: 20px;
+    }
+    .no-fly-image {
+      display: block;
+      margin: 20px auto;
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>West Palm Beach Temporary Flight Restrictions (TFRs)</h1>
+  <div id="loading" class="loading" style="display: none;">
+    <div class="spinner"></div>
+    <span>Loading TFR details...</span>
+  </div>
+  <ul id="tfr-list"><li>Loading...</li></ul>
+  <div id="status-message" class="status-message"></div>
+
+  <script>
+    const proxy = 'https://api.allorigins.win/raw?url=';
+    const realJsonUrl = 'https://tfr.faa.gov/tfrapi/exportTfrList';
+
+    async function fetchTfrDetails(notamId) {
+      try {
+        // Format the notam_id by replacing "/" with "_"
+        const formattedNotamId = notamId.replace('/', '_');
+        const detailUrl = `https://tfr.faa.gov/download/detail_${formattedNotamId}.xml`;
+        console.log('Fetching details from:', detailUrl); // Debug log
+        const response = await fetch(proxy + encodeURIComponent(detailUrl));
+        const xmlText = await response.text();
+        console.log('XML Response:', xmlText); // Debug log
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlText, "application/xml");
+        
+        // Extract times from XML using the correct path
+        const effectiveDate = xml.querySelector('dateEffective')?.textContent || 'N/A';
+        const expirationDate = xml.querySelector('dateExpire')?.textContent || 'N/A';
+        const timeZone = xml.querySelector('codeTimeZone')?.textContent || 'UTC';
+        
+        // Convert UTC to EST (UTC-5)
+        const formatDate = (dateStr) => {
+          if (dateStr === 'N/A') return dateStr;
+          const date = new Date(dateStr);
+          return date.toLocaleString('en-US', { 
+            timeZone: 'America/New_York',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+        };
+
+        return {
+          effective: formatDate(effectiveDate),
+          expires: formatDate(expirationDate),
+          timeZone: timeZone
+        };
+      } catch (err) {
+        console.error(`Failed to fetch details for NOTAM ${notamId}:`, err);
+        return { effective: 'N/A', expires: 'N/A', timeZone: 'UTC' };
+      }
+    }
+
+    fetch(proxy + encodeURIComponent(realJsonUrl))
+      .then(response => response.json())
+      .then(async data => {
+        const list = document.getElementById("tfr-list");
+        const loadingDiv = document.getElementById("loading");
+        const statusMessage = document.getElementById("status-message");
+        list.innerHTML = '';
+
+        if (!data || data.length === 0) {
+          list.innerHTML = '<li>No active TFRs found.</li>';
+          return;
+        }
+
+        // Filter for West Palm Beach NOTAMs
+        const westPalmNotams = data.filter(notam => 
+          notam.description.toLowerCase().includes('west palm beach') || 
+          notam.description.includes('PBI')
+        );
+
+        // Show loading indicator
+        loadingDiv.style.display = 'flex';
+
+        if (westPalmNotams.length === 0) {
+          statusMessage.textContent = "You are good to fly, thanks Trump!";
+          const img = document.createElement('img');
+          img.src = 'https://i.imgur.com/tprnedj.png';
+          img.alt = 'Good to Fly';
+          img.className = 'no-fly-image';
+          statusMessage.appendChild(document.createElement('br'));
+          statusMessage.appendChild(img);
+          loadingDiv.style.display = 'none';
+          return;
+        }
+
+        // Process all West Palm Beach NOTAMs
+        for (const notam of westPalmNotams) {
+          console.log('Processing West Palm Beach NOTAM:', notam); // Debug log
+          const details = await fetchTfrDetails(notam.notam_id);
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${notam.description}</strong> [${notam.type}]<br>
+                          
+                          
+                          NOTAM ID: ${notam.notam_id}<br>
+                          Creation Date: ${notam.creation_date}<br>
+                          Effective (EST): ${details.effective}<br>
+                          Expires (EST): ${details.expires}`;
+          list.appendChild(li);
+        }
+
+        // Hide loading indicator
+        loadingDiv.style.display = 'none';
+
+        // Show no-fly message and image
+        statusMessage.textContent = "No Fly for You";
+        const img = document.createElement('img');
+        img.src = 'https://i.imgur.com/M8ADnf1.png';
+        img.alt = 'No Fly Zone';
+        img.className = 'no-fly-image';
+        statusMessage.appendChild(document.createElement('br'));
+        statusMessage.appendChild(img);
+      })
+      .catch(err => {
+        console.error("Failed to load TFRs:", err);
+        document.getElementById("tfr-list").innerHTML = '<li>Error loading TFRs. See console.</li>';
+        document.getElementById("loading").style.display = 'none';
+      });
+  </script>
+</body>
+</html>
