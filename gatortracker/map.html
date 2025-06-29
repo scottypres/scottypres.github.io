@@ -169,6 +169,21 @@
 
         // Function to load waypoints from cookies
         function loadFromCookies() {
+            try {
+                // Try localStorage first
+                const data = localStorage.getItem('gatorTrackerData');
+                if (data) {
+                    waypoints = JSON.parse(data);
+                    if (waypoints.length > 0) {
+                        safeInitMap();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('localStorage failed, trying cookies');
+            }
+            
+            // Fallback to cookies
             const cookies = document.cookie.split(';');
             for (const cookie of cookies) {
                 const [name, value] = cookie.trim().split('=');

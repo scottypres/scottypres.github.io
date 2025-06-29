@@ -578,13 +578,31 @@
 
             saveToCookies() {
                 const data = JSON.stringify(this.waypoints);
-                const expiryDate = new Date();
-                expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-                
-                document.cookie = `gatorTrackerData=${encodeURIComponent(data)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
+                try {
+                    // Try localStorage first (larger capacity, better for mobile)
+                    localStorage.setItem('gatorTrackerData', data);
+                } catch (e) {
+                    // Fallback to cookies if localStorage fails
+                    console.log('localStorage failed, falling back to cookies');
+                    const expiryDate = new Date();
+                    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                    document.cookie = `gatorTrackerData=${encodeURIComponent(data)}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
+                }
             }
 
             loadFromCookies() {
+                try {
+                    // Try localStorage first
+                    const data = localStorage.getItem('gatorTrackerData');
+                    if (data) {
+                        this.waypoints = JSON.parse(data);
+                        return;
+                    }
+                } catch (e) {
+                    console.log('localStorage failed, trying cookies');
+                }
+                
+                // Fallback to cookies
                 const cookies = document.cookie.split(';');
                 for (const cookie of cookies) {
                     const [name, value] = cookie.trim().split('=');
