@@ -239,6 +239,7 @@
             <button class="btn btn-secondary" id="stopBtn" disabled>Stop</button>
             <button class="btn btn-warning" id="resetBtn">Reset</button>
             <button class="btn btn-danger" id="deleteLastBtn" disabled>Delete Last</button>
+            <button class="btn btn-secondary" id="resaveBtn">Resave</button>
         </div>
 
         <button class="mark-btn" id="markBtn" disabled>Mark Nest</button>
@@ -277,12 +278,14 @@
                 this.deleteLastBtn = document.getElementById('deleteLastBtn');
                 this.markBtn = document.getElementById('markBtn');
                 this.lastWaypointElement = document.getElementById('lastWaypoint');
+                this.resaveBtn = document.getElementById('resaveBtn');
 
                 this.startBtn.addEventListener('click', () => this.startStopwatch());
                 this.stopBtn.addEventListener('click', () => this.stopStopwatch());
                 this.resetBtn.addEventListener('click', () => this.reset());
                 this.deleteLastBtn.addEventListener('click', () => this.deleteLastWaypoint());
                 this.markBtn.addEventListener('click', () => this.markWaypoint());
+                this.resaveBtn.addEventListener('click', () => this.resaveCSV());
             }
 
             startClock() {
@@ -354,6 +357,7 @@
                 this.resetBtn.disabled = true;
                 this.deleteLastBtn.disabled = false;
                 this.markBtn.disabled = false;
+                this.resaveBtn.style.display = 'none';
                 
                 this.stopwatchInterval = setInterval(() => this.updateStopwatch(), 100);
             }
@@ -368,6 +372,7 @@
                 this.resetBtn.disabled = false;
                 this.deleteLastBtn.disabled = true;
                 this.markBtn.disabled = true;
+                this.resaveBtn.style.display = 'inline-block';
                 
                 this.exportToCSV();
             }
@@ -564,6 +569,44 @@
                 document.body.removeChild(link);
                 
                 alert(`Exported ${this.waypoints.length} waypoints to CSV file.`);
+            }
+
+            resaveCSV() {
+                // Reload data from cookies first to ensure we have the latest data
+                this.loadFromCookies();
+                
+                if (this.waypoints.length === 0) {
+                    alert('No waypoints found in saved data.');
+                    return;
+                }
+
+                const headers = ['Waypoint', 'Date', 'Time', 'Stopwatch Time', 'Latitude', 'Longitude', 'Accuracy (m)'];
+                const csvContent = [
+                    headers.join(','),
+                    ...this.waypoints.map(wp => [
+                        wp.name,
+                        new Date(wp.timestamp).toLocaleDateString(),
+                        new Date(wp.timestamp).toLocaleTimeString(),
+                        wp.stopwatchTime,
+                        wp.latitude,
+                        wp.longitude,
+                        Math.round(wp.accuracy)
+                    ].join(','))
+                ].join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `gator_nests_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert(`Re-exported ${this.waypoints.length} waypoints to CSV file.`);
             }
         }
 
