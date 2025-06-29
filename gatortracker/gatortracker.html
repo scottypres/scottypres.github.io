@@ -64,6 +64,13 @@
             margin-bottom: 15px;
         }
 
+        .speed-display {
+            font-size: 1rem;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+
         .controls {
             display: flex;
             gap: 10px;
@@ -185,28 +192,6 @@
             font-weight: bold;
         }
 
-        .speed-display {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            text-align: center;
-            margin: 10px 0;
-        }
-
-        .speed-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-
-        .speed-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #4CAF50;
-            font-family: 'Courier New', monospace;
-        }
-
         .hidden {
             display: none !important;
         }
@@ -254,6 +239,7 @@
             <h1 class="title">🐊 Gator Tracker</h1>
             <div class="clock" id="clock">--:--:--</div>
             <div class="stopwatch" id="stopwatch">00:00:00</div>
+            <div class="speed-display" id="speedDisplay">- -- MPH</div>
         </div>
 
         <div class="controls">
@@ -266,11 +252,6 @@
         </div>
 
         <button class="mark-btn" id="markBtn" disabled>Mark Nest</button>
-
-        <div class="speed-display" id="speedDisplay">
-            <div class="speed-label">Current Speed</div>
-            <div class="speed-value" id="speedValue">-- MPH</div>
-        </div>
 
         <div class="last-waypoint" id="lastWaypoint">
             <h3>Last Waypoint</h3>
@@ -311,7 +292,7 @@
                 this.lastWaypointElement = document.getElementById('lastWaypoint');
                 this.resaveBtn = document.getElementById('resaveBtn');
                 this.displayBtn = document.getElementById('displayBtn');
-                this.speedElement = document.getElementById('speedValue');
+                this.speedElement = document.getElementById('speedDisplay');
 
                 this.startBtn.addEventListener('click', () => this.startStopwatch());
                 this.stopBtn.addEventListener('click', () => this.stopStopwatch());
