@@ -518,12 +518,20 @@
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            // Check if waypoints were passed via URL
-            const urlWaypoints = decodeWaypoints();
-            if (urlWaypoints.length > 0) {
-                waypoints = urlWaypoints;
-                safeInitMap();
+            // Try to load from localStorage/cookies by default
+            try {
+                const data = localStorage.getItem('gatorTrackerData');
+                if (data) {
+                    waypoints = JSON.parse(data);
+                    if (waypoints.length > 0) {
+                        safeInitMap();
+                        return;
+                    }
+                }
+            } catch (e) {
+                // Ignore and fall through to manual load
             }
+            // If no data, show manual load options (default UI)
         });
     </script>
 </body>

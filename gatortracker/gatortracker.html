@@ -692,17 +692,8 @@
             }
 
             displayWaypoints() {
-                if (this.waypoints.length === 0) {
-                    alert('No waypoints to display.');
-                    return;
-                }
-
-                // Encode waypoints for URL
-                const waypointsParam = encodeURIComponent(JSON.stringify(this.waypoints));
-                const mapUrl = `map.html?waypoints=${waypointsParam}`;
-                
-                // Open map in new tab
-                window.open(mapUrl, '_blank');
+                // Open map in new tab with no waypoints in the URL
+                window.open('map.html', '_blank');
             }
         }
 
