@@ -185,6 +185,28 @@
             font-weight: bold;
         }
 
+        .speed-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .speed-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .speed-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4CAF50;
+            font-family: 'Courier New', monospace;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -245,6 +267,11 @@
 
         <button class="mark-btn" id="markBtn" disabled>Mark Nest</button>
 
+        <div class="speed-display" id="speedDisplay">
+            <div class="speed-label">Current Speed</div>
+            <div class="speed-value" id="speedValue">-- MPH</div>
+        </div>
+
         <div class="last-waypoint" id="lastWaypoint">
             <h3>Last Waypoint</h3>
             <div class="waypoint-info">No waypoints yet</div>
@@ -262,6 +289,9 @@
                 this.gpsWatchId = null;
                 this.currentPosition = null;
                 this.timeSinceInterval = null;
+                this.speedElement = null;
+                this.lastPosition = null;
+                this.lastPositionTime = null;
                 
                 this.initializeElements();
                 this.loadFromCookies();
@@ -281,6 +311,7 @@
                 this.lastWaypointElement = document.getElementById('lastWaypoint');
                 this.resaveBtn = document.getElementById('resaveBtn');
                 this.displayBtn = document.getElementById('displayBtn');
+                this.speedElement = document.getElementById('speedValue');
 
                 this.startBtn.addEventListener('click', () => this.startStopwatch());
                 this.stopBtn.addEventListener('click', () => this.stopStopwatch());
@@ -342,12 +373,61 @@
                 this.gpsWatchId = navigator.geolocation.watchPosition(
                     (position) => {
                         this.currentPosition = position;
+                        this.updateSpeed(position);
                     },
                     (error) => {
                         console.log('GPS Watch Error:', error.message);
                     },
                     options
                 );
+            }
+
+            updateSpeed(position) {
+                if (!this.lastPosition || !this.lastPositionTime) {
+                    this.lastPosition = position;
+                    this.lastPositionTime = Date.now();
+                    return;
+                }
+
+                const currentTime = Date.now();
+                const timeDiff = (currentTime - this.lastPositionTime) / 1000; // seconds
+                
+                if (timeDiff < 1) return; // Update at most once per second
+
+                const lat1 = this.lastPosition.coords.latitude;
+                const lon1 = this.lastPosition.coords.longitude;
+                const lat2 = position.coords.latitude;
+                const lon2 = position.coords.longitude;
+
+                // Calculate distance using Haversine formula
+                const distance = this.calculateDistance(lat1, lon1, lat2, lon2);
+                
+                // Calculate speed in miles per hour
+                const speedMph = (distance / timeDiff) * 2.23694; // Convert m/s to mph
+                
+                // Update speed display
+                if (this.speedElement) {
+                    this.speedElement.textContent = `${Math.round(speedMph)} MPH`;
+                }
+
+                // Update last position
+                this.lastPosition = position;
+                this.lastPositionTime = currentTime;
+            }
+
+            calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371e3; // Earth's radius in meters
+                const φ1 = lat1 * Math.PI / 180;
+                const φ2 = lat2 * Math.PI / 180;
+                const Δφ = (lat2 - lat1) * Math.PI / 180;
+                const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+                const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                         Math.cos(φ1) * Math.cos(φ2) *
+                         Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+                return R * c; // Distance in meters
             }
 
             startStopwatch() {
