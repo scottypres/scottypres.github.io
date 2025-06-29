@@ -180,22 +180,9 @@
             line-height: 1.4;
         }
 
-        .status {
-            text-align: center;
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px 0;
+        .time-since {
+            color: #4CAF50;
             font-weight: bold;
-        }
-
-        .status.gps {
-            background: rgba(76, 175, 80, 0.3);
-            border: 2px solid #4CAF50;
-        }
-
-        .status.no-gps {
-            background: rgba(244, 67, 54, 0.3);
-            border: 2px solid #f44336;
         }
 
         .hidden {
@@ -245,7 +232,6 @@
             <h1 class="title">🐊 Gator Tracker</h1>
             <div class="clock" id="clock">--:--:--</div>
             <div class="stopwatch" id="stopwatch">00:00:00</div>
-            <div class="status" id="gpsStatus">Checking GPS...</div>
         </div>
 
         <div class="controls">
@@ -273,6 +259,7 @@
                 this.clockInterval = null;
                 this.gpsWatchId = null;
                 this.currentPosition = null;
+                this.timeSinceInterval = null;
                 
                 this.initializeElements();
                 this.loadFromCookies();
@@ -290,7 +277,6 @@
                 this.deleteLastBtn = document.getElementById('deleteLastBtn');
                 this.markBtn = document.getElementById('markBtn');
                 this.lastWaypointElement = document.getElementById('lastWaypoint');
-                this.gpsStatusElement = document.getElementById('gpsStatus');
 
                 this.startBtn.addEventListener('click', () => this.startStopwatch());
                 this.stopBtn.addEventListener('click', () => this.stopStopwatch());
@@ -307,7 +293,7 @@
             updateClock() {
                 const now = new Date();
                 const timeString = now.toLocaleTimeString('en-US', {
-                    hour12: false,
+                    hour12: true,
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit'
@@ -317,7 +303,6 @@
 
             checkGPS() {
                 if (!navigator.geolocation) {
-                    this.updateGPSStatus('GPS not supported', false);
                     return;
                 }
 
@@ -330,11 +315,10 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         this.currentPosition = position;
-                        this.updateGPSStatus('GPS Active', true);
                         this.startGPSWatch();
                     },
                     (error) => {
-                        this.updateGPSStatus('GPS Error: ' + error.message, false);
+                        console.log('GPS Error:', error.message);
                     },
                     options
                 );
@@ -352,18 +336,12 @@
                 this.gpsWatchId = navigator.geolocation.watchPosition(
                     (position) => {
                         this.currentPosition = position;
-                        this.updateGPSStatus('GPS Active', true);
                     },
                     (error) => {
-                        this.updateGPSStatus('GPS Error: ' + error.message, false);
+                        console.log('GPS Watch Error:', error.message);
                     },
                     options
                 );
-            }
-
-            updateGPSStatus(message, isActive) {
-                this.gpsStatusElement.textContent = message;
-                this.gpsStatusElement.className = `status ${isActive ? 'gps' : 'no-gps'}`;
             }
 
             startStopwatch() {
@@ -425,6 +403,7 @@
                 this.waypoints.push(waypoint);
                 this.saveToCookies();
                 this.updateDisplay();
+                this.startTimeSinceUpdate();
                 
                 // Provide haptic feedback if available
                 if (navigator.vibrate) {
@@ -438,6 +417,7 @@
                 this.waypoints.pop();
                 this.saveToCookies();
                 this.updateDisplay();
+                this.startTimeSinceUpdate();
                 
                 // Provide haptic feedback if available
                 if (navigator.vibrate) {
@@ -453,18 +433,20 @@
                     this.saveToCookies();
                     this.updateDisplay();
                     this.stopwatchElement.textContent = '00:00:00';
+                    this.stopTimeSinceUpdate();
                 }
             }
 
             updateDisplay() {
                 if (this.waypoints.length === 0) {
                     this.lastWaypointElement.innerHTML = '<h3>Last Waypoint</h3><div class="waypoint-info">No waypoints yet</div>';
+                    this.stopTimeSinceUpdate();
                     return;
                 }
 
                 const lastWaypoint = this.waypoints[this.waypoints.length - 1];
                 const time = new Date(lastWaypoint.timestamp).toLocaleTimeString('en-US', {
-                    hour12: false,
+                    hour12: true,
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit'
@@ -475,12 +457,54 @@
                     <div class="waypoint-info">
                         <strong>${lastWaypoint.name}</strong><br>
                         Time: ${time}<br>
-                        Stopwatch: ${lastWaypoint.stopwatchTime}<br>
-                        Lat: ${lastWaypoint.latitude.toFixed(6)}<br>
-                        Lon: ${lastWaypoint.longitude.toFixed(6)}<br>
-                        Accuracy: ±${Math.round(lastWaypoint.accuracy)}m
+                        <span class="time-since" id="timeSince">Time since: calculating...</span>
                     </div>
                 `;
+                
+                this.startTimeSinceUpdate();
+            }
+
+            startTimeSinceUpdate() {
+                if (this.timeSinceInterval) {
+                    clearInterval(this.timeSinceInterval);
+                }
+                
+                this.updateTimeSince();
+                this.timeSinceInterval = setInterval(() => this.updateTimeSince(), 1000);
+            }
+
+            stopTimeSinceUpdate() {
+                if (this.timeSinceInterval) {
+                    clearInterval(this.timeSinceInterval);
+                    this.timeSinceInterval = null;
+                }
+            }
+
+            updateTimeSince() {
+                if (this.waypoints.length === 0) return;
+                
+                const lastWaypoint = this.waypoints[this.waypoints.length - 1];
+                const waypointTime = new Date(lastWaypoint.timestamp);
+                const now = new Date();
+                const timeDiff = now - waypointTime;
+                
+                const hours = Math.floor(timeDiff / 3600000);
+                const minutes = Math.floor((timeDiff % 3600000) / 60000);
+                const seconds = Math.floor((timeDiff % 60000) / 1000);
+                
+                let timeString = 'Time since: ';
+                if (hours > 0) {
+                    timeString += `${hours}h ${minutes}m ${seconds}s`;
+                } else if (minutes > 0) {
+                    timeString += `${minutes}m ${seconds}s`;
+                } else {
+                    timeString += `${seconds}s`;
+                }
+                
+                const timeSinceElement = document.getElementById('timeSince');
+                if (timeSinceElement) {
+                    timeSinceElement.textContent = timeString;
+                }
             }
 
             saveToCookies() {
