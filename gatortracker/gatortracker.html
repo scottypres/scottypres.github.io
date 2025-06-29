@@ -240,6 +240,7 @@
             <button class="btn btn-warning" id="resetBtn">Reset</button>
             <button class="btn btn-danger" id="deleteLastBtn" disabled>Delete Last</button>
             <button class="btn btn-secondary" id="resaveBtn">Resave</button>
+            <button class="btn btn-primary" id="displayBtn">Display</button>
         </div>
 
         <button class="mark-btn" id="markBtn" disabled>Mark Nest</button>
@@ -279,6 +280,7 @@
                 this.markBtn = document.getElementById('markBtn');
                 this.lastWaypointElement = document.getElementById('lastWaypoint');
                 this.resaveBtn = document.getElementById('resaveBtn');
+                this.displayBtn = document.getElementById('displayBtn');
 
                 this.startBtn.addEventListener('click', () => this.startStopwatch());
                 this.stopBtn.addEventListener('click', () => this.stopStopwatch());
@@ -286,6 +288,7 @@
                 this.deleteLastBtn.addEventListener('click', () => this.deleteLastWaypoint());
                 this.markBtn.addEventListener('click', () => this.markWaypoint());
                 this.resaveBtn.addEventListener('click', () => this.resaveCSV());
+                this.displayBtn.addEventListener('click', () => this.displayWaypoints());
             }
 
             startClock() {
@@ -607,6 +610,20 @@
                 document.body.removeChild(link);
                 
                 alert(`Re-exported ${this.waypoints.length} waypoints to CSV file.`);
+            }
+
+            displayWaypoints() {
+                if (this.waypoints.length === 0) {
+                    alert('No waypoints to display.');
+                    return;
+                }
+
+                // Encode waypoints for URL
+                const waypointsParam = encodeURIComponent(JSON.stringify(this.waypoints));
+                const mapUrl = `map.html?waypoints=${waypointsParam}`;
+                
+                // Open map in new tab
+                window.open(mapUrl, '_blank');
             }
         }
 
