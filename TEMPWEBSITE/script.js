@@ -340,14 +340,7 @@ document.getElementById('checkWindShearButton').addEventListener('click', functi
     
     });
 function fillTableWithTemperature(table, weatherData) {
-    // Safety check: ensure table has at least one row
-    const existingRows = table.getElementsByTagName('tr');
-    if (existingRows.length === 0) {
-        console.error(`Table ${table.id} has no rows, cannot fill with temperature data`);
-        return;
-    }
-
-    let tableHtml = '<tr>' + existingRows[0].innerHTML + '</tr>';
+    let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
     // Adjusted to include values in meters (2m, 10m, 80m, 180m), and their approximate conversion to feet
     const altitudeLevels = [2, 10, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100, 70, 50, 30].reverse();
 
@@ -950,529 +943,81 @@ function hasApiBeenCalledRecently(latitude, longitude) {
 
 
 async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableElement, tableId) {
-    console.log("checkAndFetchAllData");
+console.log("checkAndFetchAllData");
 
     try {
-        const daily = [
-            'weather_code',
-            'sunrise',
-            'sunset',
-            'uv_index_max',
-            'precipitation_sum'
-        ].join(',');
-
-        const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
-        let additionalParameters = ''; // Initialize additional parameters string
-
-        model =='gfs';
-        // Check the model to determine the correct forecast_days parameter
-      
-        const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14); // Default to max 14
-        additionalParameters += `&forecast_days=${forecastDays}`;
-       
-          
-        // Fetch new data if necessary
+        console.log(`Fetching data for ${name} using model ${model} with fallback system...`);
         
-    //console.log('fetching new data');
-            
-            
-                // For GFS model, test parameters and handle missing wind data
-                if (model.toLowerCase() === 'gfs') {
-                    commonParameters = await getGFSParametersWithFallback(baseUrl, lat, lon, units, additionalParameters);
-                } else if (model.toLowerCase() === 'icon') {
-                    // ICON model has different parameters
-                    commonParameters = [
-                        'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
-                        'weather_code', 'relative_humidity_2m',
-                        'dew_point_2m',
-                        'cloud_cover',
-                        'cloud_cover_low',
-                        'cloud_cover_mid',
-                        'cloud_cover_high',
-                        'cloud_cover_1000hPa',
-                        'cloud_cover_975hPa',
-                        'cloud_cover_950hPa',
-                        'cloud_cover_925hPa',
-                        'cloud_cover_900hPa',
-                        'cloud_cover_850hPa',
-                        'cloud_cover_800hPa',
-                        'cloud_cover_700hPa',
-                        'cloud_cover_600hPa',
-                        'cloud_cover_500hPa',
-                        'cloud_cover_400hPa',
-                        'cloud_cover_250hPa',
-                        'cloud_cover_200hPa',
-                        'cloud_cover_150hPa',
-                        'cloud_cover_300hPa',
-                        'cloud_cover_100hPa',
-                        'cloud_cover_70hPa',
-                        'cloud_cover_50hPa',
-                        'cloud_cover_30hPa',
-                        // Add new variables below
-                        'wind_speed_10m',
-                        'wind_speed_80m',
-                        'wind_speed_180m', 'wind_gusts_10m',
-                        'wind_direction_10m',
-                        'wind_direction_80m',
-                        'wind_direction_180m',
-                        'temperature_1000hPa',
-                        'temperature_975hPa',
-                        'temperature_950hPa',
-                        'temperature_925hPa',
-                        'temperature_900hPa',
-                        'temperature_850hPa',
-                        'temperature_800hPa',
-                        'temperature_700hPa',
-                        'temperature_600hPa',
-                        'temperature_500hPa',
-                        'temperature_400hPa',
-
-                        'windspeed_1000hPa',
-                        'windspeed_975hPa',
-                        'windspeed_950hPa',
-                        'windspeed_925hPa',
-                        'windspeed_900hPa',
-                        'windspeed_850hPa',
-                        'windspeed_800hPa',
-                        'windspeed_700hPa',
-                        'windspeed_600hPa',
-                        'windspeed_500hPa',
-                        'windspeed_400hPa',
-                        'winddirection_1000hPa',
-                        'winddirection_975hPa',
-                        'winddirection_950hPa',
-                        'winddirection_925hPa',
-                        'winddirection_900hPa',
-                        'winddirection_850hPa',
-                        'winddirection_800hPa',
-                        'winddirection_700hPa',
-                        'winddirection_600hPa',
-                        'winddirection_500hPa',
-                        'winddirection_400hPa',
-                        'is_day'
-                    ].join(',');
-                } else {
-                    // For other models (like openmeteo), use full parameters
-                    commonParameters = [
-                        'temperature_2m', 'temperature_80m',
-                        'weather_code', 'relative_humidity_2m',
-                        'dew_point_2m',
-                        'visibility','lifted_index',
-                        'cloud_cover',
-                        'cloud_cover_low',
-                        'cloud_cover_mid',
-                        'cloud_cover_high',
-                        'cloud_cover_1000hPa',
-                        'cloud_cover_975hPa',
-                        'cloud_cover_950hPa',
-                        'cloud_cover_925hPa',
-                        'cloud_cover_900hPa',
-                        'cloud_cover_850hPa',
-                        'cloud_cover_800hPa',
-                        'cloud_cover_700hPa',
-                        'cloud_cover_600hPa',
-                        'cloud_cover_500hPa',
-                        'cloud_cover_400hPa',
-                        'cloud_cover_250hPa',
-                        'cloud_cover_200hPa',
-                        'cloud_cover_150hPa',
-                        'cloud_cover_300hPa',
-                        'cloud_cover_100hPa',
-                        'cloud_cover_70hPa',
-                        'cloud_cover_50hPa',
-                        'cloud_cover_30hPa',
-                        // Add new variables below
-                        'wind_speed_10m',
-                        'wind_speed_80m',
-                        'wind_speed_180m', 'wind_gusts_10m',
-                        'wind_direction_10m',
-                        'wind_direction_80m',
-                        'wind_direction_180m',
-                        'temperature_1000hPa',
-                        'temperature_975hPa',
-                        'temperature_950hPa',
-                        'temperature_925hPa',
-                        'temperature_900hPa',
-                        'temperature_850hPa',
-                        'temperature_800hPa',
-                        'temperature_700hPa',
-                        'temperature_600hPa',
-                        'temperature_500hPa',
-                        'temperature_400hPa',
-
-                        'windspeed_1000hPa',
-                        'windspeed_975hPa',
-                        'windspeed_950hPa',
-                        'windspeed_925hPa',
-                        'windspeed_900hPa',
-                        'windspeed_850hPa',
-                        'windspeed_800hPa',
-                        'windspeed_700hPa',
-                        'windspeed_600hPa',
-                        'windspeed_500hPa',
-                        'windspeed_400hPa',
-                        'winddirection_1000hPa',
-                        'winddirection_975hPa',
-                        'winddirection_950hPa',
-                        'winddirection_925hPa',
-                        'winddirection_900hPa',
-                        'winddirection_850hPa',
-                        'winddirection_800hPa',
-                        'winddirection_700hPa',
-                        'winddirection_600hPa',
-                        'winddirection_500hPa',
-                        'winddirection_400hPa',
-                        'cape',
-                        'is_day',
-                        'precipitation_probability'
-                    ].join(',');
-                }
+        // Create a temporary userLocation for this specific call
+        const tempUserLocation = { latitude: lat, longitude: lon };
+        const originalUserLocation = userLocation;
+        userLocation = tempUserLocation;
         
-
-/////WE DID IT!
-
-
+        // Use the new fallback system
+        const result = await fetchWeatherDataWithFallback(baseUrl, model);
         
-        // For GFS model, the API call might have already been made in getGFSParametersWithFallback
-        let weatherData;
-        if (model.toLowerCase() === 'gfs') {
-            // The weatherData should already be available from the parameter testing
-            const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${commonParameters}&daily=${daily}&current_weather=true${units}${additionalParameters}`;
-            console.log(requestUrl);
-            try {
-                const response = await fetch(requestUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                weatherData = await response.json();
-                
-                // Add placeholder data for missing 10m wind parameters if they don't exist
-                if (!weatherData.hourly.wind_speed_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_speed_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_direction_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_direction_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_gusts_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_gusts_10m = new Array(timeLength).fill(null);
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for ${name} using model ${model}`, error);
-                return;
-            }
+        // Restore original userLocation
+        userLocation = originalUserLocation;
+        
+        // Process data to handle any missing parameters
+        const processedData = handleMissingData(result.data, model);
+        allTableWeatherData[tableId] = processedData;
+        console.log('ALLTABLEWEATHERDATA CHECKANDFETCH: ', allTableWeatherData);
+
+if(tableElement instanceof HTMLTableElement) {
+// Passed an actual table element, we want to retrieve its ID
+createAllTables(tableElement.id, allTableWeatherData[tableId], name, tableElement);
+} else {
+// If it's not an HTMLTableElement, it's expected to be an ID string
+createAllTables(tableId, allTableWeatherData[tableId], name, tableElement);
+}
+        
+        // Log fallback information if fallback was used
+        if (result.fallbackLevel > 0) {
+            console.warn(`Location ${name} used fallback level ${result.fallbackLevel} with ${result.parametersUsed} parameters from ${result.endpoint}`);
+            showFallbackNotification(model, result.fallbackLevel, result.parametersUsed, result.endpoint);
         } else {
-            const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${commonParameters}&daily=${daily}&current_weather=true${units}${additionalParameters}`;
-            console.log(requestUrl);
-            try {
-                const response = await fetch(requestUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                weatherData = await response.json();
-                
-                // Add placeholder data for missing parameters in ICON model
-                if (model.toLowerCase() === 'icon') {
-                    const timeLength = weatherData.hourly.time.length;
-                    
-                    // Add missing parameters that ICON doesn't support
-                    if (!weatherData.hourly.boundary_layer_height) {
-                        weatherData.hourly.boundary_layer_height = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.visibility) {
-                        weatherData.hourly.visibility = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.lifted_index) {
-                        weatherData.hourly.lifted_index = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.cape) {
-                        weatherData.hourly.cape = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.precipitation_probability) {
-                        weatherData.hourly.precipitation_probability = new Array(timeLength).fill(null);
-                    }
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for ${name} using model ${model}`, error);
-                return;
-            }
+            console.log(`Data fetched successfully for ${name} with full parameter set`);
         }
         
-        allTableWeatherData[tableId] = weatherData;
-        console.log('ALLTABLEWEATHERDATA CHECKANDFETCH: ', allTableWeatherData)
-
-        if(tableElement instanceof HTMLTableElement) {
-            // Passed an actual table element, we want to retrieve its ID
-            createAllTables(tableElement.id, allTableWeatherData[tableId], name, tableElement);
-        } else {
-            // If it's not an HTMLTableElement, it's expected to be an ID string
-            createAllTables(tableId, allTableWeatherData[tableId], name, tableElement);
+console.log(`Data fetched and table created for ${name} using model: ${model}`);
+        
+} catch (error) {
+        console.error(`Failed to fetch data for ${name} using model ${model} after all fallback attempts:`, error);
+        
+        // Show user-friendly error message
+        const errorMessage = `Unable to fetch weather data for ${name}. Please try again later.`;
+        console.error(errorMessage);
+        
+        // Optionally show a user notification
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Weather Data Error',
+                text: errorMessage,
+                confirmButtonText: 'OK'
+            });
         }
-        console.log(`Data fetched and table created for ${name} using model: ${model}`);
-    } catch (error) {
-        console.error(`Failed to fetch data for ${name} using model ${model}`, error);
-    }
+}
 }
 
 
-
-// Function to test GFS parameters and handle missing wind data
-async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additionalParameters) {
-    // First, try with all wind parameters including 10m
-    const fullParameters = [
-        'temperature_2m', 'temperature_80m',
-        'boundary_layer_height',
-        'weather_code', 'relative_humidity_2m',
-        'dew_point_2m',
-        'visibility','lifted_index',
-        'cloud_cover',
-        'cloud_cover_low',
-        'cloud_cover_mid',
-        'cloud_cover_high',
-        'cloud_cover_1000hPa',
-        'cloud_cover_975hPa',
-        'cloud_cover_950hPa',
-        'cloud_cover_925hPa',
-        'cloud_cover_900hPa',
-        'cloud_cover_850hPa',
-        'cloud_cover_800hPa',
-        'cloud_cover_700hPa',
-        'cloud_cover_600hPa',
-        'cloud_cover_500hPa',
-        'cloud_cover_400hPa',
-        'cloud_cover_250hPa',
-        'cloud_cover_200hPa',
-        'cloud_cover_150hPa',
-        'cloud_cover_300hPa',
-        'cloud_cover_100hPa',
-        'cloud_cover_70hPa',
-        'cloud_cover_50hPa',
-        'cloud_cover_30hPa',
-        'wind_speed_10m',
-        'wind_speed_80m',
-        'wind_speed_180m', 'wind_gusts_10m',
-        'wind_direction_10m',
-        'wind_direction_80m',
-        'wind_direction_180m',
-        'temperature_1000hPa',
-        'temperature_975hPa',
-        'temperature_950hPa',
-        'temperature_925hPa',
-        'temperature_900hPa',
-        'temperature_850hPa',
-        'temperature_800hPa',
-        'temperature_700hPa',
-        'temperature_600hPa',
-        'temperature_500hPa',
-        'temperature_400hPa',
-        'windspeed_1000hPa',
-        'windspeed_975hPa',
-        'windspeed_950hPa',
-        'windspeed_925hPa',
-        'windspeed_900hPa',
-        'windspeed_850hPa',
-        'windspeed_800hPa',
-        'windspeed_700hPa',
-        'windspeed_600hPa',
-        'windspeed_500hPa',
-        'windspeed_400hPa',
-        'winddirection_1000hPa',
-        'winddirection_975hPa',
-        'winddirection_950hPa',
-        'winddirection_925hPa',
-        'winddirection_900hPa',
-        'winddirection_850hPa',
-        'winddirection_800hPa',
-        'winddirection_700hPa',
-        'winddirection_600hPa',
-        'winddirection_500hPa',
-        'winddirection_400hPa',
-        'cape',
-        'is_day',
-        'precipitation_probability'
-    ].join(',');
-
-    const dailyParameters = [
-        'weather_code',
-        'sunrise',
-        'sunset',
-        'uv_index_max',
-        'precipitation_sum'
-    ].join(',');
-
-    const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${fullParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-    
-    try {
-        const response = await fetch(requestUrl);
-        if (response.ok) {
-            const weatherData = await response.json();
-            // Check if wind_speed_10m, wind_direction_10m, or wind_gusts_10m are missing
-            const missingWindData = !weatherData.hourly.wind_speed_10m || 
-                                   !weatherData.hourly.wind_direction_10m || 
-                                   !weatherData.hourly.wind_gusts_10m;
-            
-            if (missingWindData) {
-                console.log('GFS API missing 10m wind data, adding placeholder data');
-                // Add placeholder data for missing wind parameters
-                const timeLength = weatherData.hourly.time.length;
-                if (!weatherData.hourly.wind_speed_10m) {
-                    weatherData.hourly.wind_speed_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_direction_10m) {
-                    weatherData.hourly.wind_direction_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_gusts_10m) {
-                    weatherData.hourly.wind_gusts_10m = new Array(timeLength).fill(null);
-                }
-            }
-            
-            return fullParameters;
-        } else {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-    } catch (error) {
-        console.log('GFS API call failed with 10m wind parameters, trying without them');
-        
-        // Fallback: try without wind_speed_10m, wind_direction_10m, and wind_gusts_10m
-        const fallbackParameters = [
-            'temperature_2m', 'temperature_80m',
-            'boundary_layer_height',
-            'weather_code', 'relative_humidity_2m',
-            'dew_point_2m',
-            'visibility','lifted_index',
-            'cloud_cover',
-            'cloud_cover_low',
-            'cloud_cover_mid',
-            'cloud_cover_high',
-            'cloud_cover_1000hPa',
-            'cloud_cover_975hPa',
-            'cloud_cover_950hPa',
-            'cloud_cover_925hPa',
-            'cloud_cover_900hPa',
-            'cloud_cover_850hPa',
-            'cloud_cover_800hPa',
-            'cloud_cover_700hPa',
-            'cloud_cover_600hPa',
-            'cloud_cover_500hPa',
-            'cloud_cover_400hPa',
-            'cloud_cover_250hPa',
-            'cloud_cover_200hPa',
-            'cloud_cover_150hPa',
-            'cloud_cover_300hPa',
-            'cloud_cover_100hPa',
-            'cloud_cover_70hPa',
-            'cloud_cover_50hPa',
-            'cloud_cover_30hPa',
-            'wind_speed_80m',
-            'wind_speed_180m',
-            'wind_direction_80m',
-            'wind_direction_180m',
-            'temperature_1000hPa',
-            'temperature_975hPa',
-            'temperature_950hPa',
-            'temperature_925hPa',
-            'temperature_900hPa',
-            'temperature_850hPa',
-            'temperature_800hPa',
-            'temperature_700hPa',
-            'temperature_600hPa',
-            'temperature_500hPa',
-            'temperature_400hPa',
-            'windspeed_1000hPa',
-            'windspeed_975hPa',
-            'windspeed_950hPa',
-            'windspeed_925hPa',
-            'windspeed_900hPa',
-            'windspeed_850hPa',
-            'windspeed_800hPa',
-            'windspeed_700hPa',
-            'windspeed_600hPa',
-            'windspeed_500hPa',
-            'windspeed_400hPa',
-            'winddirection_1000hPa',
-            'winddirection_975hPa',
-            'winddirection_950hPa',
-            'winddirection_925hPa',
-            'winddirection_900hPa',
-            'winddirection_850hPa',
-            'winddirection_800hPa',
-            'winddirection_700hPa',
-            'winddirection_600hPa',
-            'winddirection_500hPa',
-            'winddirection_400hPa',
-            'cape',
-            'is_day',
-            'precipitation_probability'
-        ].join(',');
-        
-        const fallbackRequestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${fallbackParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-        
-        try {
-            const fallbackResponse = await fetch(fallbackRequestUrl);
-            if (fallbackResponse.ok) {
-                const weatherData = await fallbackResponse.json();
-                console.log('GFS API call succeeded without 10m wind parameters, adding placeholder data');
-                
-                // Add placeholder data for missing 10m wind parameters
-                const timeLength = weatherData.hourly.time.length;
-                weatherData.hourly.wind_speed_10m = new Array(timeLength).fill(null);
-                weatherData.hourly.wind_direction_10m = new Array(timeLength).fill(null);
-                weatherData.hourly.wind_gusts_10m = new Array(timeLength).fill(null);
-                
-                return fallbackParameters;
-            } else {
-                throw new Error(`Fallback HTTP error! Status: ${fallbackResponse.status}`);
-            }
-        } catch (fallbackError) {
-            console.error('Both GFS API calls failed:', fallbackError);
-            throw fallbackError;
-        }
-    }
-}
 
 async function checkAndFetchData(baseUrl, model) {
     console.log("checkAndFetchData");
-    // ////console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
     console.log("check and fetch data");
-    const dailyParameters = [
-        'weather_code',
-        'sunrise',
-        'sunset',
-        'uv_index_max',
-        'precipitation_sum'
-    ].join(',');
-
-
-
-    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
-    let additionalParameters = ''; // Initialize additional parameters string
-
-
-    // Check the model to determine the correct forecast_days parameter
-    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
-        const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14); // Default 7, max 14
-        additionalParameters += `&forecast_days=${forecastDays}`;
-    } else if (model.toLowerCase() === 'icon') {
-        const forecastDays = getCookieValueOrDefault('iconLength', 7); // Default 7, max 7
-        additionalParameters += `&forecast_days=${forecastDays}`;
-    }
+    
       let shouldFetchData = true;  // Default to true to indicate new data should be fetched
     const lastApiCallKey = `lastApiCall_${model}_${userLocation.latitude}_${userLocation.longitude}`;
     console.log(lastApiCallKey);
-    
-    //#####
 
     const now = Date.now();
     const cacheDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
    const lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
 
-    
-
-
-    // Check if we have cached data for this model and zipcode
+    // Check if we have cached data for this model and coordinates
      if (lastApiCallDataStr) {
+        try {
 const lastApiCallData = JSON.parse(lastApiCallDataStr);
 
 // Check if the cached data's timestamp is within the acceptable range
@@ -1481,273 +1026,105 @@ if (now - lastApiCallData.timestamp < cacheDuration) {
     shouldFetchData = false;
     globalWeatherData[model] = lastApiCallData.data;
     createTable(`${model.toLowerCase()}-table`, lastApiCallData.data, model);
-}
-}
-console.log('should fetch data: ',shouldFetchData)
+                console.log(`Using cached data for model ${model}`);
+            }
+        } catch (error) {
+            console.error(`Error parsing cached data for model ${model}:`, error);
+            // If cache is corrupted, we'll fetch new data
+        }
+    }
+    
+    console.log('should fetch data: ', shouldFetchData);
+    
     // Fetch new data if necessary
     if (shouldFetchData) {
-//console.log('fetching new data');
-        
-        if (model.toLowerCase() === 'gfs' || model.toLowerCase() === 'openmeteo') {
-            // For GFS model, test parameters and handle missing wind data
-            if (model.toLowerCase() === 'gfs') {
-                commonParameters = await getGFSParametersWithFallback(baseUrl, userLocation.latitude, userLocation.longitude, units, additionalParameters);
-            } else {
-                commonParameters = [
-                    'temperature_2m', 'temperature_80m',
-                    'boundary_layer_height',
-                    'weather_code', 'relative_humidity_2m',
-                    'dew_point_2m',
-                    'visibility','lifted_index',
-                    'cloud_cover',
-                    'cloud_cover_low',
-                    'cloud_cover_mid',
-                    'cloud_cover_high',
-                    'cloud_cover_1000hPa',
-                    'cloud_cover_975hPa',
-                    'cloud_cover_950hPa',
-                    'cloud_cover_925hPa',
-                    'cloud_cover_900hPa',
-                    'cloud_cover_850hPa',
-                    'cloud_cover_800hPa',
-                    'cloud_cover_700hPa',
-                    'cloud_cover_600hPa',
-                    'cloud_cover_500hPa',
-                    'cloud_cover_400hPa',
-                    'cloud_cover_250hPa',
-                    'cloud_cover_200hPa',
-                    'cloud_cover_150hPa',
-                    'cloud_cover_300hPa',
-                    'cloud_cover_100hPa',
-                    'cloud_cover_70hPa',
-                    'cloud_cover_50hPa',
-                    'cloud_cover_30hPa',
-                    // Add new variables below
-                    'wind_speed_10m',
-                    'wind_speed_80m',
-                    'wind_speed_180m', 'wind_gusts_10m',
-                    'wind_direction_10m',
-                    'wind_direction_80m',
-                    'wind_direction_180m',
-                    'temperature_1000hPa',
-                    'temperature_975hPa',
-                    'temperature_950hPa',
-                    'temperature_925hPa',
-                    'temperature_900hPa',
-                    'temperature_850hPa',
-                    'temperature_800hPa',
-                    'temperature_700hPa',
-                    'temperature_600hPa',
-                    'temperature_500hPa',
-                    'temperature_400hPa',
-
-                    'windspeed_1000hPa',
-                    'windspeed_975hPa',
-                    'windspeed_950hPa',
-                    'windspeed_925hPa',
-                    'windspeed_900hPa',
-                    'windspeed_850hPa',
-                    'windspeed_800hPa',
-                    'windspeed_700hPa',
-                    'windspeed_600hPa',
-                    'windspeed_500hPa',
-                    'windspeed_400hPa',
-                    'winddirection_1000hPa',
-                    'winddirection_975hPa',
-                    'winddirection_950hPa',
-                    'winddirection_925hPa',
-                    'winddirection_900hPa',
-                    'winddirection_850hPa',
-                    'winddirection_800hPa',
-                    'winddirection_700hPa',
-                    'winddirection_600hPa',
-                    'winddirection_500hPa',
-                    'winddirection_400hPa',
-                    'cape',
-                    'is_day',
-                    'precipitation_probability'
-                ].join(',');
-            }
-        }
-if (model.toLowerCase() === 'icon') {
-            commonParameters = [
-                'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
-                'weather_code', 'relative_humidity_2m',
-                'dew_point_2m',
-                'cloud_cover',
-                'cloud_cover_low',
-                'cloud_cover_mid',
-                'cloud_cover_high',
-                'cloud_cover_1000hPa',
-                'cloud_cover_975hPa',
-                'cloud_cover_950hPa',
-                'cloud_cover_925hPa',
-                'cloud_cover_900hPa',
-                'cloud_cover_850hPa',
-                'cloud_cover_800hPa',
-                'cloud_cover_700hPa',
-                'cloud_cover_600hPa',
-                'cloud_cover_500hPa',
-                'cloud_cover_400hPa',
-                'cloud_cover_250hPa',
-                'cloud_cover_200hPa',
-                'cloud_cover_150hPa',
-                'cloud_cover_300hPa',
-                'cloud_cover_100hPa',
-                'cloud_cover_70hPa',
-                'cloud_cover_50hPa',
-                'cloud_cover_30hPa',
-                // Add new variables below
-                'wind_speed_10m',
-                'wind_speed_80m',
-                'wind_speed_180m', 'wind_gusts_10m',
-                'wind_direction_10m',
-                'wind_direction_80m',
-                'wind_direction_180m',
-                'temperature_1000hPa',
-                'temperature_975hPa',
-                'temperature_950hPa',
-                'temperature_925hPa',
-                'temperature_900hPa',
-                'temperature_850hPa',
-                'temperature_800hPa',
-                'temperature_700hPa',
-                'temperature_600hPa',
-                'temperature_500hPa',
-                'temperature_400hPa',
-
-                'windspeed_1000hPa',
-                'windspeed_975hPa',
-                'windspeed_950hPa',
-                'windspeed_925hPa',
-                'windspeed_900hPa',
-                'windspeed_850hPa',
-                'windspeed_800hPa',
-                'windspeed_700hPa',
-                'windspeed_600hPa',
-                'windspeed_500hPa',
-                'windspeed_400hPa',
-                'winddirection_1000hPa',
-                'winddirection_975hPa',
-                'winddirection_950hPa',
-                'winddirection_925hPa',
-                'winddirection_900hPa',
-                'winddirection_850hPa',
-                'winddirection_800hPa',
-                'winddirection_700hPa',
-                'winddirection_600hPa',
-                'winddirection_500hPa',
-                'winddirection_400hPa',
-                'is_day'
-            ].join(',');
-        }
-
-
-
-
-        // For GFS model, the API call might have already been made in getGFSParametersWithFallback
-        let weatherData;
-        if (model.toLowerCase() === 'gfs') {
-            const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-            console.log(requestUrl);
-            try {
-                console.log("REQUEST");
-                console.log(requestUrl);
-                const response = await fetch(requestUrl);
-
-                // If the response is not okay, throw an error
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                // Parse the response as JSON
-                weatherData = await response.json();
-                
-                // Add placeholder data for missing 10m wind parameters if they don't exist
-                if (!weatherData.hourly.wind_speed_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_speed_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_direction_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_direction_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_gusts_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_gusts_10m = new Array(timeLength).fill(null);
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for model ${model}`, error);
-                return;
-            }
-        } else {
-            const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-            console.log(requestUrl);
-            try {
-                console.log("REQUEST");
-                console.log(requestUrl);
-                const response = await fetch(requestUrl);
-
-                // If the response is not okay, throw an error
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                // Parse the response as JSON
-                weatherData = await response.json();
-                
-                // Add placeholder data for missing parameters in ICON model
-                if (model.toLowerCase() === 'icon') {
-                    const timeLength = weatherData.hourly.time.length;
-                    
-                    // Add missing parameters that ICON doesn't support
-                    if (!weatherData.hourly.boundary_layer_height) {
-                        weatherData.hourly.boundary_layer_height = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.visibility) {
-                        weatherData.hourly.visibility = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.lifted_index) {
-                        weatherData.hourly.lifted_index = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.cape) {
-                        weatherData.hourly.cape = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.precipitation_probability) {
-                        weatherData.hourly.precipitation_probability = new Array(timeLength).fill(null);
-                    }
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for model ${model}`, error);
-                return;
-            }
-        }
-
         try {
-            // Cache the new API data
+            console.log(`Fetching new data for model ${model} with fallback system...`);
+            
+            // Use the new fallback system
+            const result = await fetchWeatherDataWithFallback(baseUrl, model);
+            
+            // Cache the new API data with fallback information
             localStorage.setItem(lastApiCallKey, JSON.stringify({
-                timestamp: now,
-                data: weatherData,
-                latitude: userLocation.latitude,
-                longitude: userLocation.longitude,
-                cityName: $('#cityName').text() // Store the current city name as well
+timestamp: now,
+                data: result.data,
+latitude: userLocation.latitude,
+longitude: userLocation.longitude,
+                cityName: $('#cityName').text(),
+                fallbackInfo: {
+                    endpoint: result.endpoint,
+                    parametersUsed: result.parametersUsed,
+                    fallbackLevel: result.fallbackLevel
+                }
             }));
 
+            // Process data to handle any missing parameters
+            const processedData = handleMissingData(result.data, model);
+
             // Populate the respective table with the fetched data
-            createTable(`${model.toLowerCase()}-table`, weatherData, model);
+            createTable(`${model.toLowerCase()}-table`, processedData, model);
 
             // Store the fetched data globally
-            globalWeatherData[model] = weatherData;
-
-            ////console.log(`Data fetched successfully for model ${model}`);
+            globalWeatherData[model] = processedData;
+            
+            // Log fallback information if fallback was used
+            if (result.fallbackLevel > 0) {
+                console.warn(`Model ${model} used fallback level ${result.fallbackLevel} with ${result.parametersUsed} parameters from ${result.endpoint}`);
+                showFallbackNotification(model, result.fallbackLevel, result.parametersUsed, result.endpoint);
+            } else {
+                console.log(`Data fetched successfully for model ${model} with full parameter set`);
+            }
+            
         } catch (error) {
-            // Log the error if fetching the data fails
-            console.error(`Failed to fetch data for model ${model}`, error);
-            // Optionally, handle the error in the UI
+            console.error(`Failed to fetch data for model ${model} after all fallback attempts:`, error);
+            
+            // Record the error for future reference
+            recordApiError(model, error);
+            
+            // Check if we should use cached data due to recent errors
+            if (shouldUseCachedData(model)) {
+                const lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
+                if (lastApiCallDataStr) {
+                    try {
+                        const lastApiCallData = JSON.parse(lastApiCallDataStr);
+                        console.log(`Using cached data for ${model} due to API errors`);
+                        globalWeatherData[model] = lastApiCallData.data;
+                        createTable(`${model.toLowerCase()}-table`, lastApiCallData.data, model);
+                        
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Using Cached Data',
+                                text: `Unable to fetch fresh data for ${model.toUpperCase()}. Using cached data from ${new Date(lastApiCallData.timestamp).toLocaleString()}.`,
+                                confirmButtonText: 'OK',
+                                timer: 5000,
+                                timerProgressBar: true
+                            });
+                        }
+                        return;
+                    } catch (cacheError) {
+                        console.error('Error using cached data:', cacheError);
+                    }
+                }
+            }
+            
+            // Show user-friendly error message
+            const errorMessage = `Unable to fetch weather data for ${model.toUpperCase()} model. Please try again later.`;
+            console.error(errorMessage);
+            
+            // Optionally show a user notification
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Weather Data Error',
+                    text: errorMessage,
+                    confirmButtonText: 'OK'
+                });
+            }
         }
     }
 
-    // ////console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
+    console.log(`checkAndFetchData finished for model ${model}`);
 }
 
 
@@ -2446,14 +1823,7 @@ function fillAllTablesWithWindSpeed(table, weatherData) {
 console.log('filltablewithwindspeed');
 console.log(`Filling table with ID: ${table.id} using data:`, weatherData);
 
-// Safety check: ensure table has at least one row
-const existingRows = table.getElementsByTagName('tr');
-if (existingRows.length === 0) {
-    console.error(`Table ${table.id} has no rows, cannot fill with wind speed data`);
-    return;
-}
-
-let tableHtml = '<tr>' + existingRows[0].innerHTML + '</tr>';
+let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
     const altitudeLevels = [10, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100, 70, 50, 30].reverse(); // Order hPa values and feet values in descending order
     let gustRowAdded = false; // Flag to control the addition of the gust row
     altitudeLevels.forEach(alt => {
@@ -2738,14 +2108,13 @@ function fillTableWithWindSpeed(table, weatherData) {
     console.log('filltablewithwindspeed');
     console.log(`Filling table with ID: ${table.id} for wind speed`);
 
-    // Safety check: ensure table has at least one row
-    const existingRows = table.getElementsByTagName('tr');
-    if (existingRows.length === 0) {
-        console.error(`Table ${table.id} has no rows, cannot fill with wind speed data`);
+    // Safety check - ensure table exists and has content
+    if (!table || !table.getElementsByTagName('tr')[0]) {
+        console.error(`Table ${table?.id} is empty or undefined, cannot fill with wind speed data`);
         return;
     }
 
-    let tableHtml = '<tr>' + existingRows[0].innerHTML + '</tr>';
+    let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
     const altitudeLevels = [10, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100, 70, 50, 30].reverse(); // Order hPa values and feet values in descending order
     let gustRowAdded = false;
     altitudeLevels.forEach(alt => {
@@ -3231,14 +2600,7 @@ function interpolateColorRGB(color1, color2, percentage) {
         console.log("First few boundary layer heights:", boundaryLayerHeight.slice(0, 5));
     }
     
-    // Safety check: ensure table has at least one row
-    const existingRows = table.getElementsByTagName('tr');
-    if (existingRows.length === 0) {
-        console.error(`Table ${table.id} has no rows, cannot fill with cloud cover data`);
-        return;
-    }
-
-    let tableHtml = '<tr>' + existingRows[0].innerHTML + '</tr>';
+    let tableHtml = '<tr>' + table.getElementsByTagName('tr')[0].innerHTML + '</tr>';
     
     // Define all possible altitudes in feet in descending order to match table rows
     const allAltitudes = [53150, 44948, 38714, 34121, 30184, 23622, 18373, 13780, 9843, 6234, 4921, 3281, 2625, 1640, 1050, 361];
@@ -3532,3 +2894,1570 @@ function manageViewButtons() {
         const opacity = (cloudCover / 100) * maxDarkness;
         return `rgba(0, 0, 0, ${opacity})`;
     }
+
+// Add these utility functions for error handling and fallback mechanisms
+function handleMissingData(weatherData, model) {
+    // Create a copy of the weather data to avoid modifying the original
+    const processedData = JSON.parse(JSON.stringify(weatherData));
+    
+    // Get all possible parameters for this model
+    const parameterGroups = createParameterGroups();
+    let allPossibleParams;
+    if (model.toLowerCase() === 'icon') {
+        // For ICON, filter out GFS-specific parameters that ICON doesn't have
+        const iconParams = parameterGroups.icon_full;
+        const gfsOnlyParams = [
+            'lifted_index', 'visibility', 'precipitation_probability',
+            'temperature_300hPa', 'windspeed_300hPa', 'winddirection_300hPa',
+            'temperature_250hPa', 'windspeed_250hPa', 'winddirection_250hPa',
+            'temperature_200hPa', 'windspeed_200hPa', 'winddirection_200hPa',
+            'temperature_150hPa', 'windspeed_150hPa', 'winddirection_150hPa',
+            'temperature_100hPa', 'windspeed_100hPa', 'winddirection_100hPa',
+            'temperature_70hPa', 'windspeed_70hPa', 'winddirection_70hPa',
+            'temperature_50hPa', 'windspeed_50hPa', 'winddirection_50hPa',
+            'temperature_30hPa', 'windspeed_30hPa', 'winddirection_30hPa'
+        ];
+        allPossibleParams = iconParams.filter(param => !gfsOnlyParams.includes(param));
+    } else {
+        allPossibleParams = parameterGroups.gfs_full;
+    }
+    
+    // Define default values for missing parameters
+    const defaultValues = {
+        temperature_2m: 70,
+        temperature_80m: 70,
+        wind_speed_10m: 0,
+        wind_speed_80m: 0,
+        wind_direction_10m: 0,
+        wind_direction_80m: 0,
+        wind_gusts_10m: 0,
+        relative_humidity_2m: 50,
+        dew_point_2m: 50,
+        cloud_cover: 0,
+        cloud_cover_low: 0,
+        cloud_cover_mid: 0,
+        cloud_cover_high: 0,
+        cape: 0,
+        lifted_index: 0,
+        visibility: 10000,
+        precipitation_probability: 0,
+        precipitation: 0,
+        is_day: 1
+    };
+    
+    // Add model-specific parameters
+    if (model.toLowerCase() === 'icon') {
+        defaultValues.temperature_180m = 70;
+        defaultValues.wind_speed_180m = 0;
+        defaultValues.wind_direction_180m = 0;
+    }
+    
+    // Add default values for high altitude parameters
+    const pressureLevels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100, 70, 50, 30];
+    pressureLevels.forEach(level => {
+        defaultValues[`temperature_${level}hPa`] = 70;
+        defaultValues[`windspeed_${level}hPa`] = 0;
+        defaultValues[`winddirection_${level}hPa`] = 0;
+        defaultValues[`cloud_cover_${level}hPa`] = 0;
+    });
+    
+    // Ensure hourly data exists
+    if (!processedData.hourly) {
+        processedData.hourly = {};
+    }
+    
+    // Get the time array length for creating default arrays
+    const timeLength = processedData.hourly.time ? processedData.hourly.time.length : 0;
+    
+    // Fill missing parameters with default values
+    Object.keys(defaultValues).forEach(param => {
+        if (!processedData.hourly[param]) {
+            console.warn(`Missing parameter ${param} in ${model} data, using default values`);
+            processedData.hourly[param] = new Array(timeLength).fill(defaultValues[param]);
+        }
+    });
+    
+    // Handle model-specific parameters
+    if (model.toLowerCase() === 'gfs') {
+        // GFS-specific parameters
+        if (!processedData.hourly.boundary_layer_height) {
+            console.warn(`Missing boundary_layer_height in ${model} data, using default values`);
+            processedData.hourly.boundary_layer_height = new Array(timeLength).fill(1000);
+        }
+    } else if (model.toLowerCase() === 'icon') {
+        // ICON-specific parameters
+        if (!processedData.hourly.precipitation) {
+            console.warn(`Missing precipitation in ${model} data, using default values`);
+            processedData.hourly.precipitation = new Array(timeLength).fill(0);
+        }
+    }
+    
+    // Check for any missing parameters that should exist based on the model's full parameter set
+    allPossibleParams.forEach(param => {
+        if (!processedData.hourly[param] && defaultValues[param] !== undefined) {
+            console.warn(`Missing expected parameter ${param} in ${model} data, using default values`);
+            processedData.hourly[param] = new Array(timeLength).fill(defaultValues[param]);
+        }
+    });
+    
+    // Only check for model-specific parameters that should exist for this model
+    if (model.toLowerCase() === 'gfs') {
+        // GFS-specific parameters that should exist
+        const gfsSpecificParams = ['boundary_layer_height', 'lifted_index', 'visibility', 'precipitation_probability'];
+        gfsSpecificParams.forEach(param => {
+            if (!processedData.hourly[param]) {
+                console.warn(`Missing GFS-specific parameter ${param} in ${model} data, using default values`);
+                processedData.hourly[param] = new Array(timeLength).fill(defaultValues[param] || 0);
+            }
+        });
+    } else if (model.toLowerCase() === 'icon') {
+        // ICON-specific parameters that should exist
+        const iconSpecificParams = ['precipitation'];
+        iconSpecificParams.forEach(param => {
+            if (!processedData.hourly[param]) {
+                console.warn(`Missing ICON-specific parameter ${param} in ${model} data, using default values`);
+                processedData.hourly[param] = new Array(timeLength).fill(defaultValues[param] || 0);
+            }
+        });
+    }
+    
+    return processedData;
+}
+
+function showFallbackNotification(model, fallbackLevel, parametersUsed, endpoint) {
+    const fallbackMessages = {
+        0: "Full data set retrieved successfully",
+        1: "Some advanced features unavailable - using standard parameters",
+        2: "Limited data available - using basic parameters", 
+        3: "Minimal data available - using essential parameters only"
+    };
+    
+    const message = fallbackMessages[fallbackLevel] || "Using fallback data";
+    
+    if (typeof Swal !== 'undefined' && fallbackLevel > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: `${model.toUpperCase()} Data Notice`,
+            text: `${message}. Retrieved ${parametersUsed} parameters from ${endpoint.includes('gfs') ? 'GFS' : endpoint.includes('icon') ? 'ICON' : 'Open-Meteo'}.`,
+            confirmButtonText: 'OK',
+            timer: 5000,
+            timerProgressBar: true
+        });
+    }
+    
+    console.log(`${model.toUpperCase()}: ${message}`);
+}
+
+function createParameterGroups() {
+    return {
+        // Core essential parameters that should always work for all models
+        essential: [
+            'temperature_2m', 'wind_speed_10m', 'wind_direction_10m', 'is_day'
+        ],
+        
+        // GFS-specific basic parameters (no temperature_180m)
+        gfs_basic: [
+            'temperature_2m', 'temperature_80m',
+            'wind_speed_10m', 'wind_speed_80m',
+            'wind_direction_10m', 'wind_direction_80m',
+            'wind_gusts_10m', 'weather_code', 'is_day'
+        ],
+        
+        // ICON-specific basic parameters (includes temperature_180m)
+        icon_basic: [
+            'temperature_2m', 'temperature_80m', 'temperature_180m',
+            'wind_speed_10m', 'wind_speed_80m', 'wind_speed_180m',
+            'wind_direction_10m', 'wind_direction_80m', 'wind_direction_180m',
+            'wind_gusts_10m', 'weather_code', 'is_day'
+        ],
+        
+        // GFS-specific standard parameters
+        gfs_standard: [
+            'temperature_2m', 'temperature_80m',
+            'wind_speed_10m', 'wind_speed_80m',
+            'wind_direction_10m', 'wind_direction_80m',
+            'wind_gusts_10m', 'weather_code', 'relative_humidity_2m',
+            'dew_point_2m', 'cloud_cover', 'cloud_cover_low', 'cloud_cover_mid', 'cloud_cover_high',
+            'is_day', 'precipitation_probability'
+        ],
+        
+        // ICON-specific standard parameters
+        icon_standard: [
+            'temperature_2m', 'temperature_80m', 'temperature_180m',
+            'wind_speed_10m', 'wind_speed_80m', 'wind_speed_180m',
+            'wind_direction_10m', 'wind_direction_80m', 'wind_direction_180m',
+            'wind_gusts_10m', 'weather_code', 'relative_humidity_2m',
+            'dew_point_2m', 'cloud_cover', 'cloud_cover_low', 'cloud_cover_mid', 'cloud_cover_high',
+            'is_day', 'precipitation_probability'
+        ],
+        
+        // GFS-specific full parameters (no temperature_180m, includes boundary_layer_height)
+        gfs_full: [
+            'temperature_2m', 'temperature_80m',
+            'boundary_layer_height', 'weather_code', 'relative_humidity_2m',
+            'dew_point_2m', 'visibility', 'lifted_index', 'cloud_cover',
+            'cloud_cover_low', 'cloud_cover_mid', 'cloud_cover_high',
+            'cloud_cover_1000hPa', 'cloud_cover_975hPa', 'cloud_cover_950hPa',
+            'cloud_cover_925hPa', 'cloud_cover_900hPa', 'cloud_cover_850hPa',
+            'cloud_cover_800hPa', 'cloud_cover_700hPa', 'cloud_cover_600hPa',
+            'cloud_cover_500hPa', 'cloud_cover_400hPa', 'cloud_cover_250hPa',
+            'cloud_cover_200hPa', 'cloud_cover_150hPa', 'cloud_cover_300hPa',
+            'cloud_cover_100hPa', 'cloud_cover_70hPa', 'cloud_cover_50hPa',
+            'cloud_cover_30hPa', 'wind_speed_10m', 'wind_speed_80m',
+            'wind_gusts_10m', 'wind_direction_10m', 'wind_direction_80m',
+            'temperature_1000hPa', 'temperature_975hPa', 'temperature_950hPa',
+            'temperature_925hPa', 'temperature_900hPa', 'temperature_850hPa',
+            'temperature_800hPa', 'temperature_700hPa', 'temperature_600hPa',
+            'temperature_500hPa', 'temperature_400hPa', 'windspeed_1000hPa',
+            'windspeed_975hPa', 'windspeed_950hPa', 'windspeed_925hPa',
+            'windspeed_900hPa', 'windspeed_850hPa', 'windspeed_800hPa',
+            'windspeed_700hPa', 'windspeed_600hPa', 'windspeed_500hPa',
+            'windspeed_400hPa', 'winddirection_1000hPa', 'winddirection_975hPa',
+            'winddirection_950hPa', 'winddirection_925hPa', 'winddirection_900hPa',
+            'winddirection_850hPa', 'winddirection_800hPa', 'winddirection_700hPa',
+            'winddirection_600hPa', 'winddirection_500hPa', 'winddirection_400hPa',
+            'cape', 'is_day', 'precipitation_probability'
+        ],
+        
+        // ICON-specific full parameters (includes temperature_180m, precipitation, no boundary_layer_height)
+        icon_full: [
+            'temperature_2m', 'temperature_80m', 'temperature_180m', 'precipitation',
+            'weather_code', 'relative_humidity_2m', 'dew_point_2m', 'cloud_cover',
+            'cloud_cover_low', 'cloud_cover_mid', 'cloud_cover_high',
+            'cloud_cover_1000hPa', 'cloud_cover_975hPa', 'cloud_cover_950hPa',
+            'cloud_cover_925hPa', 'cloud_cover_900hPa', 'cloud_cover_850hPa',
+            'cloud_cover_800hPa', 'cloud_cover_700hPa', 'cloud_cover_600hPa',
+            'cloud_cover_500hPa', 'cloud_cover_400hPa', 'cloud_cover_250hPa',
+            'cloud_cover_200hPa', 'cloud_cover_150hPa', 'cloud_cover_300hPa',
+            'cloud_cover_100hPa', 'cloud_cover_70hPa', 'cloud_cover_50hPa',
+            'cloud_cover_30hPa', 'wind_speed_10m', 'wind_speed_80m', 'wind_speed_180m',
+            'wind_gusts_10m', 'wind_direction_10m', 'wind_direction_80m',
+            'wind_direction_180m', 'temperature_1000hPa', 'temperature_975hPa',
+            'temperature_950hPa', 'temperature_925hPa', 'temperature_900hPa',
+            'temperature_850hPa', 'temperature_800hPa', 'temperature_700hPa',
+            'temperature_600hPa', 'temperature_500hPa', 'temperature_400hPa',
+            'windspeed_1000hPa', 'windspeed_975hPa', 'windspeed_950hPa',
+            'windspeed_925hPa', 'windspeed_900hPa', 'windspeed_850hPa',
+            'windspeed_800hPa', 'windspeed_700hPa', 'windspeed_600hPa',
+            'windspeed_500hPa', 'windspeed_400hPa', 'winddirection_1000hPa',
+            'winddirection_975hPa', 'winddirection_950hPa', 'winddirection_925hPa',
+            'winddirection_900hPa', 'winddirection_850hPa', 'winddirection_800hPa',
+            'winddirection_700hPa', 'winddirection_600hPa', 'winddirection_500hPa',
+            'winddirection_400hPa', 'cape', 'is_day'
+        ]
+    };
+}
+
+function createFallbackEndpoints(model) {
+    const baseEndpoints = {
+        gfs: [
+            'https://api.open-meteo.com/v1/gfs',
+            'https://api.open-meteo.com/v1/forecast' // Fallback to general forecast
+        ],
+        icon: [
+            'https://api.open-meteo.com/v1/dwd-icon',
+            'https://api.open-meteo.com/v1/forecast' // Fallback to general forecast
+        ],
+        openmeteo: [
+            'https://api.open-meteo.com/v1/forecast',
+            'https://api.open-meteo.com/v1/gfs' // Fallback to GFS
+        ]
+    };
+    
+    return baseEndpoints[model.toLowerCase()] || baseEndpoints.gfs;
+}
+
+async function tryApiCall(baseUrl, hourlyParams, dailyParams, units, additionalParams, model, attempt = 1) {
+    const maxAttempts = 3;
+    const delay = attempt * 1000; // Exponential backoff: 1s, 2s, 3s
+    const timeout = 30000; // 30 second timeout
+    
+    try {
+        const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${hourlyParams}&daily=${dailyParams}${units}${additionalParams}`;
+        console.log(`API Attempt ${attempt}: ${requestUrl}`);
+        
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), timeout);
+        });
+        
+        // Create the fetch promise
+        const fetchPromise = fetch(requestUrl);
+        
+        // Race between fetch and timeout
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const weatherData = await response.json();
+        
+        // Validate that we got meaningful data
+        if (!weatherData.hourly || !weatherData.hourly.time || weatherData.hourly.time.length === 0) {
+            throw new Error('Invalid or empty weather data received');
+        }
+        
+        // Additional validation for required fields
+        const requiredFields = ['temperature_2m', 'wind_speed_10m', 'wind_direction_10m'];
+        const missingFields = requiredFields.filter(field => !weatherData.hourly[field]);
+        
+        if (missingFields.length > 0) {
+            console.warn(`Missing required fields: ${missingFields.join(', ')}`);
+        }
+        
+        console.log(`API call successful on attempt ${attempt}`);
+        return weatherData;
+        
+    } catch (error) {
+        console.error(`API attempt ${attempt} failed:`, error.message);
+        
+        if (attempt < maxAttempts) {
+            console.log(`Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return await tryApiCall(baseUrl, hourlyParams, dailyParams, units, additionalParams, model, attempt + 1);
+        }
+        
+        throw error; // Re-throw if all attempts failed
+    }
+}
+
+async function fetchWeatherDataWithFallback(baseUrl, model) {
+    const parameterGroups = createParameterGroups();
+    const fallbackEndpoints = createFallbackEndpoints(model);
+    
+    const dailyParameters = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ].join(',');
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    
+    // Determine forecast days based on model
+    let forecastDays = 7; // Default
+    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+        forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    } else if (model.toLowerCase() === 'icon') {
+        forecastDays = getCookieValueOrDefault('iconLength', 7);
+    }
+    
+    const additionalParameters = `&forecast_days=${forecastDays}`;
+    
+    // Define parameter sets to try in order of preference
+    let parameterSets;
+    if (model.toLowerCase() === 'icon') {
+        parameterSets = [
+            parameterGroups.icon,
+            parameterGroups.standard,
+            parameterGroups.basic,
+            parameterGroups.essential
+        ];
+    } else {
+        parameterSets = [
+            parameterGroups.full,
+            parameterGroups.standard,
+            parameterGroups.basic,
+            parameterGroups.essential
+        ];
+    }
+    
+    // Try each endpoint
+    for (const endpoint of fallbackEndpoints) {
+        console.log(`Trying endpoint: ${endpoint}`);
+        
+        // Try each parameter set
+        for (const paramSet of parameterSets) {
+            console.log(`Trying parameter set: ${paramSet.length} parameters`);
+            
+            try {
+                const hourlyParams = paramSet.join(',');
+                const weatherData = await tryApiCall(endpoint, hourlyParams, dailyParameters, units, additionalParameters, model);
+                
+                if (weatherData) {
+                    console.log(`Successfully fetched data using ${paramSet.length} parameters from ${endpoint}`);
+                    return {
+                        data: weatherData,
+                        endpoint: endpoint,
+                        parametersUsed: paramSet.length,
+                        fallbackLevel: parameterSets.indexOf(paramSet)
+                    };
+                }
+            } catch (error) {
+                console.error(`Failed with parameter set (${paramSet.length} params):`, error.message);
+                continue; // Try next parameter set
+            }
+        }
+    }
+    
+    // If we get here, all attempts failed
+    throw new Error(`Failed to fetch weather data for model ${model} after trying all endpoints and parameter combinations`);
+}
+
+// Function to handle rate limiting and retry with exponential backoff
+async function handleRateLimit(model, retryCount = 0) {
+    const maxRetries = 3;
+    const baseDelay = 5000; // 5 seconds
+    
+    if (retryCount >= maxRetries) {
+        throw new Error(`Rate limit exceeded for ${model} after ${maxRetries} retries`);
+    }
+    
+    const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+    console.log(`Rate limit detected for ${model}, waiting ${delay}ms before retry ${retryCount + 1}`);
+    
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return retryCount + 1;
+}
+
+// Function to check if we should use cached data due to API issues
+function shouldUseCachedData(model) {
+    const lastErrorKey = `lastError_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    const lastErrorStr = localStorage.getItem(lastErrorKey);
+    
+    if (lastErrorStr) {
+        try {
+            const lastError = JSON.parse(lastErrorStr);
+            const timeSinceError = Date.now() - lastError.timestamp;
+            const errorThreshold = 5 * 60 * 1000; // 5 minutes
+            
+            // If we had an error recently, use cached data even if it's older
+            if (timeSinceError < errorThreshold) {
+                console.log(`Using cached data for ${model} due to recent API errors`);
+                return true;
+            }
+        } catch (error) {
+            console.error('Error parsing last error data:', error);
+        }
+    }
+    
+    return false;
+}
+
+// Function to record API errors for future reference
+function recordApiError(model, error) {
+    const lastErrorKey = `lastError_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    const errorData = {
+        timestamp: Date.now(),
+        error: error.message,
+        model: model
+    };
+    
+    localStorage.setItem(lastErrorKey, JSON.stringify(errorData));
+    console.error(`API error recorded for ${model}:`, error.message);
+}
+
+// ... existing code ...
+
+// Add binary search function to identify problematic variables
+async function identifyProblematicVariables(baseUrl, model, allParameters) {
+    console.log(`Starting binary search to identify problematic variables for ${model} model`);
+    
+    const dailyParameters = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ].join(',');
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    
+    // Determine forecast days based on model
+    let forecastDays = 7; // Default
+    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+        forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    } else if (model.toLowerCase() === 'icon') {
+        forecastDays = getCookieValueOrDefault('iconLength', 7);
+    }
+    
+    const additionalParameters = `&forecast_days=${forecastDays}`;
+    
+    // Test if the full parameter set works
+    const fullParamsTest = await testParameterSet(baseUrl, allParameters, dailyParameters, units, additionalParameters, model);
+    
+    if (fullParamsTest.success) {
+        console.log(`Full parameter set works for ${model} - no problematic variables found`);
+        return { working: allParameters, problematic: [] };
+    }
+    
+    console.log(`Full parameter set fails for ${model} - starting binary search...`);
+    
+    // Binary search to find problematic variables
+    const problematicVars = await binarySearchProblematicVariables(
+        baseUrl, 
+        allParameters, 
+        dailyParameters, 
+        units, 
+        additionalParameters, 
+        model
+    );
+    
+    // Create working parameter set by removing problematic variables
+    const workingParams = allParameters.filter(param => !problematicVars.includes(param));
+    
+    console.log(`Binary search complete for ${model}:`);
+    console.log(`Working parameters: ${workingParams.length}`);
+    console.log(`Problematic parameters: ${problematicVars.join(', ')}`);
+    
+    return { working: workingParams, problematic: problematicVars };
+}
+
+async function testParameterSet(baseUrl, parameters, dailyParams, units, additionalParams, model) {
+    try {
+        const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${parameters.join(',')}&daily=${dailyParams}${units}${additionalParams}`;
+        console.log(`Testing parameter set (${parameters.length} params): ${parameters.slice(0, 3).join(',')}...`);
+        
+        const response = await fetch(requestUrl);
+        
+        if (!response.ok) {
+            return { success: false, error: `HTTP ${response.status}` };
+        }
+        
+        const weatherData = await response.json();
+        
+        // Basic validation
+        if (!weatherData.hourly || !weatherData.hourly.time || weatherData.hourly.time.length === 0) {
+            return { success: false, error: 'Invalid response data' };
+        }
+        
+        return { success: true, data: weatherData };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+async function binarySearchProblematicVariables(baseUrl, allParams, dailyParams, units, additionalParams, model) {
+    console.log(`Starting binary search for problematic variables in ${model}`);
+    
+    const problematicVars = [];
+    let remainingParams = [...allParams];
+    
+    // True binary search - keep halving until we find individual problematic variables
+    while (remainingParams.length > 1) {
+        const midPoint = Math.ceil(remainingParams.length / 2);
+        const firstHalf = remainingParams.slice(0, midPoint);
+        const secondHalf = remainingParams.slice(midPoint);
+        
+        console.log(`Testing first half (${firstHalf.length} params): ${firstHalf.slice(0, 3).join(',')}...`);
+        const firstHalfResult = await testParameterSet(baseUrl, firstHalf, dailyParams, units, additionalParams, model);
+        
+        if (!firstHalfResult.success) {
+            console.log(`First half failed: ${firstHalfResult.error}`);
+            remainingParams = firstHalf; // Problem is in first half
+        } else {
+            console.log(`First half passed, testing second half (${secondHalf.length} params): ${secondHalf.slice(0, 3).join(',')}...`);
+            const secondHalfResult = await testParameterSet(baseUrl, secondHalf, dailyParams, units, additionalParams, model);
+            
+            if (!secondHalfResult.success) {
+                console.log(`Second half failed: ${secondHalfResult.error}`);
+                remainingParams = secondHalf; // Problem is in second half
+            } else {
+                console.log(`Both halves passed - testing combined`);
+                // If both halves work individually but fail together, test combinations
+                const combinedResult = await testParameterSet(baseUrl, remainingParams, dailyParams, units, additionalParams, model);
+                if (!combinedResult.success) {
+                    console.log(`Combined fails but halves work - testing individual params`);
+                    // Test each parameter individually
+                    for (const param of remainingParams) {
+                        const individualResult = await testParameterSet(baseUrl, [param], dailyParams, units, additionalParams, model);
+                        if (!individualResult.success) {
+                            console.log(`Individual parameter ${param} fails: ${individualResult.error}`);
+                            problematicVars.push(param);
+                        }
+                    }
+                    break; // We've tested all individual parameters
+                } else {
+                    console.log(`Combined works - no problematic variables in this set`);
+                    break;
+                }
+            }
+        }
+        
+        // Small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // If we have exactly one parameter left, test it
+    if (remainingParams.length === 1) {
+        const lastParam = remainingParams[0];
+        console.log(`Testing final parameter: ${lastParam}`);
+        const lastResult = await testParameterSet(baseUrl, [lastParam], dailyParams, units, additionalParams, model);
+        if (!lastResult.success) {
+            console.log(`Final parameter ${lastParam} fails: ${lastResult.error}`);
+            problematicVars.push(lastParam);
+        }
+    }
+    
+    return problematicVars;
+}
+
+async function testIndividualParameters(baseUrl, paramGroup, dailyParams, units, additionalParams, model) {
+    const problematic = [];
+    
+    // Test each parameter individually
+    for (const param of paramGroup) {
+        console.log(`Testing individual parameter: ${param}`);
+        
+        const testResult = await testParameterSet(baseUrl, [param], dailyParams, units, additionalParams, model);
+        
+        if (!testResult.success) {
+            console.log(`Parameter ${param} is problematic: ${testResult.error}`);
+            problematic.push(param);
+        } else {
+            console.log(`Parameter ${param} works`);
+        }
+        
+        // Small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return problematic;
+}
+
+// Function to create optimized parameter sets based on problematic variable detection
+async function createOptimizedParameterSets(baseUrl, model) {
+    console.log(`Creating optimized parameter sets for ${model}`);
+    
+    // Get the model-specific parameter sets
+    const parameterGroups = createParameterGroups();
+    let fullParams, basicParams, standardParams;
+    
+    if (model.toLowerCase() === 'icon') {
+        fullParams = parameterGroups.icon_full;
+        basicParams = parameterGroups.icon_basic;
+        standardParams = parameterGroups.icon_standard;
+    } else {
+        // Default to GFS for gfs, openmeteo, and any other models
+        fullParams = parameterGroups.gfs_full;
+        basicParams = parameterGroups.gfs_basic;
+        standardParams = parameterGroups.gfs_standard;
+    }
+    
+    // Identify problematic variables
+    const result = await identifyProblematicVariables(baseUrl, model, fullParams);
+    
+    // Create optimized parameter sets
+    const optimizedSets = {
+        essential: parameterGroups.essential.filter(param => !result.problematic.includes(param)),
+        basic: basicParams.filter(param => !result.problematic.includes(param)),
+        standard: standardParams.filter(param => !result.problematic.includes(param)),
+        full: result.working
+    };
+    
+    // Add model-specific full set
+    if (model.toLowerCase() === 'icon') {
+        optimizedSets.icon_full = parameterGroups.icon_full.filter(param => !result.problematic.includes(param));
+    } else {
+        optimizedSets.gfs_full = parameterGroups.gfs_full.filter(param => !result.problematic.includes(param));
+    }
+    
+    console.log(`Optimized parameter sets created for ${model}:`);
+    Object.keys(optimizedSets).forEach(setName => {
+        console.log(`${setName}: ${optimizedSets[setName].length} parameters`);
+    });
+    
+    return optimizedSets;
+}
+
+// Update the fetchWeatherDataWithFallback function to trigger comprehensive testing on API failure
+async function fetchWeatherDataWithFallback(baseUrl, model) {
+    console.log(`Fetching weather data with fallback for ${model}`);
+    
+    const parameterGroups = createParameterGroups();
+    const fallbackEndpoints = createFallbackEndpoints(model);
+    
+    const dailyParameters = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ].join(',');
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    
+    // Determine forecast days based on model
+    let forecastDays = 7; // Default
+    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+        forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    } else if (model.toLowerCase() === 'icon') {
+        forecastDays = getCookieValueOrDefault('iconLength', 7);
+    }
+    
+    const additionalParameters = `&forecast_days=${forecastDays}`;
+    
+    // Get the full parameter set for this model
+    let fullParams;
+    if (model.toLowerCase() === 'icon') {
+        fullParams = parameterGroups.icon_full;
+    } else {
+        fullParams = parameterGroups.gfs_full;
+    }
+    
+    // Try the full parameter set first
+    try {
+        const hourlyParams = fullParams.join(',');
+        const weatherData = await tryApiCall(baseUrl, hourlyParams, dailyParameters, units, additionalParameters, model);
+        
+        if (weatherData) {
+            console.log(`Successfully fetched data using full parameter set from ${baseUrl}`);
+            return {
+                data: weatherData,
+                endpoint: baseUrl,
+                parametersUsed: fullParams.length,
+                fallbackLevel: 0
+            };
+        }
+    } catch (error) {
+        console.error(`Full parameter set failed for ${model}:`, error.message);
+        
+        // API failed - trigger comprehensive testing to identify problematic variables
+        console.log(`API failed for ${model} - starting comprehensive parameter testing...`);
+        
+        try {
+            const comprehensiveResults = await testAllParametersIndividually(baseUrl, model);
+            
+            // Cache the problematic variables
+            cacheProblematicVariables(model, comprehensiveResults.failing);
+            
+            // Create working parameter set by removing problematic variables
+            const workingParams = fullParams.filter(param => !comprehensiveResults.failing.includes(param));
+            
+            // Try again with working parameters
+            if (workingParams.length > 0) {
+                const hourlyParams = workingParams.join(',');
+                const weatherData = await tryApiCall(baseUrl, hourlyParams, dailyParameters, units, additionalParameters, model);
+                
+                if (weatherData) {
+                    console.log(`Successfully fetched data using ${workingParams.length} working parameters after comprehensive testing`);
+                    return {
+                        data: weatherData,
+                        endpoint: baseUrl,
+                        parametersUsed: workingParams.length,
+                        fallbackLevel: 1
+                    };
+                }
+            }
+        } catch (comprehensiveError) {
+            console.error(`Comprehensive testing failed for ${model}:`, comprehensiveError.message);
+        }
+        
+        // If comprehensive testing also fails, throw the original error to trigger fallback endpoints
+        throw error;
+    }
+    
+    // Try fallback endpoints with essential parameters
+    const essentialParams = parameterGroups.essential;
+    
+    for (const endpoint of fallbackEndpoints) {
+        if (endpoint === baseUrl) continue; // Skip the original endpoint
+        
+        console.log(`Trying fallback endpoint: ${endpoint}`);
+        
+        try {
+            const hourlyParams = essentialParams.join(',');
+            const weatherData = await tryApiCall(endpoint, hourlyParams, dailyParameters, units, additionalParameters, model);
+            
+            if (weatherData) {
+                console.log(`Successfully fetched data using essential parameters from ${endpoint}`);
+                return {
+                    data: weatherData,
+                    endpoint: endpoint,
+                    parametersUsed: essentialParams.length,
+                    fallbackLevel: 2
+                };
+            }
+        } catch (error) {
+            console.error(`Failed with fallback endpoint ${endpoint}:`, error.message);
+            continue;
+        }
+    }
+    
+    // If we get here, all attempts failed
+    throw new Error(`Failed to fetch weather data for model ${model} after trying all endpoints and parameter combinations`);
+}
+
+// ... existing code ...
+
+// Add caching for problematic variable detection
+function getCachedProblematicVariables(model) {
+    // Check if we should bypass cache detection
+    if (window.bypassCacheDetection) {
+        console.log(`Bypassing cached problematic variables for ${model} - doing fresh detection`);
+        window.bypassCacheDetection = false; // Reset the flag
+        return null;
+    }
+    
+    const cacheKey = `problematicVars_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (cached) {
+        try {
+            const data = JSON.parse(cached);
+            const cacheAge = Date.now() - data.timestamp;
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+            
+            if (cacheAge < maxAge) {
+                // Validate that the cached data is reasonable
+                if (Array.isArray(data.problematic) && data.problematic.length < 50) {
+                    console.log(`Using cached problematic variables for ${model}: ${data.problematic.length} variables`);
+                    return data.problematic;
+                } else {
+                    console.warn(`Cached problematic variables for ${model} seem corrupted (${data.problematic?.length || 'undefined'} variables), clearing cache`);
+                    localStorage.removeItem(cacheKey);
+                    return null;
+                }
+            }
+        } catch (error) {
+            console.error('Error parsing cached problematic variables:', error);
+            localStorage.removeItem(cacheKey); // Clear corrupted cache
+        }
+    }
+    
+    return null;
+}
+
+function cacheProblematicVariables(model, problematicVars) {
+    const cacheKey = `problematicVars_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    const cacheData = {
+        timestamp: Date.now(),
+        problematic: problematicVars,
+        model: model
+    };
+    
+    localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    console.log(`Cached problematic variables for ${model}: ${problematicVars.join(', ')}`);
+}
+
+// Manual testing function for debugging specific variables
+async function testSpecificVariable(baseUrl, model, variable) {
+    console.log(`Manually testing variable: ${variable} for ${model} model`);
+    
+    const dailyParameters = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ].join(',');
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    
+    // Determine forecast days based on model
+    let forecastDays = 7; // Default
+    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+        forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    } else if (model.toLowerCase() === 'icon') {
+        forecastDays = getCookieValueOrDefault('iconLength', 7);
+    }
+    
+    const additionalParameters = `&forecast_days=${forecastDays}`;
+    
+    const testResult = await testParameterSet(baseUrl, [variable], dailyParameters, units, additionalParameters, model);
+    
+    if (testResult.success) {
+        console.log(`✅ Variable ${variable} works for ${model}`);
+        return true;
+    } else {
+        console.log(`❌ Variable ${variable} fails for ${model}: ${testResult.error}`);
+        return false;
+    }
+}
+
+// Function to test a group of variables
+async function testVariableGroup(baseUrl, model, variables) {
+    console.log(`Testing variable group for ${model}: ${variables.join(', ')}`);
+    
+    const dailyParameters = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ].join(',');
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    
+    // Determine forecast days based on model
+    let forecastDays = 7; // Default
+    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+        forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    } else if (model.toLowerCase() === 'icon') {
+        forecastDays = getCookieValueOrDefault('iconLength', 7);
+    }
+    
+    const additionalParameters = `&forecast_days=${forecastDays}`;
+    
+    const testResult = await testParameterSet(baseUrl, variables, dailyParameters, units, additionalParameters, model);
+    
+    if (testResult.success) {
+        console.log(`✅ Variable group works for ${model}`);
+        return true;
+    } else {
+        console.log(`❌ Variable group fails for ${model}: ${testResult.error}`);
+        return false;
+    }
+}
+
+// Update the identifyProblematicVariables function to use caching
+async function identifyProblematicVariables(baseUrl, model, allParameters) {
+    console.log(`Starting binary search to identify problematic variables for ${model} model`);
+    
+    // Check cache first
+    const cachedProblematic = getCachedProblematicVariables(model);
+    if (cachedProblematic !== null) {
+        console.log(`Using cached problematic variables for ${model}: ${cachedProblematic.join(', ')}`);
+        const workingParams = allParameters.filter(param => !cachedProblematic.includes(param));
+        return { working: workingParams, problematic: cachedProblematic };
+    }
+    
+    const dailyParameters = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ];
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    
+    // Determine forecast days based on model
+    let forecastDays = 7; // Default
+    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+        forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    } else if (model.toLowerCase() === 'icon') {
+        forecastDays = getCookieValueOrDefault('iconLength', 7);
+    }
+    
+    const additionalParameters = `&forecast_days=${forecastDays}`;
+    
+    // Test if the full parameter set works
+    const fullParamsTest = await testParameterSet(baseUrl, allParameters, dailyParameters.join(','), units, additionalParameters, model);
+    
+    if (fullParamsTest.success) {
+        console.log(`Full parameter set works for ${model} - no problematic variables found`);
+        cacheProblematicVariables(model, []);
+        return { working: allParameters, problematic: [] };
+    }
+    
+    console.log(`Full parameter set fails for ${model} - starting binary search...`);
+    
+    // First, test daily parameters separately
+    console.log(`Testing daily parameters for ${model}...`);
+    const dailyProblematic = await testDailyParameters(baseUrl, dailyParameters, units, additionalParameters, model);
+    
+    // Binary search to find problematic hourly variables
+    const hourlyProblematic = await binarySearchProblematicVariables(
+        baseUrl, 
+        allParameters, 
+        dailyParameters.join(','), 
+        units, 
+        additionalParameters, 
+        model
+    );
+    
+    // Combine problematic variables
+    const allProblematic = [...hourlyProblematic, ...dailyProblematic];
+    
+    // Cache the results
+    cacheProblematicVariables(model, allProblematic);
+    
+    // Create working parameter set by removing problematic variables
+    const workingParams = allParameters.filter(param => !allProblematic.includes(param));
+    
+    console.log(`Binary search complete for ${model}:`);
+    console.log(`Working hourly parameters: ${workingParams.length}`);
+    console.log(`Problematic hourly parameters: ${hourlyProblematic.join(', ')}`);
+    console.log(`Problematic daily parameters: ${dailyProblematic.join(', ')}`);
+    
+    return { working: workingParams, problematic: allProblematic };
+}
+
+async function testDailyParameters(baseUrl, dailyParams, units, additionalParams, model) {
+    const problematic = [];
+    
+    // Test each daily parameter individually
+    for (const param of dailyParams) {
+        console.log(`Testing daily parameter: ${param}`);
+        
+        try {
+            const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&daily=${param}${units}${additionalParams}`;
+            const response = await fetch(requestUrl);
+            
+            if (!response.ok) {
+                console.log(`Daily parameter ${param} fails: HTTP ${response.status}`);
+                problematic.push(param);
+            } else {
+                const data = await response.json();
+                if (!data.daily || !data.daily[param]) {
+                    console.log(`Daily parameter ${param} fails: missing data`);
+                    problematic.push(param);
+                } else {
+                    console.log(`Daily parameter ${param} works`);
+                }
+            }
+        } catch (error) {
+            console.log(`Daily parameter ${param} fails: ${error.message}`);
+            problematic.push(param);
+        }
+        
+        // Small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return problematic;
+}
+
+// Add global functions for manual testing (accessible from browser console)
+window.testWeatherVariable = testSpecificVariable;
+window.testWeatherVariableGroup = testVariableGroup;
+window.clearProblematicVariableCache = function(model) {
+    const cacheKey = `problematicVars_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    localStorage.removeItem(cacheKey);
+    console.log(`Cleared problematic variable cache for ${model}`);
+};
+
+// Function to force fresh problematic variable detection
+window.forceFreshDetection = function(model) {
+    console.log(`Forcing fresh problematic variable detection for ${model}`);
+    
+    // Clear the cache
+    clearProblematicVariableCache(model);
+    
+    // Clear any error cache
+    const errorCacheKey = `lastError_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    localStorage.removeItem(errorCacheKey);
+    
+    // Clear the API call cache to force fresh data
+    const apiCacheKey = `lastApiCall_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    localStorage.removeItem(apiCacheKey);
+    
+    console.log(`All caches cleared for ${model}. Next fetch will perform fresh detection.`);
+    
+    // Trigger a new fetch
+    fetchAllModelsData();
+};
+
+// Special function to test wind-related variables for GFS debugging
+window.testGFSWindVariables = async function() {
+    console.log('Testing GFS wind variables specifically...');
+    
+    const baseUrl = 'https://api.open-meteo.com/v1/gfs';
+    const model = 'gfs';
+    
+    const windVariables = [
+        'wind_speed_10m',
+        'wind_speed_80m', 
+        'wind_speed_180m',
+        'wind_direction_10m',
+        'wind_direction_80m',
+        'wind_direction_180m',
+        'wind_gusts_10m',
+        'windspeed_1000hPa',
+        'windspeed_975hPa',
+        'windspeed_950hPa',
+        'windspeed_925hPa',
+        'windspeed_900hPa',
+        'windspeed_850hPa',
+        'windspeed_800hPa',
+        'windspeed_700hPa',
+        'windspeed_600hPa',
+        'windspeed_500hPa',
+        'windspeed_400hPa',
+        'winddirection_1000hPa',
+        'winddirection_975hPa',
+        'winddirection_950hPa',
+        'winddirection_925hPa',
+        'winddirection_900hPa',
+        'winddirection_850hPa',
+        'winddirection_800hPa',
+        'winddirection_700hPa',
+        'winddirection_600hPa',
+        'winddirection_500hPa',
+        'winddirection_400hPa'
+    ];
+    
+    const results = {};
+    
+    for (const variable of windVariables) {
+        console.log(`Testing ${variable}...`);
+        const result = await testSpecificVariable(baseUrl, model, variable);
+        results[variable] = result;
+        
+        // Small delay between tests
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    console.log('GFS Wind Variable Test Results:');
+    console.table(results);
+    
+    const working = Object.keys(results).filter(v => results[v]);
+    const failing = Object.keys(results).filter(v => !results[v]);
+    
+    console.log(`✅ Working wind variables: ${working.join(', ')}`);
+    console.log(`❌ Failing wind variables: ${failing.join(', ')}`);
+    
+    return { working, failing, results };
+};
+
+// Function to test the specific problematic variables mentioned
+window.testKnownProblematicVariables = async function() {
+    console.log('Testing known problematic variables for GFS...');
+    
+    const baseUrl = 'https://api.open-meteo.com/v1/gfs';
+    const model = 'gfs';
+    
+    const knownProblematic = [
+        'wind_speed_10m',
+        'wind_direction_10m',
+        'apparent_temperature_max',
+        'apparent_temperature_min'
+    ];
+    
+    const results = {};
+    
+    for (const variable of knownProblematic) {
+        console.log(`Testing known problematic variable: ${variable}...`);
+        const result = await testSpecificVariable(baseUrl, model, variable);
+        results[variable] = result;
+        
+        // Small delay between tests
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    console.log('Known Problematic Variable Test Results:');
+    console.table(results);
+    
+    const working = Object.keys(results).filter(v => results[v]);
+    const failing = Object.keys(results).filter(v => !results[v]);
+    
+    console.log(`✅ Working variables: ${working.join(', ')}`);
+    console.log(`❌ Failing variables: ${failing.join(', ')}`);
+    
+    return { working, failing, results };
+};
+
+// Function to test daily parameters specifically
+window.testDailyParameters = async function() {
+    console.log('Testing daily parameters for GFS...');
+    
+    const baseUrl = 'https://api.open-meteo.com/v1/gfs';
+    const model = 'gfs';
+    
+    const dailyParams = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ];
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    const additionalParams = `&forecast_days=${forecastDays}`;
+    
+    const results = {};
+    
+    for (const param of dailyParams) {
+        console.log(`Testing daily parameter: ${param}`);
+        
+        try {
+            const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&daily=${param}${units}${additionalParams}`;
+            const response = await fetch(requestUrl);
+            
+            if (!response.ok) {
+                console.log(`Daily parameter ${param} fails: HTTP ${response.status}`);
+                results[param] = false;
+            } else {
+                const data = await response.json();
+                if (!data.daily || !data.daily[param]) {
+                    console.log(`Daily parameter ${param} fails: missing data`);
+                    results[param] = false;
+                } else {
+                    console.log(`Daily parameter ${param} works`);
+                    results[param] = true;
+                }
+            }
+        } catch (error) {
+            console.log(`Daily parameter ${param} fails: ${error.message}`);
+            results[param] = false;
+        }
+        
+        // Small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    console.log('Daily Parameter Test Results:');
+    console.table(results);
+    
+    const working = Object.keys(results).filter(v => results[v]);
+    const failing = Object.keys(results).filter(v => !results[v]);
+    
+    console.log(`✅ Working daily parameters: ${working.join(', ')}`);
+    console.log(`❌ Failing daily parameters: ${failing.join(', ')}`);
+    
+    return { working, failing, results };
+};
+
+// Function to clear all caches and force fresh detection
+window.clearAllCachesAndDetect = function(model) {
+    console.log(`Clearing all caches and forcing fresh problematic variable detection for ${model}`);
+    
+    // Clear problematic variables cache
+    clearProblematicVariableCache(model);
+    
+    // Clear error cache
+    const errorCacheKey = `lastError_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    localStorage.removeItem(errorCacheKey);
+    
+    // Clear API call cache to force fresh data
+    const apiCacheKey = `lastApiCall_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    localStorage.removeItem(apiCacheKey);
+    
+    console.log(`All caches cleared for ${model}. Starting fresh detection...`);
+    
+    // Force the system to bypass cache and do fresh detection
+    window.bypassCacheDetection = true;
+    
+    // Trigger a new fetch
+    fetchAllModelsData();
+};
+
+// Function to test half of the parameters at a time
+window.testParameterHalf = async function(baseUrl, model, allParameters) {
+    console.log(`Testing parameter halves for ${model}...`);
+    
+    const midPoint = Math.ceil(allParameters.length / 2);
+    const firstHalf = allParameters.slice(0, midPoint);
+    const secondHalf = allParameters.slice(midPoint);
+    
+    console.log(`First half (${firstHalf.length} params): ${firstHalf.slice(0, 3).join(',')}...`);
+    console.log(`Second half (${secondHalf.length} params): ${secondHalf.slice(0, 3).join(',')}...`);
+    
+    const firstHalfResult = await testVariableGroup(baseUrl, model, firstHalf);
+    const secondHalfResult = await testVariableGroup(baseUrl, model, secondHalf);
+    
+    console.log(`First half result: ${firstHalfResult ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`Second half result: ${secondHalfResult ? '✅ PASS' : '❌ FAIL'}`);
+    
+    if (firstHalfResult && !secondHalfResult) {
+        console.log('Problem is in the second half of parameters');
+        return { problematicHalf: 'second', params: secondHalf };
+    } else if (!firstHalfResult && secondHalfResult) {
+        console.log('Problem is in the first half of parameters');
+        return { problematicHalf: 'first', params: firstHalf };
+    } else if (!firstHalfResult && !secondHalfResult) {
+        console.log('Both halves have problems - testing smaller groups');
+        return { problematicHalf: 'both', params: allParameters };
+    } else {
+        console.log('Both halves work - testing individual parameters');
+        return { problematicHalf: 'none', params: [] };
+    }
+};
+
+// ... existing code ...
+
+// Add comprehensive one-by-one parameter testing system
+async function testAllParametersIndividually(baseUrl, model) {
+    console.log(`Starting comprehensive parameter testing for ${model}`);
+    
+    // Check if we already have comprehensive test results
+    const comprehensiveCacheKey = `comprehensiveTest_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    const cachedComprehensive = localStorage.getItem(comprehensiveCacheKey);
+    
+    if (cachedComprehensive) {
+        try {
+            const data = JSON.parse(cachedComprehensive);
+            const cacheAge = Date.now() - data.timestamp;
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+            
+            if (cacheAge < maxAge) {
+                console.log(`Using cached comprehensive test results for ${model}`);
+                return data.results;
+            }
+        } catch (error) {
+            console.error('Error parsing cached comprehensive test results:', error);
+        }
+    }
+    
+    // Get all possible parameters for this model
+    const hourlyParameters = getAllPossibleParameters(model);
+    const dailyParameters = [
+        'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+        'apparent_temperature_max', 'apparent_temperature_min',
+        'sunrise', 'sunset', 'uv_index_max', 'precipitation_sum'
+    ];
+    
+    // Combine all parameters to test
+    const allParameters = [...hourlyParameters, ...dailyParameters];
+    
+    // Create progress UI
+    const progressContainer = createProgressUI(model, allParameters.length);
+    
+    const results = {
+        working: [],
+        failing: [],
+        details: {}
+    };
+    
+    const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
+    
+    // Determine forecast days based on model
+    let forecastDays = 7; // Default
+    if (model.toLowerCase() === 'openmeteo' || model.toLowerCase() === 'gfs') {
+        forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
+    } else if (model.toLowerCase() === 'icon') {
+        forecastDays = getCookieValueOrDefault('iconLength', 7);
+    }
+    
+    const additionalParameters = `&forecast_days=${forecastDays}`;
+    
+    // Test each parameter individually (both hourly and daily)
+    for (let i = 0; i < allParameters.length; i++) {
+        const param = allParameters[i];
+        
+        // Update progress
+        updateProgress(progressContainer, i + 1, allParameters.length, param);
+        
+        console.log(`Testing parameter ${i + 1}/${allParameters.length}: ${param}`);
+        
+        try {
+            // Determine if this is a daily or hourly parameter
+            const isDailyParam = dailyParameters.includes(param);
+            
+            if (isDailyParam) {
+                // Test daily parameter individually (no hourly parameters)
+                const testResult = await testDailyParameterIndividually(baseUrl, param, units, additionalParameters, model);
+                
+                if (testResult.success) {
+                    results.working.push(param);
+                    results.details[param] = { status: 'working', error: null, type: 'daily' };
+                    console.log(`✅ Daily parameter ${param} works`);
+                } else {
+                    results.failing.push(param);
+                    results.details[param] = { status: 'failing', error: testResult.error, type: 'daily' };
+                    console.log(`❌ Daily parameter ${param} fails: ${testResult.error}`);
+                }
+            } else {
+                // Test hourly parameter individually (no daily parameters)
+                const testResult = await testHourlyParameterIndividually(baseUrl, param, units, additionalParameters, model);
+                
+                if (testResult.success) {
+                    results.working.push(param);
+                    results.details[param] = { status: 'working', error: null, type: 'hourly' };
+                    console.log(`✅ Hourly parameter ${param} works`);
+                } else {
+                    results.failing.push(param);
+                    results.details[param] = { status: 'failing', error: testResult.error, type: 'hourly' };
+                    console.log(`❌ Hourly parameter ${param} fails: ${testResult.error}`);
+                }
+            }
+        } catch (error) {
+            results.failing.push(param);
+            results.details[param] = { status: 'failing', error: error.message, type: 'unknown' };
+            console.log(`❌ ${param} fails: ${error.message}`);
+        }
+        
+        // Small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    // Cache the comprehensive results
+    const cacheData = {
+        timestamp: Date.now(),
+        results: results,
+        model: model
+    };
+    localStorage.setItem(comprehensiveCacheKey, JSON.stringify(cacheData));
+    
+    // Show final results
+    showComprehensiveResults(progressContainer, results, model);
+    
+    console.log(`Comprehensive parameter testing complete for ${model}:`);
+    console.log(`Working: ${results.working.length} parameters`);
+    console.log(`Failing: ${results.failing.length} parameters`);
+    
+    return results;
+}
+
+// Test a single hourly parameter individually (no daily parameters)
+async function testHourlyParameterIndividually(baseUrl, parameter, units, additionalParams, model) {
+    try {
+        const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${parameter}${units}${additionalParams}`;
+        console.log(`Testing hourly parameter individually: ${parameter}`);
+        console.log(`URL: ${requestUrl}`);
+        
+        const response = await fetch(requestUrl);
+        
+        if (!response.ok) {
+            return { success: false, error: `HTTP ${response.status}` };
+        }
+        
+        const weatherData = await response.json();
+        
+        // Basic validation
+        if (!weatherData.hourly || !weatherData.hourly.time || weatherData.hourly.time.length === 0) {
+            return { success: false, error: 'Invalid response data' };
+        }
+        
+        // Check if the specific parameter exists in the response
+        if (!weatherData.hourly[parameter]) {
+            return { success: false, error: 'Parameter not found in response' };
+        }
+        
+        return { success: true, data: weatherData };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+// Test a single daily parameter individually (no hourly parameters)
+async function testDailyParameterIndividually(baseUrl, parameter, units, additionalParams, model) {
+    try {
+        const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&daily=${parameter}${units}${additionalParams}`;
+        console.log(`Testing daily parameter individually: ${parameter}`);
+        console.log(`URL: ${requestUrl}`);
+        
+        const response = await fetch(requestUrl);
+        
+        if (!response.ok) {
+            return { success: false, error: `HTTP ${response.status}` };
+        }
+        
+        const weatherData = await response.json();
+        
+        // Basic validation
+        if (!weatherData.daily || !weatherData.daily.time || weatherData.daily.time.length === 0) {
+            return { success: false, error: 'Invalid response data' };
+        }
+        
+        // Check if the specific parameter exists in the response
+        if (!weatherData.daily[parameter]) {
+            return { success: false, error: 'Parameter not found in response' };
+        }
+        
+        return { success: true, data: weatherData };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+function getAllPossibleParameters(model) {
+    // Get all possible parameters for the model
+    const parameterGroups = createParameterGroups();
+    
+    if (model.toLowerCase() === 'icon') {
+        return parameterGroups.icon_full;
+    } else {
+        return parameterGroups.gfs_full;
+    }
+}
+
+function createProgressUI(model, totalParameters) {
+    // Remove any existing progress UI
+    const existingProgress = document.getElementById('parameter-test-progress');
+    if (existingProgress) {
+        existingProgress.remove();
+    }
+    
+    // Create progress container
+    const progressContainer = document.createElement('div');
+    progressContainer.id = 'parameter-test-progress';
+    progressContainer.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border: 2px solid #007bff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 400px;
+        max-width: 600px;
+    `;
+    
+    progressContainer.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #007bff;">Testing ${model.toUpperCase()} Parameters</h3>
+        <p style="margin: 0 0 10px 0; color: #666;">Testing all parameters individually...</p>
+        <div style="background: #f0f0f0; border-radius: 5px; height: 20px; margin: 10px 0;">
+            <div id="progress-bar" style="background: #007bff; height: 100%; border-radius: 5px; width: 0%; transition: width 0.3s;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span id="progress-text">0 / ${totalParameters}</span>
+            <span id="progress-percentage">0%</span>
+        </div>
+        <p id="current-parameter" style="margin: 10px 0 0 0; font-weight: bold; color: #333;">Starting...</p>
+    `;
+    
+    document.body.appendChild(progressContainer);
+    return progressContainer;
+}
+
+function updateProgress(container, current, total, currentParameter) {
+    const progressBar = container.querySelector('#progress-bar');
+    const progressText = container.querySelector('#progress-text');
+    const progressPercentage = container.querySelector('#progress-percentage');
+    const currentParamElement = container.querySelector('#current-parameter');
+    
+    const percentage = Math.round((current / total) * 100);
+    
+    progressBar.style.width = percentage + '%';
+    progressText.textContent = `${current} / ${total}`;
+    progressPercentage.textContent = percentage + '%';
+    currentParamElement.textContent = `Testing: ${currentParameter}`;
+}
+
+function showComprehensiveResults(container, results, model) {
+    container.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #28a745;">${model.toUpperCase()} Parameter Test Complete</h3>
+        <div style="margin: 10px 0;">
+            <p style="margin: 5px 0; color: #28a745;">✅ Working: ${results.working.length} parameters</p>
+            <p style="margin: 5px 0; color: #dc3545;">❌ Failing: ${results.failing.length} parameters</p>
+        </div>
+        <div style="max-height: 200px; overflow-y: auto; margin: 10px 0;">
+            <h4 style="margin: 10px 0 5px 0; color: #28a745;">Working Parameters:</h4>
+            <p style="font-size: 12px; color: #666; margin: 5px 0;">${results.working.join(', ')}</p>
+            <h4 style="margin: 10px 0 5px 0; color: #dc3545;">Failing Parameters:</h4>
+            <p style="font-size: 12px; color: #666; margin: 5px 0;">${results.failing.join(', ')}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Close</button>
+    `;
+}
+
+// Update the identifyProblematicVariables function to only test when API fails
+async function identifyProblematicVariables(baseUrl, model, allParameters) {
+    console.log(`Checking for problematic variables for ${model} model`);
+    
+    // Check if we should bypass cache detection
+    if (window.bypassCacheDetection) {
+        console.log(`Bypassing cached problematic variables for ${model} - doing fresh detection`);
+        window.bypassCacheDetection = false; // Reset the flag
+    } else {
+        // Check cache first
+        const cachedProblematic = getCachedProblematicVariables(model);
+        if (cachedProblematic !== null) {
+            console.log(`Using cached problematic variables for ${model}: ${cachedProblematic.length} variables`);
+            const workingParams = allParameters.filter(param => !cachedProblematic.includes(param));
+            return { working: workingParams, problematic: cachedProblematic };
+        }
+    }
+    
+    // Only perform comprehensive testing if explicitly requested or no cache exists
+    // This will be called from fetchWeatherDataWithFallback when an API error occurs
+    console.log(`No cached problematic variables found for ${model} - will test when API fails`);
+    return { working: allParameters, problematic: [] };
+}
+
+// Add global function to manually trigger comprehensive testing
+window.runComprehensiveParameterTest = async function(model) {
+    console.log(`Manually triggering comprehensive parameter test for ${model}`);
+    
+    // Clear any existing cache
+    clearProblematicVariableCache(model);
+    
+    // Clear comprehensive test cache
+    const comprehensiveCacheKey = `comprehensiveTest_${model}_${userLocation.latitude}_${userLocation.longitude}`;
+    localStorage.removeItem(comprehensiveCacheKey);
+    
+    // Run the test
+    const baseUrl = model.toLowerCase() === 'icon' ? 'https://api.open-meteo.com/v1/dwd-icon' : 'https://api.open-meteo.com/v1/gfs';
+    const results = await testAllParametersIndividually(baseUrl, model);
+    
+    return results;
+};
+
+// ... existing code ...
