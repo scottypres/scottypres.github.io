@@ -980,77 +980,8 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
                 if (model.toLowerCase() === 'gfs') {
                     commonParameters = await getGFSParametersWithFallback(baseUrl, lat, lon, units, additionalParameters);
                 } else if (model.toLowerCase() === 'icon') {
-                    // ICON model has different parameters
-                    commonParameters = [
-                        'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
-                        'weather_code', 'relative_humidity_2m',
-                        'dew_point_2m',
-                        'cloud_cover',
-                        'cloud_cover_low',
-                        'cloud_cover_mid',
-                        'cloud_cover_high',
-                        'cloud_cover_1000hPa',
-                        'cloud_cover_975hPa',
-                        'cloud_cover_950hPa',
-                        'cloud_cover_925hPa',
-                        'cloud_cover_900hPa',
-                        'cloud_cover_850hPa',
-                        'cloud_cover_800hPa',
-                        'cloud_cover_700hPa',
-                        'cloud_cover_600hPa',
-                        'cloud_cover_500hPa',
-                        'cloud_cover_400hPa',
-                        'cloud_cover_250hPa',
-                        'cloud_cover_200hPa',
-                        'cloud_cover_150hPa',
-                        'cloud_cover_300hPa',
-                        'cloud_cover_100hPa',
-                        'cloud_cover_70hPa',
-                        'cloud_cover_50hPa',
-                        'cloud_cover_30hPa',
-                        // Add new variables below
-                        'wind_speed_10m',
-                        'wind_speed_80m',
-                        'wind_speed_180m', 'wind_gusts_10m',
-                        'wind_direction_10m',
-                        'wind_direction_80m',
-                        'wind_direction_180m',
-                        'temperature_1000hPa',
-                        'temperature_975hPa',
-                        'temperature_950hPa',
-                        'temperature_925hPa',
-                        'temperature_900hPa',
-                        'temperature_850hPa',
-                        'temperature_800hPa',
-                        'temperature_700hPa',
-                        'temperature_600hPa',
-                        'temperature_500hPa',
-                        'temperature_400hPa',
-
-                        'windspeed_1000hPa',
-                        'windspeed_975hPa',
-                        'windspeed_950hPa',
-                        'windspeed_925hPa',
-                        'windspeed_900hPa',
-                        'windspeed_850hPa',
-                        'windspeed_800hPa',
-                        'windspeed_700hPa',
-                        'windspeed_600hPa',
-                        'windspeed_500hPa',
-                        'windspeed_400hPa',
-                        'winddirection_1000hPa',
-                        'winddirection_975hPa',
-                        'winddirection_950hPa',
-                        'winddirection_925hPa',
-                        'winddirection_900hPa',
-                        'winddirection_850hPa',
-                        'winddirection_800hPa',
-                        'winddirection_700hPa',
-                        'winddirection_600hPa',
-                        'winddirection_500hPa',
-                        'winddirection_400hPa',
-                        'is_day'
-                    ].join(',');
+                    // ICON model parameter testing for missing 180m wind data
+                    commonParameters = await getICONParametersWithFallback(baseUrl, lat, lon, units, additionalParameters);
                 } else {
                     // For other models (like openmeteo), use full parameters
                     commonParameters = [
@@ -1217,6 +1148,207 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
 }
 
 
+
+// Function to test ICON parameters and handle missing wind data at 180m
+async function getICONParametersWithFallback(baseUrl, lat, lon, units, additionalParameters) {
+    // First, try with all wind parameters including 180m
+    const fullParameters = [
+        'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
+        'weather_code', 'relative_humidity_2m',
+        'dew_point_2m',
+        'cloud_cover',
+        'cloud_cover_low',
+        'cloud_cover_mid',
+        'cloud_cover_high',
+        'cloud_cover_1000hPa',
+        'cloud_cover_975hPa',
+        'cloud_cover_950hPa',
+        'cloud_cover_925hPa',
+        'cloud_cover_900hPa',
+        'cloud_cover_850hPa',
+        'cloud_cover_800hPa',
+        'cloud_cover_700hPa',
+        'cloud_cover_600hPa',
+        'cloud_cover_500hPa',
+        'cloud_cover_400hPa',
+        'cloud_cover_250hPa',
+        'cloud_cover_200hPa',
+        'cloud_cover_150hPa',
+        'cloud_cover_300hPa',
+        'cloud_cover_100hPa',
+        'cloud_cover_70hPa',
+        'cloud_cover_50hPa',
+        'cloud_cover_30hPa',
+        'wind_speed_10m',
+        'wind_speed_80m',
+        'wind_speed_180m', 'wind_gusts_10m',
+        'wind_direction_10m',
+        'wind_direction_80m',
+        'wind_direction_180m',
+        'temperature_1000hPa',
+        'temperature_975hPa',
+        'temperature_950hPa',
+        'temperature_925hPa',
+        'temperature_900hPa',
+        'temperature_850hPa',
+        'temperature_800hPa',
+        'temperature_700hPa',
+        'temperature_600hPa',
+        'temperature_500hPa',
+        'temperature_400hPa',
+        'windspeed_1000hPa',
+        'windspeed_975hPa',
+        'windspeed_950hPa',
+        'windspeed_925hPa',
+        'windspeed_900hPa',
+        'windspeed_850hPa',
+        'windspeed_800hPa',
+        'windspeed_700hPa',
+        'windspeed_600hPa',
+        'windspeed_500hPa',
+        'windspeed_400hPa',
+        'winddirection_1000hPa',
+        'winddirection_975hPa',
+        'winddirection_950hPa',
+        'winddirection_925hPa',
+        'winddirection_900hPa',
+        'winddirection_850hPa',
+        'winddirection_800hPa',
+        'winddirection_700hPa',
+        'winddirection_600hPa',
+        'winddirection_500hPa',
+        'winddirection_400hPa',
+        'is_day'
+    ].join(',');
+
+    const dailyParameters = [
+        'weather_code',
+        'sunrise',
+        'sunset',
+        'uv_index_max',
+        'precipitation_sum'
+    ].join(',');
+
+    const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${fullParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
+    
+    try {
+        const response = await fetch(requestUrl);
+        if (response.ok) {
+            const weatherData = await response.json();
+            // Check if wind_speed_180m or wind_direction_180m are missing
+            const missingWindData = !weatherData.hourly.wind_speed_180m || 
+                                   !weatherData.hourly.wind_direction_180m;
+            
+            if (missingWindData) {
+                console.log('ICON API missing 180m wind data, adding placeholder data');
+                // Add placeholder data for missing wind parameters
+                const timeLength = weatherData.hourly.time.length;
+                if (!weatherData.hourly.wind_speed_180m) {
+                    weatherData.hourly.wind_speed_180m = new Array(timeLength).fill(null);
+                }
+                if (!weatherData.hourly.wind_direction_180m) {
+                    weatherData.hourly.wind_direction_180m = new Array(timeLength).fill(null);
+                }
+            }
+            
+            return fullParameters;
+        } else {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+    } catch (error) {
+        console.log('ICON API call failed with 180m wind parameters, trying without them');
+        
+        // Fallback: try without wind_speed_180m and wind_direction_180m
+        const fallbackParameters = [
+            'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
+            'weather_code', 'relative_humidity_2m',
+            'dew_point_2m',
+            'cloud_cover',
+            'cloud_cover_low',
+            'cloud_cover_mid',
+            'cloud_cover_high',
+            'cloud_cover_1000hPa',
+            'cloud_cover_975hPa',
+            'cloud_cover_950hPa',
+            'cloud_cover_925hPa',
+            'cloud_cover_900hPa',
+            'cloud_cover_850hPa',
+            'cloud_cover_800hPa',
+            'cloud_cover_700hPa',
+            'cloud_cover_600hPa',
+            'cloud_cover_500hPa',
+            'cloud_cover_400hPa',
+            'cloud_cover_250hPa',
+            'cloud_cover_200hPa',
+            'cloud_cover_150hPa',
+            'cloud_cover_300hPa',
+            'cloud_cover_100hPa',
+            'cloud_cover_70hPa',
+            'cloud_cover_50hPa',
+            'cloud_cover_30hPa',
+            'wind_speed_10m',
+            'wind_speed_80m', 'wind_gusts_10m',
+            'wind_direction_10m',
+            'wind_direction_80m',
+            'temperature_1000hPa',
+            'temperature_975hPa',
+            'temperature_950hPa',
+            'temperature_925hPa',
+            'temperature_900hPa',
+            'temperature_850hPa',
+            'temperature_800hPa',
+            'temperature_700hPa',
+            'temperature_600hPa',
+            'temperature_500hPa',
+            'temperature_400hPa',
+            'windspeed_1000hPa',
+            'windspeed_975hPa',
+            'windspeed_950hPa',
+            'windspeed_925hPa',
+            'windspeed_900hPa',
+            'windspeed_850hPa',
+            'windspeed_800hPa',
+            'windspeed_700hPa',
+            'windspeed_600hPa',
+            'windspeed_500hPa',
+            'windspeed_400hPa',
+            'winddirection_1000hPa',
+            'winddirection_975hPa',
+            'winddirection_950hPa',
+            'winddirection_925hPa',
+            'winddirection_900hPa',
+            'winddirection_850hPa',
+            'winddirection_800hPa',
+            'winddirection_700hPa',
+            'winddirection_600hPa',
+            'winddirection_500hPa',
+            'winddirection_400hPa',
+            'is_day'
+        ].join(',');
+        
+        const fallbackRequestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${fallbackParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
+        
+        try {
+            const fallbackResponse = await fetch(fallbackRequestUrl);
+            if (fallbackResponse.ok) {
+                const weatherData = await fallbackResponse.json();
+                console.log('ICON API call succeeded without 180m wind parameters, adding placeholder data');
+                
+                // Add placeholder data for missing 180m wind parameters
+                const timeLength = weatherData.hourly.time.length;
+                weatherData.hourly.wind_speed_180m = new Array(timeLength).fill(null);
+                weatherData.hourly.wind_direction_180m = new Array(timeLength).fill(null);
+                
+                return fallbackParameters;
+            } else {
+                throw new Error(`Fallback HTTP error! Status: ${fallbackResponse.status}`);
+            }
+        } catch (fallbackError) {
+            console.error('Both ICON API calls failed:', fallbackError);
+            throw fallbackError;
+        }
+    }
+}
 
 // Function to test GFS parameters and handle missing wind data
 async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additionalParameters) {
@@ -1568,78 +1700,9 @@ console.log('should fetch data: ',shouldFetchData)
                     'precipitation_probability'
                 ].join(',');
             }
-        }
-if (model.toLowerCase() === 'icon') {
-            commonParameters = [
-                'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
-                'weather_code', 'relative_humidity_2m',
-                'dew_point_2m',
-                'cloud_cover',
-                'cloud_cover_low',
-                'cloud_cover_mid',
-                'cloud_cover_high',
-                'cloud_cover_1000hPa',
-                'cloud_cover_975hPa',
-                'cloud_cover_950hPa',
-                'cloud_cover_925hPa',
-                'cloud_cover_900hPa',
-                'cloud_cover_850hPa',
-                'cloud_cover_800hPa',
-                'cloud_cover_700hPa',
-                'cloud_cover_600hPa',
-                'cloud_cover_500hPa',
-                'cloud_cover_400hPa',
-                'cloud_cover_250hPa',
-                'cloud_cover_200hPa',
-                'cloud_cover_150hPa',
-                'cloud_cover_300hPa',
-                'cloud_cover_100hPa',
-                'cloud_cover_70hPa',
-                'cloud_cover_50hPa',
-                'cloud_cover_30hPa',
-                // Add new variables below
-                'wind_speed_10m',
-                'wind_speed_80m',
-                'wind_speed_180m', 'wind_gusts_10m',
-                'wind_direction_10m',
-                'wind_direction_80m',
-                'wind_direction_180m',
-                'temperature_1000hPa',
-                'temperature_975hPa',
-                'temperature_950hPa',
-                'temperature_925hPa',
-                'temperature_900hPa',
-                'temperature_850hPa',
-                'temperature_800hPa',
-                'temperature_700hPa',
-                'temperature_600hPa',
-                'temperature_500hPa',
-                'temperature_400hPa',
-
-                'windspeed_1000hPa',
-                'windspeed_975hPa',
-                'windspeed_950hPa',
-                'windspeed_925hPa',
-                'windspeed_900hPa',
-                'windspeed_850hPa',
-                'windspeed_800hPa',
-                'windspeed_700hPa',
-                'windspeed_600hPa',
-                'windspeed_500hPa',
-                'windspeed_400hPa',
-                'winddirection_1000hPa',
-                'winddirection_975hPa',
-                'winddirection_950hPa',
-                'winddirection_925hPa',
-                'winddirection_900hPa',
-                'winddirection_850hPa',
-                'winddirection_800hPa',
-                'winddirection_700hPa',
-                'winddirection_600hPa',
-                'winddirection_500hPa',
-                'winddirection_400hPa',
-                'is_day'
-            ].join(',');
+        } else if (model.toLowerCase() === 'icon') {
+            // ICON model parameter testing for missing 180m wind data
+            commonParameters = await getICONParametersWithFallback(baseUrl, userLocation.latitude, userLocation.longitude, units, additionalParameters);
         }
 
 
