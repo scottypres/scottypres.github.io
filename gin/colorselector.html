@@ -432,42 +432,22 @@
       loadFromQuery();
 
       /**
-       * Fit the entire page content to the viewport on load
-       * Preserves relative proportions between SVG and color selectors
-       * Zooms in on mobile devices for better usability
+       * Scale everything up proportionally for mobile devices
        */
       function fitPageToViewport() {
-        const container = document.querySelector('.container');
         const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        
-        // Get the natural size of the content
-        const contentWidth = container.scrollWidth;
-        const contentHeight = container.scrollHeight;
-        
-        // Detect if we're on a mobile device
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || viewportWidth < 768;
         
-        let scale;
-        
         if (isMobile) {
-          // On mobile, zoom in for better usability
-          // Calculate a scale that makes the content larger and more readable
-          const targetScale = 1.5; // Zoom in by 50%
-          const maxScale = Math.min(viewportWidth / contentWidth, viewportHeight / contentHeight);
-          scale = Math.min(targetScale, maxScale);
-        } else {
-          // On desktop, fit to viewport
-          const scaleX = viewportWidth / contentWidth;
-          const scaleY = viewportHeight / contentHeight;
-          scale = Math.min(scaleX, scaleY, 1);
+          // Simple proportional scale up for mobile
+          const scale = 1.8; // Scale up by 80%
+          
+          document.body.style.transform = `scale(${scale})`;
+          document.body.style.transformOrigin = 'top left';
+          document.body.style.width = `${100 / scale}%`;
+          document.body.style.height = `${100 / scale}%`;
         }
-        
-        // Apply the transform to the body
-        document.body.style.transform = `scale(${scale})`;
-        document.body.style.transformOrigin = 'top left';
-        document.body.style.width = `${100 / scale}%`;
-        document.body.style.height = `${100 / scale}%`;
+        // On desktop, don't apply any scaling
       }
 
       // Fit to viewport on load and resize
