@@ -433,6 +433,7 @@
 
       /**
        * Fit the entire page content to the viewport on load
+       * Preserves relative proportions between SVG and color selectors
        */
       function fitPageToViewport() {
         const container = document.querySelector('.container');
@@ -448,9 +449,11 @@
         const scaleY = viewportHeight / contentHeight;
         
         // Use the smaller scale to ensure everything fits
+        // This preserves the relative proportions you set (35% SVG width)
         const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
         
         // Apply the transform to the body
+        // This maintains the 35% SVG to color selector ratio you established
         document.body.style.transform = `scale(${scale})`;
         document.body.style.transformOrigin = 'top left';
         document.body.style.width = `${100 / scale}%`;
