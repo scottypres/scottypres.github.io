@@ -61,6 +61,10 @@
       font-weight: bold;
       margin-bottom: 8px;
     }
+    .color-group {
+      position: relative;
+    }
+    
     .color-group input[type="color"] {
       /* Increase size and add border so it is clearly tappable as a colour wheel */
       width: 100px;
@@ -69,6 +73,22 @@
       border-radius: 4px;
       cursor: pointer;
       margin-bottom: 10px;
+    }
+    
+    .click-hint {
+      position: absolute;
+      left: 30px;
+      top: 45%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #666;
+      white-space: nowrap;
+    }
+    
+    .click-hint::after {
+      content: "→";
+      margin-left: 4px;
+      font-size: 14px;
     }
     .swatches {
       display: flex;
@@ -279,16 +299,19 @@
 
     <div class="color-selector">
       <div class="color-group">
+        <div class="click-hint">click</div>
         <label for="color1Picker">Primary&nbsp;Color</label>
         <input type="color" id="color1Picker" value="#173d95">
         <div class="swatches" id="swatches1"></div>
       </div>
       <div class="color-group">
+        <div class="click-hint">click</div>
         <label for="color2Picker">Secondary&nbsp;Color</label>
         <input type="color" id="color2Picker" value="#c21a20">
         <div class="swatches" id="swatches2"></div>
       </div>
       <div class="color-group">
+        <div class="click-hint">click</div>
         <label for="color3Picker">Tertiary&nbsp;Color</label>
         <input type="color" id="color3Picker" value="#ecedee">
         <div class="swatches" id="swatches3"></div>
