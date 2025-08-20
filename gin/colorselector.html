@@ -430,6 +430,36 @@
 
       // Initialize by reading any query parameters and applying colors
       loadFromQuery();
+
+      /**
+       * Fit the entire page content to the viewport on load
+       */
+      function fitPageToViewport() {
+        const container = document.querySelector('.container');
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Get the natural size of the content
+        const contentWidth = container.scrollWidth;
+        const contentHeight = container.scrollHeight;
+        
+        // Calculate scale factors for both dimensions
+        const scaleX = viewportWidth / contentWidth;
+        const scaleY = viewportHeight / contentHeight;
+        
+        // Use the smaller scale to ensure everything fits
+        const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+        
+        // Apply the transform to the body
+        document.body.style.transform = `scale(${scale})`;
+        document.body.style.transformOrigin = 'top left';
+        document.body.style.width = `${100 / scale}%`;
+        document.body.style.height = `${100 / scale}%`;
+      }
+
+      // Fit to viewport on load and resize
+      window.addEventListener('load', fitPageToViewport);
+      window.addEventListener('resize', fitPageToViewport);
     })();
   </script>
 </body>
