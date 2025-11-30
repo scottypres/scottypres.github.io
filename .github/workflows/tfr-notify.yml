@@ -28,6 +28,7 @@ jobs:
           from zoneinfo import ZoneInfo
           import json
           import os
+          from pathlib import Path
           import re
           import sys
           import urllib.parse
@@ -37,7 +38,7 @@ jobs:
           FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
           TOKEN = os.getenv("TELEGRAM_TOKEN")
           CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-          STATE_FILE = "state/last_wpb.json"
+          STATE_FILE = Path("state") / "last_wpb.json"
           ET_ZONE = ZoneInfo("America/New_York")
 
           TZ_RE = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
@@ -76,9 +77,10 @@ jobs:
               return dt_obj.astimezone(ET_ZONE).strftime("%Y-%m-%d %a %I:%M %p %Z")
 
           def load_state(path):
-              if not os.path.exists(path):
+              path.parent.mkdir(parents=True, exist_ok=True)
+              if not path.exists():
                   return {"seen": {}}
-              with open(path, "r", encoding="utf-8") as f:
+              with path.open("r", encoding="utf-8") as f:
                   data = json.load(f)
               # Migrate old format
               if isinstance(data, dict) and "seen_ids" in data and "seen" not in data:
@@ -88,7 +90,8 @@ jobs:
               return data
 
           def save_state(path, data):
-              with open(path, "w", encoding="utf-8") as f:
+              path.parent.mkdir(parents=True, exist_ok=True)
+              with path.open("w", encoding="utf-8") as f:
                   json.dump(data, f, indent=2, sort_keys=True)
 
           def send_telegram(body):
