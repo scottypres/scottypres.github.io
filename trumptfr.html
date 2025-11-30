@@ -72,10 +72,18 @@
         const expirationDate = xml.querySelector('dateExpire')?.textContent || 'N/A';
         const timeZone = xml.querySelector('codeTimeZone')?.textContent || 'UTC';
         
-        // Convert UTC to EST (UTC-5)
+        // Convert feed timestamps (published in UTC) to Eastern Time
         const formatDate = (dateStr) => {
           if (dateStr === 'N/A') return dateStr;
-          const date = new Date(dateStr);
+
+          // The XML feed omits a timezone on ISO strings; treat them as UTC explicitly.
+          const normalized = /[zZ]|[+-]\d{2}:?\d{2}$/.test(dateStr)
+            ? dateStr
+            : `${dateStr}Z`;
+
+          const date = new Date(normalized);
+          if (isNaN(date)) return 'N/A';
+
           return date.toLocaleString('en-US', { 
             timeZone: 'America/New_York',
             year: 'numeric',
@@ -84,7 +92,8 @@
             weekday: 'long',
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
+            timeZoneName: 'short'
           });
         };
 
@@ -143,8 +152,8 @@
                           
                           NOTAM ID: ${notam.notam_id}<br>
                           Creation Date: ${notam.creation_date}<br>
-                          Effective (EST): ${details.effective}<br>
-                          Expires (EST): ${details.expires}`;
+                          Effective (ET): ${details.effective}<br>
+                          Expires (ET): ${details.expires}`;
           list.appendChild(li);
         }
 
