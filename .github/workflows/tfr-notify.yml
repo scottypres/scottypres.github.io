@@ -202,3 +202,4 @@ jobs:
             git push
           else
             echo "No state change to commit."
+          fi
