@@ -145,7 +145,7 @@ jobs:
                       desc = n.get("description","").strip()
                       start_str = format_et(eff_dt)
                       end_str = format_et(exp_dt)
-                      link = f"https://tfr.faa.gov/save_pages/detail_{notam_id.replace('/', '_')}.html"
+                      link = f"https://tfr.faa.gov/tfr3/?page=detail_{notam_id.replace('/', '_')}"
                       new_msgs.append(f"- {notam_id}: {desc} (type: {n.get('type','?')})\n  Starts: {start_str}\n  Ends: {end_str}\n  Link: {link}")
                       seen[notam_id] = current_active[notam_id]
                   else:
@@ -178,6 +178,9 @@ jobs:
                   send_telegram(full_msg)
               else:
                   print("No new or revoked WPB NOTAMs.")
+                  # On manual dispatch, send a quiet status if nothing new/revoked
+                  if os.getenv("GITHUB_EVENT_NAME") == "workflow_dispatch":
+                      send_telegram("No new West Palm Beach TFRs or revocations at this time.")
 
               state["seen"] = seen
               save_state(STATE_FILE, state)
@@ -187,3 +190,15 @@ jobs:
               main()
               sys.exit(0)
           PYCODE
+
+      - name: Commit state if changed
+        run: |
+          set -euo pipefail
+          if git status --porcelain | grep -q 'state/last_wpb.json'; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add state/last_wpb.json
+            git commit -m "Update TFR state"
+            git push
+          else
+            echo "No state change to commit."
