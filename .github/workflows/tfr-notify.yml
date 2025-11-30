@@ -38,7 +38,7 @@ jobs:
           FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
           TOKEN = os.getenv("TELEGRAM_TOKEN")
           CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-          STATE_FILE = Path("state") / "last_wpb.json"
+          STATE_FILE = Path(".github/workflows/state") / "last_wpb.json"
           ET_ZONE = ZoneInfo("America/New_York")
 
           TZ_RE = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
@@ -200,7 +200,7 @@ jobs:
           if git status --porcelain | grep -q 'state/last_wpb.json'; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add state/last_wpb.json
+            git add .github/workflows/state/last_wpb.json
             git commit -m "Update TFR state"
             git push
           else
