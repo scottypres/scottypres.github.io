@@ -16,47 +16,43 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0      # allow proper commits
-          clean: false        # don't wipe workspace before checkout
+          fetch-depth: 0
+          clean: false
+          ref: main        # REQUIRED for commits
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
-      - name: Run TFR check script
+      - name: Run TFR notifier
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           set -euo pipefail
-          mkdir -p state
-          python3 .github/scripts/tfr_wpb.py
-
-      - name: Debug file system after python
-        run: |
-          echo "PWD: $(pwd)"
-          echo "--- Listing repo root ---"
-          ls -la .
-          echo "--- Listing all recursively ---"
-          ls -R .
-
+          mkdir -p TFRNotifier/state
+          python3 TFRNotifier/tfr_wpb.py
 
       - name: Commit state if changed
         run: |
           set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           echo "--- Git status before commit ---"
           git status --untracked-files=all
-          echo "--- End git status ---"
 
-          # Include untracked files when checking for changes
-          if ! git diff --cached --quiet || ! git diff --quiet || git ls-files --others --exclude-standard | grep -q .; then
-            git add state/last_wpb.json
+          # Detect ANY changes, including new files
+          if ! git diff --quiet || \
+             ! git diff --cached --quiet || \
+             git ls-files --others --exclude-standard | grep -q .; then
+
+            git add TFRNotifier/state/last_wpb.json
             git commit -m "Update TFR state"
             git push
+
           else
             echo "No state change to commit."
           fi

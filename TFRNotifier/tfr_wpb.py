@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-STATE_FILE = Path("state") / "last_wpb.json"
+STATE_FILE = Path("TFRNotifier/state/last_wpb.json")
 ET_ZONE = ZoneInfo("America/New_York")
 
 TZ_RE = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
