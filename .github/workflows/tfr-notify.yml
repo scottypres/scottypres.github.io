@@ -16,8 +16,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          clean: false
+          fetch-depth: 0      # allow proper commits
+          clean: false        # don't wipe workspace before checkout
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
       - name: Run TFR check script
         env:
@@ -26,159 +31,25 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p state
+          python3 .github/scripts/tfr_wpb.py
 
-          python3 << 'EOF'
-import datetime
-from zoneinfo import ZoneInfo
-import json, os, re, sys
-from pathlib import Path
-import urllib.parse, urllib.request
-import xml.etree.ElementTree as ET
-
-FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-STATE_FILE = Path("state/last_wpb.json")
-ET_ZONE = ZoneInfo("America/New_York")
-TZ_RE = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
-
-def fetch_json(url):
-    with urllib.request.urlopen(url, timeout=15) as resp:
-        return json.loads(resp.read().decode())
-
-def fetch_detail(notam_id):
-    url_id = notam_id.replace("/", "_")
-    url = f"https://tfr.faa.gov/download/detail_{url_id}.xml"
-    with urllib.request.urlopen(url, timeout=15) as resp:
-        xml_text = resp.read()
-    root = ET.fromstring(xml_text)
-    eff = root.find(".//dateEffective")
-    exp = root.find(".//dateExpire")
-    return {
-        "effective": eff.text if eff is not None else None,
-        "expires": exp.text if exp is not None else None,
-    }
-
-def parse_utc(dt_str):
-    if not dt_str:
-        return None
-    dt_str = dt_str.strip()
-    if not TZ_RE.search(dt_str):
-        dt_str = dt_str + "Z"
-    try:
-        return datetime.datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-
-def format_et(dt_obj):
-    if not dt_obj:
-        return "N/A"
-    return dt_obj.astimezone(ET_ZONE).strftime("%Y-%m-%d %a %I:%M %p %Z")
-
-def load_state(path):
-    if not path.exists():
-        return {"seen": {}}
-    with path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-    if "seen" not in data:
-        data["seen"] = {}
-    return data
-
-def save_state(path, data):
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, sort_keys=True)
-
-def send_telegram(body):
-    if not (TOKEN and CHAT_ID):
-        print("Skipping Telegram (no token or chat id).")
-        return
-    data = urllib.parse.urlencode({"chat_id": CHAT_ID, "text": body}).encode()
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/x-www-form-urlencoded"})
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        print("Telegram status:", resp.status)
-
-def main():
-    now = datetime.datetime.now(datetime.timezone.utc)
-    feed = fetch_json(FEED_URL)
-
-    wpb = [
-        n for n in feed
-        if ("west palm beach" in n.get("description","").lower())
-        or ("PBI" in n.get("description",""))
-    ]
-
-    state = load_state(STATE_FILE)
-    seen = state.get("seen", {})
-    current_active = {}
-    new_msgs, revoke_msgs = [], []
-
-    for n in wpb:
-        notam_id = n.get("notam_id")
-        if not notam_id:
-            continue
-
-        try:
-            detail = fetch_detail(notam_id)
-        except Exception as e:
-            print("Failed to fetch detail:", notam_id, e)
-            continue
-
-        eff_dt = parse_utc(detail.get("effective"))
-        exp_dt = parse_utc(detail.get("expires"))
-
-        if not exp_dt or exp_dt <= now:
-            continue
-
-        current_active[notam_id] = {
-            "effective": eff_dt.isoformat() if eff_dt else None,
-            "expires": exp_dt.isoformat(),
-            "description": n.get("description","").strip()
-        }
-
-        if notam_id not in seen:
-            msg = (
-                f"- {notam_id}: {n.get('description','').strip()} (type: {n.get('type','?')})\n"
-                f"  Starts: {format_et(eff_dt)}\n"
-                f"  Ends:   {format_et(exp_dt)}\n"
-                f"  Link: https://tfr.faa.gov/tfr3/?page=detail_{notam_id.replace('/', '_')}"
-            )
-            new_msgs.append(msg)
-            seen[notam_id] = current_active[notam_id]
-        else:
-            seen[notam_id] = current_active[notam_id]
-
-    for notam_id, info in list(seen.items()):
-        exp_dt = parse_utc(info.get("expires"))
-        if exp_dt and exp_dt <= now:
-            seen.pop(notam_id, None)
-        elif notam_id not in current_active:
-            revoke_msgs.append(f"- {notam_id} revoked early")
-            seen.pop(notam_id, None)
-
-    if new_msgs or revoke_msgs:
-        combined = ""
-        if new_msgs:
-            combined += "New West Palm Beach TFR(s):\n" + "\n".join(new_msgs) + "\n\n"
-        if revoke_msgs:
-            combined += "TFR(s) revoked early:\n" + "\n".join(revoke_msgs)
-        send_telegram(combined.strip())
-
-    state["seen"] = seen
-    save_state(STATE_FILE, state)
-
-main()
-EOF
-
-      - name: Commit changes if state updated
+      - name: Commit state if changed
         run: |
           set -euo pipefail
+
+          if [ ! -f state/last_wpb.json ]; then
+            echo "state/last_wpb.json does not exist; nothing to commit."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if ! git diff --quiet; then
+          # Only commit if that file actually changed
+          if ! git diff --quiet -- state/last_wpb.json; then
             git add state/last_wpb.json
             git commit -m "Update TFR state"
             git push
-          else:
-            echo "No state change."
+          else
+            echo "No state change to commit."
+          fi
