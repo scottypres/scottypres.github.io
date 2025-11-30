@@ -17,6 +17,9 @@ ET_ZONE = ZoneInfo("America/New_York")
 
 TZ_RE = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
 
+print("Python cwd:", os.getcwd())
+print("Files:", os.listdir("."))
+print("STATE_FILE real path:", STATE_FILE.resolve())
 
 def fetch_json(url: str):
     with urllib.request.urlopen(url, timeout=15) as resp:

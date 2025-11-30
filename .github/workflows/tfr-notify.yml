@@ -33,6 +33,15 @@ jobs:
           mkdir -p state
           python3 .github/scripts/tfr_wpb.py
 
+      - name: Debug file system after python
+        run: |
+          echo "PWD: $(pwd)"
+          echo "--- Listing repo root ---"
+          ls -la .
+          echo "--- Listing all recursively ---"
+          ls -R .
+
+
       - name: Commit state if changed
         run: |
           set -euo pipefail
