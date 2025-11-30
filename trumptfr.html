@@ -55,6 +55,15 @@
     const proxy = 'https://api.allorigins.win/raw?url=';
     const realJsonUrl = 'https://tfr.faa.gov/tfrapi/exportTfrList';
 
+    const parseUtcDate = (dateStr) => {
+      if (dateStr === 'N/A') return null;
+      const normalized = /[zZ]|[+-]\d{2}:?\d{2}$/.test(dateStr)
+        ? dateStr
+        : `${dateStr}Z`;
+      const date = new Date(normalized);
+      return isNaN(date) ? null : date;
+    };
+
     async function fetchTfrDetails(notamId) {
       try {
         // Format the notam_id by replacing "/" with "_"
@@ -98,13 +107,15 @@
         };
 
         return {
+          effectiveDate: parseUtcDate(effectiveDate),
+          expirationDate: parseUtcDate(expirationDate),
           effective: formatDate(effectiveDate),
           expires: formatDate(expirationDate),
           timeZone: timeZone
         };
       } catch (err) {
         console.error(`Failed to fetch details for NOTAM ${notamId}:`, err);
-        return { effective: 'N/A', expires: 'N/A', timeZone: 'UTC' };
+        return { effective: 'N/A', expires: 'N/A', timeZone: 'UTC', effectiveDate: null, expirationDate: null };
       }
     }
 
@@ -142,10 +153,17 @@
           return;
         }
 
+        let anyDisplayed = false;
+
         // Process all West Palm Beach NOTAMs
         for (const notam of westPalmNotams) {
           console.log('Processing West Palm Beach NOTAM:', notam); // Debug log
           const details = await fetchTfrDetails(notam.notam_id);
+          if (details.expirationDate && details.expirationDate < new Date()) {
+            console.log('Skipping expired NOTAM:', notam.notam_id);
+            continue;
+          }
+
           const li = document.createElement("li");
           li.innerHTML = `<strong>${notam.description}</strong> [${notam.type}]<br>
                           
@@ -155,19 +173,24 @@
                           Effective (ET): ${details.effective}<br>
                           Expires (ET): ${details.expires}`;
           list.appendChild(li);
+          anyDisplayed = true;
         }
 
         // Hide loading indicator
         loadingDiv.style.display = 'none';
 
-        // Show no-fly message and image
-        statusMessage.textContent = "No Fly for You";
-        const img = document.createElement('img');
-        img.src = 'https://i.imgur.com/M8ADnf1.png';
-        img.alt = 'No Fly Zone';
-        img.className = 'no-fly-image';
-        statusMessage.appendChild(document.createElement('br'));
-        statusMessage.appendChild(img);
+        if (!anyDisplayed) {
+          statusMessage.textContent = "You are good to fly, thanks Trump!";
+          const img = document.createElement('img');
+          img.src = 'https://i.imgur.com/tprnedj.png';
+          img.alt = 'Good to Fly';
+          img.className = 'no-fly-image';
+          statusMessage.appendChild(document.createElement('br'));
+          statusMessage.appendChild(img);
+        } else {
+          statusMessage.textContent = '';
+          statusMessage.innerHTML = '';
+        }
       })
       .catch(err => {
         console.error("Failed to load TFRs:", err);
