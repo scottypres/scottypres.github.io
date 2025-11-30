@@ -25,6 +25,11 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Log trigger type (cron vs manual)
+        run: |
+          echo "Triggered by: $GITHUB_EVENT_NAME"
+          echo "Timestamp (UTC): $(date -u '+%Y-%m-%d %H:%M:%S')"
+
       - name: Run TFR notifier
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
