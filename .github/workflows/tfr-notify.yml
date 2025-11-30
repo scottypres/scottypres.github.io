@@ -2,7 +2,7 @@ name: TFR West Palm Alerts
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "*/3 * * * *"
   workflow_dispatch: {}
 
 permissions:
