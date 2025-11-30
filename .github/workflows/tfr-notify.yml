@@ -45,17 +45,15 @@ jobs:
       - name: Commit state if changed
         run: |
           set -euo pipefail
-
-          if [ ! -f state/last_wpb.json ]; then
-            echo "state/last_wpb.json does not exist; nothing to commit."
-            exit 0
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Only commit if that file actually changed
-          if ! git diff --quiet -- state/last_wpb.json; then
+          echo "--- Git status before commit ---"
+          git status --untracked-files=all
+          echo "--- End git status ---"
+
+          # Include untracked files when checking for changes
+          if ! git diff --cached --quiet || ! git diff --quiet || git ls-files --others --exclude-standard | grep -q .; then
             git add state/last_wpb.json
             git commit -m "Update TFR state"
             git push
