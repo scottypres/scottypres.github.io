@@ -24,7 +24,10 @@ jobs:
           mkdir -p state
 
           python - <<'PYCODE'
-          import datetime
+          from textwrap import dedent
+          exec(dedent("""
+            import datetime
+            from zoneinfo import ZoneInfo
           import json
           import os
           import re
@@ -36,7 +39,8 @@ jobs:
           FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
           TOKEN = os.getenv("TELEGRAM_TOKEN")
           CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-          STATE_FILE = "state/last_wpb.json"
+            STATE_FILE = "state/last_wpb.json"
+            ET_ZONE = ZoneInfo("America/New_York")
 
           TZ_RE = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
 
@@ -57,16 +61,21 @@ jobs:
                   "expires": exp.text if exp is not None else None,
               }
 
-          def parse_utc(dt_str):
-              if not dt_str:
-                  return None
-              dt_str = dt_str.strip()
-              if not TZ_RE.search(dt_str):
-                  dt_str = f"{dt_str}Z"
-              try:
-                  return datetime.datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-              except ValueError:
-                  return None
+            def parse_utc(dt_str):
+                if not dt_str:
+                    return None
+                dt_str = dt_str.strip()
+                if not TZ_RE.search(dt_str):
+                    dt_str = f"{dt_str}Z"
+                try:
+                    return datetime.datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+                except ValueError:
+                    return None
+
+            def format_et(dt_obj):
+                if not dt_obj:
+                    return "N/A"
+                return dt_obj.astimezone(ET_ZONE).strftime("%Y-%m-%d %a %I:%M %p %Z")
 
           def load_state(path):
               if not os.path.exists(path):
@@ -109,36 +118,43 @@ jobs:
               new_msgs = []
               revoke_msgs = []
 
-              for n in wpb:
-                  notam_id = n.get("notam_id")
-                  if not notam_id:
-                      continue
-                  try:
-                      detail = fetch_detail(notam_id)
-                  except Exception as exc:  # pragma: no cover - network error logging
-                      print(f"Failed detail fetch for {notam_id}: {exc}")
-                      continue
+                for n in wpb:
+                    notam_id = n.get("notam_id")
+                    if not notam_id:
+                        continue
+                    try:
+                        detail = fetch_detail(notam_id)
+                    except Exception as exc:  # pragma: no cover - network error logging
+                        print(f"Failed detail fetch for {notam_id}: {exc}")
+                        continue
 
-                  exp_dt = parse_utc(detail.get("expires"))
-                  if not exp_dt:
-                      print(f"No expiration for {notam_id}; skipping.")
-                      continue
-                  if exp_dt <= now:
-                      print(f"{notam_id} already expired; skipping.")
-                      continue
+                    eff_dt = parse_utc(detail.get("effective"))
+                    exp_dt = parse_utc(detail.get("expires"))
+                    if not exp_dt:
+                        print(f"No expiration for {notam_id}; skipping.")
+                        continue
+                    if exp_dt <= now:
+                        print(f"{notam_id} already expired; skipping.")
+                        continue
 
-                  current_active[notam_id] = {
-                      "expires": exp_dt.isoformat(),
-                      "description": n.get("description", "").strip(),
-                  }
+                    current_active[notam_id] = {
+                        "effective": eff_dt.isoformat() if eff_dt else None,
+                        "expires": exp_dt.isoformat(),
+                        "description": n.get("description", "").strip(),
+                    }
 
-                  if notam_id not in seen:
-                      new_msgs.append(f"- {notam_id}: {n.get('description','').strip()} (type: {n.get('type','?')})")
-                      seen[notam_id] = current_active[notam_id]
-                  else:
-                      # refresh stored expiration in case it changed
-                      seen[notam_id]["expires"] = exp_dt.isoformat()
-                      seen[notam_id]["description"] = n.get("description", "").strip()
+                    if notam_id not in seen:
+                        desc = n.get("description","").strip()
+                        start_str = format_et(eff_dt)
+                        end_str = format_et(exp_dt)
+                        link = f"https://tfr.faa.gov/save_pages/detail_{notam_id.replace('/', '_')}.html"
+                        new_msgs.append(f"- {notam_id}: {desc} (type: {n.get('type','?')})\n  Starts: {start_str}\n  Ends: {end_str}\n  Link: {link}")
+                        seen[notam_id] = current_active[notam_id]
+                    else:
+                        # refresh stored expiration/effective in case it changed
+                        seen[notam_id]["expires"] = exp_dt.isoformat()
+                        seen[notam_id]["effective"] = eff_dt.isoformat() if eff_dt else None
+                        seen[notam_id]["description"] = n.get("description", "").strip()
 
               # Handle revocations: items we had seen, not expired yet, now missing
               for notam_id, info in list(seen.items()):
@@ -146,10 +162,11 @@ jobs:
                   if exp_dt and exp_dt <= now:
                       seen.pop(notam_id, None)
                       continue
-                  if notam_id not in current_active:
-                      until = info.get("expires", "unknown")
-                      revoke_msgs.append(f"- {notam_id} revoked before expiration (was until {until})")
-                      seen.pop(notam_id, None)
+                    if notam_id not in current_active:
+                        until = format_et(parse_utc(info.get("expires")))
+                        start = format_et(parse_utc(info.get("effective")))
+                        revoke_msgs.append(f"- {notam_id} revoked before expiration\n  Was: {start} to {until}")
+                        seen.pop(notam_id, None)
 
               messages = []
               if new_msgs:
@@ -171,4 +188,5 @@ jobs:
           if __name__ == "__main__":
               main()
               sys.exit(0)
+          """))
           PYCODE
