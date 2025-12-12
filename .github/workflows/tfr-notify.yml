@@ -1,0 +1,63 @@
+name: TFR West Palm Alerts
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false
+          ref: main        # REQUIRED for commits
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Log trigger type (cron vs manual)
+        run: |
+          echo "Triggered by: $GITHUB_EVENT_NAME"
+          echo "Timestamp (UTC): $(date -u '+%Y-%m-%d %H:%M:%S')"
+
+      - name: Run TFR notifier
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p TFRNotifier/state
+          python3 TFRNotifier/tfr_wpb.py
+
+      - name: Commit state if changed
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "--- Git status before commit ---"
+          git status --untracked-files=all
+
+          # Detect ANY changes, including new files
+          if ! git diff --quiet || \
+             ! git diff --cached --quiet || \
+             git ls-files --others --exclude-standard | grep -q .; then
+
+            git add TFRNotifier/state/last_wpb.json
+            git commit -m "Update TFR state"
+            git push
+
+          else
+            echo "No state change to commit."
+          fi
