@@ -1,0 +1,129 @@
+{
+  "device_id": 466898,
+  "start": "2025-12-12T19:57:28+00:00",
+  "end": "2025-12-12T20:57:28+00:00",
+  "count": 11,
+  "data": [
+    {
+      "time_utc": "2025-12-12T20:00:00+00:00",
+      "epoch": 1765569600,
+      "wind_lull_mps": 0.0,
+      "wind_avg_mps": 1.4,
+      "wind_gust_mps": 2.6,
+      "wind_dir_deg": 137.0,
+      "wind_lull_mph": 0.0,
+      "wind_avg_mph": 3.1317108088761594,
+      "wind_gust_mph": 5.816034359341439
+    },
+    {
+      "time_utc": "2025-12-12T20:05:00+00:00",
+      "epoch": 1765569900,
+      "wind_lull_mps": 0.1,
+      "wind_avg_mps": 1.7,
+      "wind_gust_mps": 3.9,
+      "wind_dir_deg": 111.0,
+      "wind_lull_mph": 0.22369362920544,
+      "wind_avg_mph": 3.8027916964924797,
+      "wind_gust_mph": 8.724051539012159
+    },
+    {
+      "time_utc": "2025-12-12T20:10:00+00:00",
+      "epoch": 1765570200,
+      "wind_lull_mps": 0.0,
+      "wind_avg_mps": 1.4,
+      "wind_gust_mps": 3.3,
+      "wind_dir_deg": 99.0,
+      "wind_lull_mph": 0.0,
+      "wind_avg_mph": 3.1317108088761594,
+      "wind_gust_mph": 7.381889763779519
+    },
+    {
+      "time_utc": "2025-12-12T20:15:00+00:00",
+      "epoch": 1765570500,
+      "wind_lull_mps": 0.2,
+      "wind_avg_mps": 1.5,
+      "wind_gust_mps": 3.2,
+      "wind_dir_deg": 102.0,
+      "wind_lull_mph": 0.44738725841088,
+      "wind_avg_mph": 3.3554044380815995,
+      "wind_gust_mph": 7.15819613457408
+    },
+    {
+      "time_utc": "2025-12-12T20:20:00+00:00",
+      "epoch": 1765570800,
+      "wind_lull_mps": 0.0,
+      "wind_avg_mps": 1.4,
+      "wind_gust_mps": 3.2,
+      "wind_dir_deg": 67.0,
+      "wind_lull_mph": 0.0,
+      "wind_avg_mph": 3.1317108088761594,
+      "wind_gust_mph": 7.15819613457408
+    },
+    {
+      "time_utc": "2025-12-12T20:25:00+00:00",
+      "epoch": 1765571100,
+      "wind_lull_mps": 0.0,
+      "wind_avg_mps": 1.2,
+      "wind_gust_mps": 2.9,
+      "wind_dir_deg": 73.0,
+      "wind_lull_mph": 0.0,
+      "wind_avg_mph": 2.6843235504652796,
+      "wind_gust_mph": 6.487115246957759
+    },
+    {
+      "time_utc": "2025-12-12T20:30:00+00:00",
+      "epoch": 1765571400,
+      "wind_lull_mps": 0.1,
+      "wind_avg_mps": 1.9,
+      "wind_gust_mps": 4.2,
+      "wind_dir_deg": 62.0,
+      "wind_lull_mph": 0.22369362920544,
+      "wind_avg_mph": 4.250178954903359,
+      "wind_gust_mph": 9.39513242662848
+    },
+    {
+      "time_utc": "2025-12-12T20:35:00+00:00",
+      "epoch": 1765571700,
+      "wind_lull_mps": 0.0,
+      "wind_avg_mps": 1.1,
+      "wind_gust_mps": 2.4,
+      "wind_dir_deg": 56.0,
+      "wind_lull_mph": 0.0,
+      "wind_avg_mph": 2.46062992125984,
+      "wind_gust_mph": 5.368647100930559
+    },
+    {
+      "time_utc": "2025-12-12T20:40:00+00:00",
+      "epoch": 1765572000,
+      "wind_lull_mps": 0.9,
+      "wind_avg_mps": 1.7,
+      "wind_gust_mps": 3.1,
+      "wind_dir_deg": 47.0,
+      "wind_lull_mph": 2.0132426628489597,
+      "wind_avg_mph": 3.8027916964924797,
+      "wind_gust_mph": 6.9345025053686395
+    },
+    {
+      "time_utc": "2025-12-12T20:45:00+00:00",
+      "epoch": 1765572300,
+      "wind_lull_mps": 0.0,
+      "wind_avg_mps": 1.4,
+      "wind_gust_mps": 3.1,
+      "wind_dir_deg": 35.0,
+      "wind_lull_mph": 0.0,
+      "wind_avg_mph": 3.1317108088761594,
+      "wind_gust_mph": 6.9345025053686395
+    },
+    {
+      "time_utc": "2025-12-12T20:50:00+00:00",
+      "epoch": 1765572600,
+      "wind_lull_mps": 0.1,
+      "wind_avg_mps": 1.5,
+      "wind_gust_mps": 2.5,
+      "wind_dir_deg": 60.0,
+      "wind_lull_mph": 0.22369362920544,
+      "wind_avg_mph": 3.3554044380815995,
+      "wind_gust_mph": 5.592340730136
+    }
+  ]
+}
