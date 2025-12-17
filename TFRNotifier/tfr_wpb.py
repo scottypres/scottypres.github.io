@@ -89,8 +89,12 @@ def send_telegram(body: str) -> None:
         data=data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        print("Telegram status:", resp.status)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            print("Telegram status:", resp.status)
+    except Exception as exc:
+        # Don't fail the whole workflow on Telegram errors; just log them.
+        print(f"Telegram send failed: {exc}")
 
 
 def main() -> int:
