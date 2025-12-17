@@ -7,6 +7,7 @@ import re
 import sys
 import urllib.parse
 import urllib.request
+import urllib.error
 import xml.etree.ElementTree as ET
 
 FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
@@ -80,17 +81,69 @@ def send_telegram(body: str) -> None:
     if not (TOKEN and CHAT_ID):
         print("Telegram env vars missing; skipping send.")
         return
-    data = urllib.parse.urlencode(
-        {"chat_id": CHAT_ID, "text": body}
-    ).encode()
+    # Telegram messages have a hard cap (4096 chars). Keep some slack for safety.
+    max_len = 3900
+    chunks: list[str] = []
+    if len(body) <= max_len:
+        chunks = [body]
+    else:
+        # Prefer splitting on blank lines/newlines to keep chunks readable.
+        current: list[str] = []
+        current_len = 0
+        for part in body.split("\n\n"):
+            part = part.strip()
+            if not part:
+                continue
+            candidate = (("\n\n".join(current) + "\n\n" + part) if current else part)
+            if len(candidate) <= max_len:
+                current = candidate.split("\n\n")
+                current_len = len(candidate)
+                continue
+            # If the single part itself is too big, hard-split it.
+            if not current:
+                for i in range(0, len(part), max_len):
+                    chunks.append(part[i : i + max_len])
+                continue
+            chunks.append("\n\n".join(current))
+            current = [part]
+            current_len = len(part)
+        if current:
+            chunks.append("\n\n".join(current))
+
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-    )
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        print("Telegram status:", resp.status)
+    for idx, chunk in enumerate(chunks, start=1):
+        data = urllib.parse.urlencode({"chat_id": CHAT_ID, "text": chunk}).encode()
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                # Drain response body to avoid ResourceWarning in some runtimes.
+                _ = resp.read()
+                print(
+                    "Telegram status:",
+                    resp.status,
+                    f"(chunk {idx}/{len(chunks)})" if len(chunks) > 1 else "",
+                )
+        except urllib.error.HTTPError as exc:
+            detail = ""
+            try:
+                detail = exc.read().decode("utf-8", errors="replace")
+            except Exception:
+                detail = ""
+            print(f"Telegram HTTPError {exc.code}: {exc.reason}")
+            if detail:
+                print("Telegram response:", detail)
+            # Don't fail the entire run if Telegram is misconfigured or rejects the message.
+            return
+        except urllib.error.URLError as exc:
+            print(f"Telegram URLError: {exc}")
+            return
+        except Exception as exc:
+            print(f"Telegram send failed: {exc}")
+            return
 
 
 def main() -> int:
