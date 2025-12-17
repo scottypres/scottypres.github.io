@@ -92,8 +92,15 @@ def send_telegram(body: str) -> None:
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             print("Telegram status:", resp.status)
+    except urllib.error.HTTPError as exc:
+        # Capture Telegram error response for easier debugging
+        body = exc.read().decode(errors="replace") if exc.fp else ""
+        body_snip = body[:500] + ("..." if len(body) > 500 else "")
+        print(f"Telegram send failed: HTTP {exc.code} {exc.reason}")
+        if body_snip:
+            print(f"Response body: {body_snip}")
     except Exception as exc:
-        # Don't fail the whole workflow on Telegram errors; just log them.
+        # Don't fail the whole workflow on other errors; just log them.
         print(f"Telegram send failed: {exc}")
 
 
