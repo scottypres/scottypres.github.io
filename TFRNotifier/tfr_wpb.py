@@ -99,6 +99,28 @@ def send_telegram(body: str) -> None:
         print(f"Telegram send failed: HTTP {exc.code} {exc.reason}")
         if body_snip:
             print(f"Response body: {body_snip}")
+        # If Telegram says the chat was migrated to a supergroup, auto-retry once.
+        try:
+            parsed = json.loads(body)
+        except Exception:
+            parsed = {}
+        migrate_id = parsed.get("parameters", {}).get("migrate_to_chat_id")
+        if migrate_id:
+            print(f"Retrying with migrate_to_chat_id={migrate_id}")
+            migrated_data = urllib.parse.urlencode(
+                {"chat_id": migrate_id, "text": body}
+            ).encode()
+            migrated_req = urllib.request.Request(
+                url,
+                data=migrated_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            try:
+                with urllib.request.urlopen(migrated_req, timeout=10) as resp2:
+                    print("Telegram status (migrated):", resp2.status)
+            except Exception as exc2:
+                print(f"Telegram migrated send failed: {exc2}")
+                print("Please update TELEGRAM_CHAT_ID to the migrated id.")
     except Exception as exc:
         # Don't fail the whole workflow on other errors; just log them.
         print(f"Telegram send failed: {exc}")
