@@ -133,8 +133,9 @@ def main() -> int:
     wpb = [
         n
         for n in feed
-        if ("west palm beach" in n.get("description", "").lower())
-        or ("PBI" in n.get("description", ""))
+        if (n.get("type") == "VIP")
+        and (n.get("state") == "FL")
+        and (n.get("description", "").strip() == "Palm Beach, FL")
     ]
 
     state = load_state(STATE_FILE)
@@ -206,7 +207,7 @@ def main() -> int:
     messages: list[str] = []
     if new_msgs:
         messages.append(
-            "New West Palm Beach TFR(s) detected:\n" + "\n".join(new_msgs)
+            "New Palm Beach, FL TFR(s) detected:\n" + "\n".join(new_msgs)
         )
     if revoke_msgs:
         messages.append(
@@ -218,11 +219,11 @@ def main() -> int:
         print(full_msg)
         send_telegram(full_msg)
     else:
-        print("No new or revoked WPB NOTAMs.")
+        print("No new or revoked Palm Beach TFRs.")
         # Optional: if you want a quiet "status OK" on manual run:
         if os.getenv("GITHUB_EVENT_NAME") == "workflow_dispatch":
             send_telegram(
-                "No new West Palm Beach TFRs or revocations at this time."
+                "No new Palm Beach TFRs or revocations at this time."
             )
 
     state["seen"] = seen
