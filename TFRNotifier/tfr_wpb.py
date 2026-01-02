@@ -41,16 +41,20 @@ def fetch_detail(notam_id: str):
 
 
 def parse_utc(dt_str: str | None):
+    """Parse a timestamp into UTC, handling 'effective immediately' strings."""
     if not dt_str:
         return None
-    dt_str = dt_str.strip()
-    # FAA sometimes uses "Effective Immediately" in detail XML
-    if dt_str.lower().startswith("effective immediately"):
+
+    normalized = dt_str.strip().lower()
+    if "immediat" in normalized:
+        # Some TFRs list the effective time as "IMMEDIATELY"; treat as now.
         return datetime.datetime.now(datetime.timezone.utc)
-    if not TZ_RE.search(dt_str):
-        dt_str = dt_str + "Z"
+
+    if not TZ_RE.search(normalized):
+        normalized = normalized + "Z"
+
     try:
-        return datetime.datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+        return datetime.datetime.fromisoformat(normalized.replace("z", "+00:00"))
     except ValueError:
         return None
 
@@ -136,9 +140,8 @@ def main() -> int:
     wpb = [
         n
         for n in feed
-        if (n.get("type") == "VIP")
-        and (n.get("state") == "FL")
-        and (n.get("description", "").strip() == "Palm Beach, FL")
+        if ("palm beach" in n.get("description", "").lower())
+        or ("PBI" in n.get("description", ""))
     ]
 
     state = load_state(STATE_FILE)
@@ -210,7 +213,7 @@ def main() -> int:
     messages: list[str] = []
     if new_msgs:
         messages.append(
-            "New Palm Beach, FL TFR(s) detected:\n" + "\n".join(new_msgs)
+            "New West Palm Beach TFR(s) detected:\n" + "\n".join(new_msgs)
         )
     if revoke_msgs:
         messages.append(
@@ -222,11 +225,11 @@ def main() -> int:
         print(full_msg)
         send_telegram(full_msg)
     else:
-        print("No new or revoked Palm Beach TFRs.")
+        print("No new or revoked WPB NOTAMs.")
         # Optional: if you want a quiet "status OK" on manual run:
         if os.getenv("GITHUB_EVENT_NAME") == "workflow_dispatch":
             send_telegram(
-                "No new Palm Beach TFRs or revocations at this time."
+                "No new West Palm Beach TFRs or revocations at this time."
             )
 
     state["seen"] = seen
