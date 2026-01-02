@@ -70,7 +70,13 @@ def load_state(path: Path) -> dict:
     if not path.exists():
         return {"seen": {}}
     with path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            # If the file is empty or corrupted, reset it to an empty state so
+            # future runs have a valid JSON file.
+            data = {"seen": {}}
+            save_state(path, data)
     # Backward compatibility if we ever had a different format
     if "seen" not in data:
         data["seen"] = {}
