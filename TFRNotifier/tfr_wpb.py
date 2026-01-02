@@ -44,6 +44,9 @@ def parse_utc(dt_str: str | None):
     if not dt_str:
         return None
     dt_str = dt_str.strip()
+    # FAA sometimes uses "Effective Immediately" in detail XML
+    if dt_str.lower().startswith("effective immediately"):
+        return datetime.datetime.now(datetime.timezone.utc)
     if not TZ_RE.search(dt_str):
         dt_str = dt_str + "Z"
     try:
