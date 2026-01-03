@@ -59,9 +59,9 @@ def parse_utc(dt_str: str | None):
         return None
 
 
-def format_et(dt_obj: datetime.datetime | None) -> str:
+def format_et(dt_obj: datetime.datetime | None, missing_label: str = "N/A") -> str:
     if not dt_obj:
-        return "N/A"
+        return missing_label
     return dt_obj.astimezone(ET_ZONE).strftime("%Y-%m-%d %a %I:%M %p %Z")
 
 
@@ -143,12 +143,22 @@ def main() -> int:
     now = datetime.datetime.now(datetime.timezone.utc)
 
     feed = fetch_json(FEED_URL)
-    wpb = [
-        n
-        for n in feed
-        if ("palm beach" in n.get("description", "").lower())
-        or ("PBI" in n.get("description", ""))
-    ]
+
+    def is_wpb_tfr(n: dict) -> bool:
+        facility = n.get("facility", "")
+        tfr_type = n.get("type", "")
+        desc = n.get("description", "").lower()
+        if facility.upper() != "ZMA":
+            return False
+        if tfr_type.upper() != "VIP":
+            return False
+        return (
+            "west palm beach" in desc
+            or "palm beach" in desc
+            or "pbi" in desc
+        )
+
+    wpb = [n for n in feed if is_wpb_tfr(n)]
 
     state = load_state(STATE_FILE)
     seen: dict = state.get("seen", {})
@@ -184,7 +194,7 @@ def main() -> int:
 
         if notam_id not in seen:
             desc = n.get("description", "").strip()
-            start_str = format_et(eff_dt)
+            start_str = format_et(eff_dt, "Effective Immediately")
             end_str = format_et(exp_dt)
             link = (
                 f"https://tfr.faa.gov/tfr3/?page=detail_{notam_id.replace('/', '_')}"
@@ -208,7 +218,7 @@ def main() -> int:
             seen.pop(notam_id, None)
             continue
         if notam_id not in current_active:
-            start = format_et(parse_utc(info.get("effective")))
+            start = format_et(parse_utc(info.get("effective")), "Effective Immediately")
             until = format_et(parse_utc(info.get("expires")))
             revoke_msgs.append(
                 f"- {notam_id} revoked before expiration\n"
