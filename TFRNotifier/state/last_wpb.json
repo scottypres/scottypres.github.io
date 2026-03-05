@@ -5,6 +5,12 @@
       "effective": "2026-03-07T00:45:00+00:00",
       "expires": "2026-03-09T18:15:00+00:00",
       "type": "VIP"
+    },
+    "6/4277": {
+      "description": "West Palm Beach, FL, Saturday, March 7, 2026 through Monday, March 9, 2026 Local",
+      "effective": "2026-03-07T22:00:00+00:00",
+      "expires": "2026-03-09T18:30:00+00:00",
+      "type": "VIP"
     }
   }
 }
