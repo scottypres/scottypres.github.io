@@ -1,3 +1,10 @@
 {
-  "seen": {}
+  "seen": {
+    "6/6546": {
+      "description": "West Palm Beach, FL, Friday, March 13, 2026 through Sunday, March 15, 2026 Local",
+      "effective": "2026-03-13T23:45:00+00:00",
+      "expires": "2026-03-15T23:30:00+00:00",
+      "type": "VIP"
+    }
+  }
 }
