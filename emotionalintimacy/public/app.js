@@ -54,16 +54,13 @@ function splitBatchQuestions(raw) {
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => line.replace(/^[-*•]\s+/, "").replace(/^\d+[\).\-\s]+/, "").trim())
+    .map((line) => line.replace(/^(?:[-*]|\u2022)\s+/, "").replace(/^\d+[\).\-\s]+/, "").trim())
     .filter(Boolean);
 
   const questions = [];
   for (const line of lines) {
     if (line.includes("?")) {
-      const segments = line
-        .split(/(?<=\?)/)
-        .map((part) => part.trim())
-        .filter(Boolean);
+      const segments = (line.match(/[^?]+\??/g) || []).map((part) => part.trim()).filter(Boolean);
       questions.push(...segments);
     } else {
       questions.push(line);
@@ -128,8 +125,7 @@ function collectBatchInputsFromDom() {
       ...item,
       question: questionsByIndex.get(index) || "",
       answer: answersByIndex.get(index) || ""
-    }))
-    .filter((item) => item.question);
+    }));
 }
 
 function formatDate(value) {
@@ -331,7 +327,6 @@ generateBatchBtn.addEventListener("click", () => {
 
   const startIndex = state.batchItems.length;
   const newItems = questions.map((question, offset) => ({
-    localId: `${Date.now()}-${startIndex + offset}`,
     question,
     answer: ""
   }));

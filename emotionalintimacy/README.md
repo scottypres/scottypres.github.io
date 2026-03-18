@@ -3,6 +3,7 @@
 A local web app to capture question/answer reflections with your wife, including:
 
 - dedicated text boxes for question and answer
+- batch question input that generates separate question/answer rows
 - automatic question parsing (normalization, type detection, topic detection)
 - tracking who asked and who answered
 - persistent server-side storage
