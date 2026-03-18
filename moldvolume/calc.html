@@ -485,6 +485,7 @@
   <script>
     const mmToIn = (value) => value / 25.4;
     const inToCm = (inches) => inches * 2.54;
+    const inToMm = (inches) => inches * 25.4;
     const inToCm3 = (in3) => in3 * 16.387064;
     const in3ToGal = (in3) => in3 / 231;
     const in3ToCup = (in3) => in3 / 14.4375;
@@ -1079,6 +1080,12 @@
       return Number.isFinite(num) ? num.toFixed(digits) : "N/A";
     }
 
+    function formatInWithMm(valueIn, inDigits = 3, mmDigits = 0) {
+      const inVal = toFixedNumber(valueIn, inDigits);
+      const mmVal = toFixedNumber(inToMm(valueIn), mmDigits);
+      return `${inVal} in (${mmVal}mm)`;
+    }
+
     function formatDimensionSummary(sheetDimensions, unit = "in") {
       const grouped = new Map();
       const converter = unit === "cm" ? inToCm : (v) => v;
@@ -1101,21 +1108,30 @@
         .join(", ");
     }
 
-    function formatDimensionList(sheetDimensions, unit = "in") {
+    function formatDimensionList(sheetDimensions, unit = "in", sheetThicknessIn = 0) {
       const converter = unit === "cm" ? inToCm : (v) => v;
       const unitLabel = unit === "cm" ? "cm" : "in";
       const digits = unit === "cm" ? 2 : 3;
+      const thicknessDigits = unit === "cm" ? 2 : 4;
+      const includeThickness = Number.isFinite(Number(sheetThicknessIn)) && Number(sheetThicknessIn) >= 0;
+      const grouped = new Map();
+      const safeThickness = includeThickness ? toFixedNumber(converter(sheetThicknessIn), thicknessDigits) : "N/A";
 
       if (!sheetDimensions.length) {
         return `No sheets`;
       }
 
-      return sheetDimensions
-        .map((d, index) => {
-          const w = toFixedNumber(converter(d?.width), digits);
-          const l = toFixedNumber(converter(d?.length), digits);
-          return `Sheet ${index + 1}: ${w} x ${l} ${unitLabel}`;
-        })
+      for (const d of sheetDimensions) {
+        const w = toFixedNumber(converter(d?.width), digits);
+        const l = toFixedNumber(converter(d?.length), digits);
+        const sizeText = unit === "cm"
+          ? `${w} x ${l} x ${safeThickness} ${unitLabel}`
+          : `${w} x ${l} ${unitLabel} x ${safeThickness} ${unitLabel}`;
+        grouped.set(sizeText, (grouped.get(sizeText) || 0) + 1);
+      }
+
+      return [...grouped.entries()]
+        .map(([size, count]) => count > 1 ? `${count} x ${size}` : size)
         .join("\n");
     }
 
@@ -1166,16 +1182,17 @@
       const safeLen = toFixedNumber(len, 3);
       const safeWid = toFixedNumber(wid, 3);
       const safeDepth = toFixedNumber(depth, 3);
-      const safeTop = toFixedNumber(topDiameter, 3);
-      const safeBottom = toFixedNumber(bottomDiameter, 3);
+      const safeTop = formatInWithMm(topDiameter);
+      const safeBottom = formatInWithMm(bottomDiameter);
+      const safeDepthWithMm = formatInWithMm(depth);
 
       if (shape === "cylinder") {
-        return `Top diameter: ${safeTop} in, Bottom diameter: ${safeBottom} in, Depth: ${safeDepth} in`;
+        return `Top diameter: ${safeTop}, Bottom diameter: ${safeBottom}, Depth: ${safeDepthWithMm}`;
       }
       if (shape === "square") {
-        return `Side: ${safeLen} in, Depth: ${safeDepth} in`;
+        return `Side: ${safeLen} in (${safeLen === "N/A" ? "N/A" : toFixedNumber(len * 25.4, 0)}mm), Depth: ${safeDepth} in (${safeDepth === "N/A" ? "N/A" : toFixedNumber(depth * 25.4, 0)}mm)`;
       }
-      return `Length: ${safeLen} in, Width: ${safeWid} in, Depth: ${safeDepth} in`;
+      return `Length: ${safeLen} in (${safeLen === "N/A" ? "N/A" : toFixedNumber(len * 25.4, 0)}mm), Width: ${safeWid} in (${safeWid === "N/A" ? "N/A" : toFixedNumber(wid * 25.4, 0)}mm), Depth: ${safeDepth} in (${safeDepth === "N/A" ? "N/A" : toFixedNumber(depth * 25.4, 0)}mm)`;
     }
 
     function makeQuoteText({
@@ -1186,11 +1203,15 @@
       cavitiesPerSheet,
       sheetDimsIn,
       sheetDimsCm,
+      sheetThicknessIn,
       quotedPrice,
       casts,
       weightLb,
       costPerCast,
       costPerCastPerCavity,
+      cavityVolIn3,
+      cavityVolCm3,
+      cavityVolStandard,
     }) {
       const safeCavityDims = typeof cavityDimText === "string" && cavityDimText.trim().length > 0
         ? cavityDimText
@@ -1200,34 +1221,49 @@
       const safeCasts = Number.isFinite(casts) && casts >= 0 ? Math.floor(casts) : 0;
       const safePrice = Number.isFinite(quotedPrice) && quotedPrice > 0 ? quotedPrice : 0;
       const safeWeight = Number.isFinite(weightLb) && weightLb >= 0 ? weightLb : 0;
-      const safeCostPerCast = Number.isFinite(costPerCast) && costPerCast >= 0 ? costPerCast : 0;
       const safeCostPerCastPerCavity = Number.isFinite(costPerCastPerCavity) && costPerCastPerCavity >= 0 ? costPerCastPerCavity : 0;
+      const safeCavityVolIn3 = Number.isFinite(cavityVolIn3) && cavityVolIn3 >= 0 ? cavityVolIn3 : 0;
+      const safeCavityVolCm3 = Number.isFinite(cavityVolCm3) && cavityVolCm3 >= 0 ? cavityVolCm3 : 0;
+      const safeCavityVolStandard = typeof cavityVolStandard === "string" && cavityVolStandard.trim().length > 0
+        ? cavityVolStandard
+        : "~0";
+      const safeThicknessIn = Number.isFinite(sheetThicknessIn) && sheetThicknessIn >= 0 ? Number(sheetThicknessIn) : 0;
       const normalizedSheets = Array.isArray(sheetDimsIn) ? sheetDimsIn : [];
       const normalizedSheetsCm = Array.isArray(sheetDimsCm) ? sheetDimsCm : [];
       const normalizedPerSheet = Array.isArray(cavitiesPerSheet) ? cavitiesPerSheet : [];
 
-      const listIn = formatDimensionList(normalizedSheets, "in");
-      const listCm = formatDimensionList(normalizedSheetsCm, "cm");
-      const perSheet = normalizedPerSheet.length ? normalizedPerSheet.join(", ") : "N/A";
+      const listIn = formatDimensionList(normalizedSheets, "in", safeThicknessIn);
+      const listCm = formatDimensionList(normalizedSheetsCm, "cm", safeThicknessIn);
+      const perSheet = normalizedPerSheet.length
+        ? (() => {
+          if (normalizedPerSheet.every((v) => v === normalizedPerSheet[0])) {
+            return String(normalizedPerSheet[0]);
+          }
+          return normalizedPerSheet.join(", ");
+        })()
+        : "N/A";
 
       const niceShape = shape === "cylinder"
         ? "Round"
         : shape === "square"
           ? "Square"
           : "Rectangle";
+      const totalCavitiesLabel = shape === "cylinder"
+        ? "Total Cavities"
+        : "Total Cavities";
 
       const lines = [
         `Cavity shape: ${niceShape}`,
         `Cavity dimensions: ${safeCavityDims}`,
         `Number of sheets: ${safeSheetCount}`,
-        `Number of cavities per sheet: ${perSheet}`,
-        `Total cavities: ${safeCavities}`,
+        `Cavities per sheet: ${perSheet}`,
+        `${totalCavitiesLabel}: ${safeCavities}`,
+        `Cavity volume: ${safeCavityVolIn3.toFixed(2)} in^3 / ${safeCavityVolCm3.toFixed(2)} cm^3 / ${safeCavityVolStandard}`,
         `Sheet(s) dimensions (in): ${listIn}`,
         `Sheet(s) dimensions (cm): ${listCm}`,
-        `Sheet silicone weight: ${safeWeight.toFixed(2)} lb`,
+        `Sheet weight: ${safeWeight.toFixed(2)} lb`,
         `Expected mold life: ${safeCasts} castings`,
-        `Customer quote: $${safePrice.toFixed(2)}`,
-        `Cost per casting: $${safeCostPerCast.toFixed(2)}`,
+        `Total Price: $${safePrice.toFixed(2)}`,
         `Cost per casting per cavity: $${safeCostPerCastPerCavity.toFixed(2)}`,
       ];
       return lines.join("\n");
@@ -1559,27 +1595,36 @@
           cavitiesPerSheet,
           sheetDimsIn: sheetDimensions,
           sheetDimsCm: sheetDimensions,
+          sheetThicknessIn: totalThickness,
           quotedPrice,
           casts,
           weightLb: sheetWeightLb,
           costPerCast: costPerCasting,
+          cavityVolIn3: perCavityIn3,
+          cavityVolCm3: perCavityCm3,
+          cavityVolStandard: perCavityStandard,
           costPerCastPerCavity,
         });
       } catch (error) {
         console.error("Quote generation failed", error);
-        elements.quoteText.value = [
-          `Cavity shape: ${shape === "cylinder" ? "Round" : shape === "square" ? "Square" : "Rectangle"}`,
-          `Cavity dimensions: ${getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter)}`,
-          `Number of sheets: ${sheetCountOutput}`,
-          `Total cavities: ${cavityCount}`,
-          `Sheet(s) dimensions (in): ${formatDimensionSummary(sheetDimensions, "in")}`,
-          `Sheet(s) dimensions (cm): ${formatDimensionSummary(sheetDimensions, "cm")}`,
-          `Sheet silicone weight: ${sheetWeightLb.toFixed(2)} lb`,
-          `Expected mold life: ${casts} castings`,
-          `Customer quote: $${quotedPrice.toFixed(2)}`,
-          `Cost per casting: $${costPerCasting.toFixed(2)}`,
-          `Cost per casting per cavity: $${costPerCastingPerCavity.toFixed(2)}`,
-        ].join("\n");
+        elements.quoteText.value = makeQuoteText({
+          shape,
+          cavityDimText: getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter),
+          sheetCount: sheetCountOutput,
+          cavities: cavityCount,
+          cavitiesPerSheet,
+          sheetDimsIn: sheetDimensions,
+          sheetDimsCm: sheetDimensions,
+          sheetThicknessIn: totalThickness,
+          quotedPrice,
+          casts,
+          weightLb: sheetWeightLb,
+          costPerCast: costPerCasting,
+          cavityVolIn3: perCavityIn3,
+          cavityVolCm3: perCavityCm3,
+          cavityVolStandard: perCavityStandard,
+          costPerCastPerCavity,
+        });
       }
 
       elements.copyQuoteHint.classList.add("hidden");
