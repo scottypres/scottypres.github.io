@@ -1074,6 +1074,11 @@
       };
     }
 
+    function toFixedNumber(value, digits = 0) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num.toFixed(digits) : "N/A";
+    }
+
     function formatDimensionSummary(sheetDimensions, unit = "in") {
       const grouped = new Map();
       const converter = unit === "cm" ? inToCm : (v) => v;
@@ -1081,8 +1086,8 @@
       const digits = unit === "cm" ? 2 : 3;
 
       sheetDimensions.forEach((d) => {
-        const w = converter(d.width).toFixed(digits);
-        const l = converter(d.length).toFixed(digits);
+        const w = toFixedNumber(converter(d?.width), digits);
+        const l = toFixedNumber(converter(d?.length), digits);
         const key = `${w} x ${l} ${unitLabel}`;
         grouped.set(key, (grouped.get(key) || 0) + 1);
       });
@@ -1106,11 +1111,19 @@
       }
 
       return sheetDimensions
-        .map((d, index) => `Sheet ${index + 1}: ${(converter(d.width)).toFixed(digits)} x ${(converter(d.length)).toFixed(digits)} ${unitLabel}`)
+        .map((d, index) => {
+          const w = toFixedNumber(converter(d?.width), digits);
+          const l = toFixedNumber(converter(d?.length), digits);
+          return `Sheet ${index + 1}: ${w} x ${l} ${unitLabel}`;
+        })
         .join("\n");
     }
 
     function formatClosestStandardVolume(in3Volume) {
+      if (!Number.isFinite(in3Volume) || in3Volume < 0) {
+        return "~0";
+      }
+
       if (in3Volume <= 0) {
         return "~0";
       }
@@ -1150,15 +1163,19 @@
     }
 
     function getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter) {
+      const safeLen = toFixedNumber(len, 3);
+      const safeWid = toFixedNumber(wid, 3);
+      const safeDepth = toFixedNumber(depth, 3);
+      const safeTop = toFixedNumber(topDiameter, 3);
+      const safeBottom = toFixedNumber(bottomDiameter, 3);
+
       if (shape === "cylinder") {
-        const top = topDiameter.toFixed(3);
-        const bottom = bottomDiameter.toFixed(3);
-        return `Top diameter: ${top} in, Bottom diameter: ${bottom} in, Depth: ${depth.toFixed(3)} in`;
+        return `Top diameter: ${safeTop} in, Bottom diameter: ${safeBottom} in, Depth: ${safeDepth} in`;
       }
       if (shape === "square") {
-        return `Side: ${len.toFixed(3)} in, Depth: ${depth.toFixed(3)} in`;
+        return `Side: ${safeLen} in, Depth: ${safeDepth} in`;
       }
-      return `Length: ${len.toFixed(3)} in, Width: ${wid.toFixed(3)} in, Depth: ${depth.toFixed(3)} in`;
+      return `Length: ${safeLen} in, Width: ${safeWid} in, Depth: ${safeDepth} in`;
     }
 
     function makeQuoteText({
@@ -1549,7 +1566,20 @@
           costPerCastPerCavity,
         });
       } catch (error) {
-        elements.quoteText.value = "Unable to generate quote text. Check cavity and sheet dimensions, then recalculate.";
+        console.error("Quote generation failed", error);
+        elements.quoteText.value = [
+          `Cavity shape: ${shape === "cylinder" ? "Round" : shape === "square" ? "Square" : "Rectangle"}`,
+          `Cavity dimensions: ${getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter)}`,
+          `Number of sheets: ${sheetCountOutput}`,
+          `Total cavities: ${cavityCount}`,
+          `Sheet(s) dimensions (in): ${formatDimensionSummary(sheetDimensions, "in")}`,
+          `Sheet(s) dimensions (cm): ${formatDimensionSummary(sheetDimensions, "cm")}`,
+          `Sheet silicone weight: ${sheetWeightLb.toFixed(2)} lb`,
+          `Expected mold life: ${casts} castings`,
+          `Customer quote: $${quotedPrice.toFixed(2)}`,
+          `Cost per casting: $${costPerCasting.toFixed(2)}`,
+          `Cost per casting per cavity: $${costPerCastingPerCavity.toFixed(2)}`,
+        ].join("\n");
       }
 
       elements.copyQuoteHint.classList.add("hidden");
