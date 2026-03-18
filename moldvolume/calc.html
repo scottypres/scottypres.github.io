@@ -393,6 +393,35 @@
           </div>
         </div>
 
+        <div class="row">
+          <div class="field">
+            <label for="save-config-name">Save profile name</label>
+            <input id="save-config-name" type="text" placeholder="My mold setup" />
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="save-config" type="button">Save profile</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="saved-config-select">Load saved profile</label>
+            <select id="saved-config-select"></select>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="load-config" type="button">Load profile</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="load-config-status">Storage status</label>
+            <p id="load-config-status" class="note">No saved config loaded.</p>
+          </div>
+        </div>
+
         <p class="note">Each dimension input supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom) and use the larger diameter for spacing checks. Layout is recalculated live; single mode checks one cavity, and target mode can compute the exact sheet size for a requested cavity count and split it across sheets with optional max sheet width/length.</p>
       </section>
 
@@ -497,6 +526,11 @@
       targetCavityCount: document.getElementById("target-cavity-count"),
       requestedSheets: document.getElementById("sheet-count"),
       price: document.getElementById("price-per-gallon"),
+      saveConfigName: document.getElementById("save-config-name"),
+      savedConfigSelect: document.getElementById("saved-config-select"),
+      saveConfig: document.getElementById("save-config"),
+      loadConfig: document.getElementById("load-config"),
+      loadConfigStatus: document.getElementById("load-config-status"),
       outFit: document.getElementById("cavities-fit"),
       outSheets: document.getElementById("sheet-count-output"),
       outThickness: document.getElementById("sheet-thickness"),
@@ -517,6 +551,11 @@
       copyQuote: document.getElementById("copy-quote"),
       copyQuoteHint: document.getElementById("quote-copy-hint"),
     };
+
+    const STORAGE_KEY = "mold-volume-calculator-config-profiles-v1";
+    const LEGACY_STORAGE_KEY = "mold-volume-calculator-config-v1";
+    const DEFAULT_PROFILE_NAME = "Default";
+    const EMPTY_CONFIG_STORE = { version: 1, configs: {} };
 
     const allInputs = [
       elements.cavityShape,
@@ -548,6 +587,268 @@
 
     function numVal(el) {
       return parse(el.value);
+    }
+
+    function supportsLocalStorage() {
+      try {
+        const test = "__mold_volume_calc_test__";
+        window.localStorage.setItem(test, "1");
+        window.localStorage.removeItem(test);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function setCookie(name, value, days) {
+      const expiry = new Date(Date.now() + days * 864e5).toUTCString();
+      document.cookie = `${name}=${encodeURIComponent(value)};expires=${expiry};path=/`;
+    }
+
+    function getCookie(name) {
+      const parts = document.cookie.split("; ");
+      const prefix = `${name}=`;
+      for (const part of parts) {
+        if (part.startsWith(prefix)) {
+          return decodeURIComponent(part.slice(prefix.length));
+        }
+      }
+      return "";
+    }
+
+    function getStoragePayload(storageKey = STORAGE_KEY) {
+      if (supportsLocalStorage()) {
+        return window.localStorage.getItem(storageKey) || "";
+      }
+      return getCookie(storageKey);
+    }
+
+    function setStoragePayload(raw, storageKey = STORAGE_KEY) {
+      if (supportsLocalStorage()) {
+        window.localStorage.setItem(storageKey, raw);
+        return;
+      }
+      setCookie(storageKey, raw, 365);
+    }
+
+    function safeParse(value) {
+      try {
+        return value ? JSON.parse(value) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function looksLikeConfig(payload) {
+      return !!(
+        payload &&
+        typeof payload === "object" &&
+        typeof payload.cavityShape === "string" &&
+        typeof payload.shellShape === "string" &&
+        typeof payload.depth === "string"
+      );
+    }
+
+    function getConfigStore() {
+      const raw = getStoragePayload();
+      const parsed = safeParse(raw);
+      if (parsed && typeof parsed === "object" && parsed.configs && typeof parsed.configs === "object") {
+        return {
+          version: parsed.version || 1,
+          configs: parsed.configs,
+        };
+      }
+
+      const legacyRaw = getStoragePayload(LEGACY_STORAGE_KEY);
+      const legacyParsed = safeParse(legacyRaw);
+      if (looksLikeConfig(legacyParsed)) {
+        return {
+          version: 1,
+          configs: {
+            [DEFAULT_PROFILE_NAME]: {
+              config: legacyParsed,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            },
+          },
+        };
+      }
+
+      return { ...EMPTY_CONFIG_STORE };
+    }
+
+    function setConfigStore(store) {
+      setStoragePayload(JSON.stringify(store));
+    }
+
+    function refreshSavedConfigOptions(selectedName = "") {
+      const store = getConfigStore();
+      const names = Object.keys(store.configs || {}).sort((a, b) => a.localeCompare(b));
+      const previous = selectedName || elements.savedConfigSelect.value;
+      elements.savedConfigSelect.innerHTML = "";
+
+      if (!names.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No saved profiles";
+        elements.savedConfigSelect.append(option);
+        elements.savedConfigSelect.disabled = true;
+        return;
+      }
+
+      const fallbackName = names[0];
+      names.forEach((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        if (name === (previous || fallbackName)) {
+          option.selected = true;
+        }
+        elements.savedConfigSelect.append(option);
+      });
+      elements.savedConfigSelect.disabled = false;
+    }
+
+    function normalizeProfileName(value) {
+      return (value || "").trim();
+    }
+
+    function gatherConfig() {
+      return {
+        version: 1,
+        cavityShape: elements.cavityShape.value,
+        shellShape: elements.shellShape.value,
+        layoutMode: elements.layoutMode.value,
+        sizingMode: elements.sizingMode.value,
+        topDiameter: elements.topDiameter.value,
+        bottomDiameter: elements.bottomDiameter.value,
+        topDiameterUnit: elements.topDiameterUnit.value,
+        bottomDiameterUnit: elements.bottomDiameterUnit.value,
+        length: elements.length.value,
+        width: elements.width.value,
+        lengthUnit: elements.lengthUnit.value,
+        widthUnit: elements.widthUnit.value,
+        depth: elements.depth.value,
+        depthUnit: elements.depthUnit.value,
+        spacing: elements.spacing.value,
+        spacingUnit: elements.spacingUnit.value,
+        perimeter: elements.perimeter.value,
+        perimeterUnit: elements.perimeterUnit.value,
+        baseThickness: elements.baseThickness.value,
+        baseThicknessUnit: elements.baseThicknessUnit.value,
+        sheetLength: elements.sheetLength.value,
+        sheetWidth: elements.sheetWidth.value,
+        sheetLengthUnit: elements.sheetLengthUnit.value,
+        sheetWidthUnit: elements.sheetWidthUnit.value,
+        targetCavityCount: elements.targetCavityCount.value,
+        requestedSheets: elements.requestedSheets.value,
+        price: elements.price.value,
+        castsEndure: elements.castsEndure.value,
+        customerQuote: elements.customerQuote.value,
+      };
+    }
+
+    function restoreConfig(config) {
+      if (!config || typeof config !== "object") {
+        elements.loadConfigStatus.textContent = "No saved settings found.";
+        return;
+      }
+
+      try {
+        const assignments = [
+          [elements.cavityShape, config.cavityShape],
+          [elements.shellShape, config.shellShape],
+          [elements.layoutMode, config.layoutMode],
+          [elements.sizingMode, config.sizingMode],
+          [elements.topDiameter, config.topDiameter],
+          [elements.bottomDiameter, config.bottomDiameter],
+          [elements.topDiameterUnit, config.topDiameterUnit],
+          [elements.bottomDiameterUnit, config.bottomDiameterUnit],
+          [elements.length, config.length],
+          [elements.width, config.width],
+          [elements.lengthUnit, config.lengthUnit],
+          [elements.widthUnit, config.widthUnit],
+          [elements.depth, config.depth],
+          [elements.depthUnit, config.depthUnit],
+          [elements.spacing, config.spacing],
+          [elements.spacingUnit, config.spacingUnit],
+          [elements.perimeter, config.perimeter],
+          [elements.perimeterUnit, config.perimeterUnit],
+          [elements.baseThickness, config.baseThickness],
+          [elements.baseThicknessUnit, config.baseThicknessUnit],
+          [elements.sheetLength, config.sheetLength],
+          [elements.sheetWidth, config.sheetWidth],
+          [elements.sheetLengthUnit, config.sheetLengthUnit],
+          [elements.sheetWidthUnit, config.sheetWidthUnit],
+          [elements.targetCavityCount, config.targetCavityCount],
+          [elements.requestedSheets, config.requestedSheets],
+          [elements.price, config.price],
+          [elements.castsEndure, config.castsEndure],
+          [elements.customerQuote, config.customerQuote],
+        ];
+
+        assignments.forEach(([element, value]) => {
+          if (value !== undefined && value !== null) {
+            element.value = String(value);
+          }
+        });
+
+        updateShapeFields();
+        updateSizingModeFields();
+        calculate();
+        elements.loadConfigStatus.textContent = "Saved settings loaded.";
+      } catch (error) {
+        elements.loadConfigStatus.textContent = "Could not load saved settings.";
+      }
+    }
+
+    function saveConfig() {
+      try {
+        const profileName = normalizeProfileName(elements.saveConfigName.value);
+        if (!profileName) {
+          elements.loadConfigStatus.textContent = "Enter a save profile name.";
+          return;
+        }
+
+        const store = getConfigStore();
+        const now = Date.now();
+        const existing = store.configs?.[profileName] || null;
+        store.version = 1;
+        if (!store.configs) {
+          store.configs = {};
+        }
+        store.configs[profileName] = {
+          config: gatherConfig(),
+          createdAt: existing?.createdAt || now,
+          updatedAt: now,
+        };
+        setConfigStore(store);
+        refreshSavedConfigOptions(profileName);
+        elements.loadConfigStatus.textContent = `Profile "${profileName}" saved.`;
+        elements.saveConfigName.value = profileName;
+      } catch (error) {
+        elements.loadConfigStatus.textContent = "Unable to save settings.";
+      }
+    }
+
+    function loadConfigFromStorage() {
+      const name = elements.savedConfigSelect.value;
+      if (!name) {
+        elements.loadConfigStatus.textContent = "Select a profile to load.";
+        return;
+      }
+
+      const store = getConfigStore();
+      const entry = store.configs?.[name];
+      if (!entry || !entry.config) {
+        elements.loadConfigStatus.textContent = "Could not load selected profile.";
+        refreshSavedConfigOptions(name);
+        return;
+      }
+
+      restoreConfig(entry.config);
+      elements.loadConfigStatus.textContent = `Profile "${name}" loaded.`;
+      elements.saveConfigName.value = name;
     }
 
     function toInchesFromInput(input, unitSelect) {
@@ -1272,9 +1573,12 @@
         elements.copyQuoteHint.textContent = "Copy failed; manually select and copy.";
       }
     });
+    elements.saveConfig.addEventListener("click", saveConfig);
+    elements.loadConfig.addEventListener("click", loadConfigFromStorage);
 
     updateSizingModeFields();
     updateShapeFields();
+    refreshSavedConfigOptions();
     calculate();
   </script>
 
