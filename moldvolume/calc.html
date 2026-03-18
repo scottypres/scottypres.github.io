@@ -471,7 +471,7 @@
           </div>
           <div class="field">
             <label for="quote-text">Customer quote text (copy/paste)</label>
-            <textarea id="quote-text" class="quote-box" rows="10" readonly></textarea>
+            <textarea id="quote-text" class="quote-box" rows="10" readonly>Fill values to generate a customer quote summary.</textarea>
           </div>
           <div class="field">
             <button id="copy-quote" type="button">Copy quote text</button>
@@ -1515,20 +1515,24 @@
       elements.outCavityVolPerCm3.textContent = `${perCavityCm3.toFixed(2)} cm^3`;
       elements.outCavityVolPerStandard.textContent = perCavityStandard;
 
-      elements.quoteText.value = makeQuoteText({
-        shape,
-        cavityDimText: getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter),
-        sheetCount: sheetCountOutput,
-        cavities: cavityCount,
-        cavitiesPerSheet,
-        sheetDimsIn: sheetDimensions,
-        sheetDimsCm: sheetDimensions,
-        quotedPrice,
-        casts,
-        weightLb: sheetWeightLb,
-        costPerCast: costPerCasting,
-        costPerCastPerCavity,
-      });
+      try {
+        elements.quoteText.value = makeQuoteText({
+          shape,
+          cavityDimText: getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter),
+          sheetCount: sheetCountOutput,
+          cavities: cavityCount,
+          cavitiesPerSheet,
+          sheetDimsIn: sheetDimensions,
+          sheetDimsCm: sheetDimensions,
+          quotedPrice,
+          casts,
+          weightLb: sheetWeightLb,
+          costPerCast: costPerCasting,
+          costPerCastPerCavity,
+        });
+      } catch (error) {
+        elements.quoteText.value = "Unable to generate quote text. Check cavity and sheet dimensions, then recalculate.";
+      }
 
       elements.copyQuoteHint.classList.add("hidden");
 
