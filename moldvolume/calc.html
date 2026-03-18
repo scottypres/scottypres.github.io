@@ -1208,7 +1208,7 @@
       casts,
       weightLb,
       costPerCast,
-      costPerCastPerCavity,
+      costPerCastingPerCavity,
       cavityVolIn3,
       cavityVolCm3,
       cavityVolStandard,
@@ -1221,7 +1221,7 @@
       const safeCasts = Number.isFinite(casts) && casts >= 0 ? Math.floor(casts) : 0;
       const safePrice = Number.isFinite(quotedPrice) && quotedPrice > 0 ? quotedPrice : 0;
       const safeWeight = Number.isFinite(weightLb) && weightLb >= 0 ? weightLb : 0;
-      const safeCostPerCastPerCavity = Number.isFinite(costPerCastPerCavity) && costPerCastPerCavity >= 0 ? costPerCastPerCavity : 0;
+      const safeCostPerCastingPerCavity = Number.isFinite(costPerCastingPerCavity) && costPerCastingPerCavity >= 0 ? costPerCastingPerCavity : 0;
       const safeCavityVolIn3 = Number.isFinite(cavityVolIn3) && cavityVolIn3 >= 0 ? cavityVolIn3 : 0;
       const safeCavityVolCm3 = Number.isFinite(cavityVolCm3) && cavityVolCm3 >= 0 ? cavityVolCm3 : 0;
       const safeCavityVolStandard = typeof cavityVolStandard === "string" && cavityVolStandard.trim().length > 0
@@ -1264,7 +1264,7 @@
         `Sheet weight: ${safeWeight.toFixed(2)} lb`,
         `Expected mold life: ${safeCasts} castings`,
         `Total Price: $${safePrice.toFixed(2)}`,
-        `Cost per casting per cavity: $${safeCostPerCastPerCavity.toFixed(2)}`,
+        `Cost per casting per cavity: $${safeCostPerCastingPerCavity.toFixed(2)}`,
       ];
       return lines.join("\n");
     }
@@ -1603,7 +1603,7 @@
           cavityVolIn3: perCavityIn3,
           cavityVolCm3: perCavityCm3,
           cavityVolStandard: perCavityStandard,
-          costPerCastPerCavity,
+          costPerCastingPerCavity,
         });
       } catch (error) {
         console.error("Quote generation failed", error);
@@ -1623,7 +1623,7 @@
           cavityVolIn3: perCavityIn3,
           cavityVolCm3: perCavityCm3,
           cavityVolStandard: perCavityStandard,
-          costPerCastPerCavity,
+          costPerCastingPerCavity,
         });
       }
 
