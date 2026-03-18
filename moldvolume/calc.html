@@ -217,6 +217,24 @@
               <option value="single">Single cavity</option>
             </select>
           </div>
+          <div class="field">
+            <label for="sizing-mode">Sizing mode</label>
+            <select id="sizing-mode">
+              <option value="bounds">Fit to max sheet dimensions</option>
+              <option value="target">Target cavity count</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="target-cavity-count">Requested cavity count</label>
+            <input id="target-cavity-count" type="number" step="1" min="0" value="0" />
+          </div>
+          <div class="field">
+            <label for="sheet-count">Preferred sheet count (0 = auto)</label>
+            <input id="sheet-count" type="number" step="1" min="0" value="0" />
+          </div>
         </div>
 
         <div class="row" id="cylinder-dimension-row">
@@ -279,10 +297,10 @@
           <div class="field">
             <label for="spacing">Spacing between cavities</label>
             <div class="value-with-unit">
-              <input id="spacing" type="number" step="0.001" min="0" value="0.25" />
+              <input id="spacing" type="number" step="0.001" min="0" value="4" />
               <select class="unit-picker" id="spacing-unit">
                 <option value="in">in</option>
-                <option value="mm">mm</option>
+                <option value="mm" selected>mm</option>
               </select>
             </div>
           </div>
@@ -304,7 +322,7 @@
             <div class="value-with-unit">
               <input id="base-thickness" type="number" step="0.001" min="0" value="0.25" />
               <select class="unit-picker" id="base-thickness-unit">
-                <option value="in">in</option>
+                <option value="in" selected>in</option>
                 <option value="mm">mm</option>
               </select>
             </div>
@@ -315,20 +333,20 @@
           <div class="field">
             <label for="sheet-length">Max mold length</label>
             <div class="value-with-unit">
-              <input id="sheet-length" type="number" step="0.001" min="0" value="12" />
+              <input id="sheet-length" type="number" step="0.001" min="0" value="250" />
               <select class="unit-picker" id="sheet-length-unit">
                 <option value="in">in</option>
-                <option value="mm">mm</option>
+                <option value="mm" selected>mm</option>
               </select>
             </div>
           </div>
           <div class="field">
             <label for="sheet-width">Max mold width</label>
             <div class="value-with-unit">
-              <input id="sheet-width" type="number" step="0.001" min="0" value="8" />
+              <input id="sheet-width" type="number" step="0.001" min="0" value="210" />
               <select class="unit-picker" id="sheet-width-unit">
                 <option value="in">in</option>
-                <option value="mm">mm</option>
+                <option value="mm" selected>mm</option>
               </select>
             </div>
           </div>
@@ -337,11 +355,11 @@
         <div class="row">
           <div class="field">
             <label for="price-per-gallon">Silicone price ($/gallon)</label>
-            <input id="price-per-gallon" type="number" step="0.001" min="0" value="30" />
+            <input id="price-per-gallon" type="number" step="0.001" min="0" value="130" />
           </div>
         </div>
 
-        <p class="note">Each dimension input now supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom). Cavity spacing and fit checks use the larger of the two diameters. Layout is recalculated live; single-cavity mode checks one cavity fit, while auto mode packs a full uniform grid.</p>
+        <p class="note">Each dimension input supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom) and use the larger diameter for spacing checks. Layout is recalculated live; single mode checks one cavity, and target mode can compute the exact sheet size for a requested cavity count and split it across sheets with optional max sheet width/length.</p>
       </section>
 
       <section>
@@ -366,6 +384,7 @@
         </div>
 
         <div class="result-block">
+          <p><strong>Sheets used:</strong> <span id="sheet-count-output">0</span></p>
           <p><strong>Used outer shell:</strong> <span id="used-shell">0 x 0 (in)</span></p>
           <p><strong>Silicone volume:</strong> <span id="volume-cm3">0 cm^3</span></p>
           <p><strong>Silicone volume (gallons):</strong> <span id="volume-gal">0 gal</span></p>
@@ -385,6 +404,7 @@
       cavityShape: document.getElementById("cavity-shape"),
       shellShape: document.getElementById("shell-shape"),
       layoutMode: document.getElementById("layout-mode"),
+      sizingMode: document.getElementById("sizing-mode"),
       cylinderRow: document.getElementById("cylinder-dimension-row"),
       rectangleRow: document.getElementById("rectangle-dimension-row"),
       topDiameter: document.getElementById("cavity-top-diameter"),
@@ -410,8 +430,11 @@
       sheetWidth: document.getElementById("sheet-width"),
       sheetLengthUnit: document.getElementById("sheet-length-unit"),
       sheetWidthUnit: document.getElementById("sheet-width-unit"),
+      targetCavityCount: document.getElementById("target-cavity-count"),
+      requestedSheets: document.getElementById("sheet-count"),
       price: document.getElementById("price-per-gallon"),
       outFit: document.getElementById("cavities-fit"),
+      outSheets: document.getElementById("sheet-count-output"),
       outThickness: document.getElementById("sheet-thickness"),
       outVolumeIn3: document.getElementById("volume-in3"),
       outCost: document.getElementById("cost-usd"),
@@ -426,6 +449,7 @@
       elements.cavityShape,
       elements.layoutMode,
       elements.shellShape,
+      elements.sizingMode,
       elements.topDiameter,
       elements.bottomDiameter,
       elements.topDiameterUnit,
@@ -438,7 +462,9 @@
       elements.baseThickness,
       elements.sheetLength,
       elements.sheetWidth,
-      elements.price
+      elements.targetCavityCount,
+      elements.requestedSheets,
+      elements.price,
     ];
 
     function parse(value) {
@@ -462,6 +488,223 @@
       return (Math.PI * height * (rTop * rTop + rTop * rBottom + rBottom * rBottom)) / 3;
     }
 
+    function splitCount(total, groups) {
+      if (groups <= 0 || total <= 0) return [];
+      const base = Math.floor(total / groups);
+      const rem = total % groups;
+      const result = new Array(groups).fill(base);
+      for (let i = 0; i < rem; i += 1) {
+        result[i] += 1;
+      }
+      return result;
+    }
+
+    function maxCountPerAxis(axisLimit, cellSize, gap, perimeter) {
+      if (axisLimit <= 0) {
+        return Infinity;
+      }
+      const available = axisLimit - 2 * perimeter;
+      if (available < cellSize) {
+        return 0;
+      }
+      const requiredForOne = cellSize + gap;
+      return Math.floor((available + gap) / requiredForOne);
+    }
+
+    function sheetCountsToDimensions(cols, rows, len, wid, spacing, perimeter) {
+      const width = 2 * perimeter + cols * len + Math.max(0, cols - 1) * spacing;
+      const length = 2 * perimeter + rows * wid + Math.max(0, rows - 1) * spacing;
+      return { width, length, area: width * length };
+    }
+
+    function bestGridForTargetCount(targetCavities, len, wid, spacing, perimeter) {
+      if (targetCavities <= 0) {
+        return { rows: 0, cols: 0, extraCells: 0, sheetArea: 0 };
+      }
+
+      let bestRows = 0;
+      let bestCols = 0;
+      let bestExtra = Infinity;
+      let bestArea = Infinity;
+      let bestLongSide = Infinity;
+
+      for (let rows = 1; rows <= targetCavities; rows += 1) {
+        const cols = Math.ceil(targetCavities / rows);
+        const cells = rows * cols;
+        const used = sheetCountsToDimensions(cols, rows, len, wid, spacing, perimeter);
+        const extra = cells - targetCavities;
+        const longSide = Math.max(used.width, used.length);
+
+        if (
+          used.area < bestArea ||
+          (used.area === bestArea && (extra < bestExtra || (extra === bestExtra && longSide < bestLongSide)))
+        ) {
+          bestRows = rows;
+          bestCols = cols;
+          bestExtra = extra;
+          bestArea = used.area;
+          bestLongSide = longSide;
+        }
+      }
+
+      return {
+        rows: bestRows,
+        cols: bestCols,
+        extraCells: bestExtra,
+        sheetArea: bestArea,
+      };
+    }
+
+    function splitToSheetGroups(totalCols, totalRows, targetSheets, maxColsPerSheet, maxRowsPerSheet, len, wid, spacing, perimeter) {
+      const toGroupList = (total, groupCount) => {
+        if (groupCount <= 0 || total <= 0 || groupCount > total) {
+          return [];
+        }
+        return splitCount(total, groupCount);
+      };
+
+      const describe = (colSizes, rowSizes) => {
+        const sheetDimensions = [];
+        let shellArea = 0;
+        let maxSheetArea = 0;
+        let maxSheetSide = 0;
+
+        for (const rowCount of rowSizes) {
+          for (const colCount of colSizes) {
+            const dims = sheetCountsToDimensions(colCount, rowCount, len, wid, spacing, perimeter);
+            sheetDimensions.push(dims);
+            shellArea += dims.area;
+            maxSheetArea = Math.max(maxSheetArea, dims.area);
+            maxSheetSide = Math.max(maxSheetSide, dims.width, dims.length);
+          }
+        }
+
+        return {
+          sheetDimensions,
+          shellArea,
+          sheets: sheetDimensions.length,
+          maxSheetArea,
+          maxSheetSide,
+        };
+      };
+
+      const autoColGroups = maxColsPerSheet === Infinity ? 1 : Math.max(1, Math.ceil(totalCols / maxColsPerSheet));
+      const autoRowGroups = maxRowsPerSheet === Infinity ? 1 : Math.max(1, Math.ceil(totalRows / maxRowsPerSheet));
+      const minSheets = autoColGroups * autoRowGroups;
+
+      if (totalCols <= 0 || totalRows <= 0) {
+        return {
+          sheetDimensions: [],
+          shellArea: 0,
+          sheets: 0,
+          maxSheetArea: 0,
+          maxSheetSide: 0,
+          by: "invalid",
+          warning: "No cavities to place.",
+        };
+      }
+
+      if (maxColsPerSheet === 0 || maxRowsPerSheet === 0) {
+        return {
+          sheetDimensions: [],
+          shellArea: 0,
+          sheets: 0,
+          maxSheetArea: 0,
+          maxSheetSide: 0,
+          by: "impossible",
+          warning: "Cavity footprint is too large for the max sheet dimensions.",
+        };
+      }
+
+      if (targetSheets <= 0) {
+        const colGroups = autoColGroups;
+        const rowGroups = autoRowGroups;
+        const colSizes = toGroupList(totalCols, colGroups);
+        const rowSizes = toGroupList(totalRows, rowGroups);
+        return {
+          ...describe(colSizes, rowSizes),
+          colGroups,
+          rowGroups,
+          colSizes,
+          rowSizes,
+          by: "auto",
+        };
+      }
+
+      const preferred = Math.max(1, Math.floor(targetSheets));
+      const maxSheetsToCheck = totalCols * totalRows;
+
+      for (let sheetCount = preferred; sheetCount <= maxSheetsToCheck; sheetCount += 1) {
+        let bestThisCount = null;
+        const maxRowGroups = Math.min(totalRows, sheetCount);
+
+        for (let rowGroups = 1; rowGroups <= maxRowGroups; rowGroups += 1) {
+          if (sheetCount % rowGroups !== 0) continue;
+          const colGroups = sheetCount / rowGroups;
+          if (colGroups < 1 || colGroups > totalCols) continue;
+
+          const colSizes = toGroupList(totalCols, colGroups);
+          const rowSizes = toGroupList(totalRows, rowGroups);
+          if (colSizes.length === 0 || rowSizes.length === 0) continue;
+          if (maxColsPerSheet !== Infinity && Math.max(...colSizes) > maxColsPerSheet) continue;
+          if (maxRowsPerSheet !== Infinity && Math.max(...rowSizes) > maxRowsPerSheet) continue;
+
+          const report = describe(colSizes, rowSizes);
+          if (
+            !bestThisCount ||
+            report.shellArea < bestThisCount.shellArea ||
+            (
+              report.shellArea === bestThisCount.shellArea && (
+                report.maxSheetSide < bestThisCount.maxSheetSide ||
+                (report.maxSheetSide === bestThisCount.maxSheetSide && report.maxSheetArea < bestThisCount.maxSheetArea)
+              )
+            )
+          ) {
+            bestThisCount = {
+              ...report,
+              colGroups,
+              rowGroups,
+              colSizes,
+              rowSizes,
+              by: "count",
+            };
+          }
+        }
+
+        if (bestThisCount) {
+          if (sheetCount !== preferred) {
+            bestThisCount.warning = `Requested ${preferred} sheets cannot satisfy the limits, using ${sheetCount} sheets.`;
+          }
+          return bestThisCount;
+        }
+      }
+
+      const fallbackColSizes = toGroupList(totalCols, autoColGroups);
+      const fallbackRowSizes = toGroupList(totalRows, autoRowGroups);
+      return {
+        ...describe(fallbackColSizes, fallbackRowSizes),
+        colGroups: autoColGroups,
+        rowGroups: autoRowGroups,
+        colSizes: fallbackColSizes,
+        rowSizes: fallbackRowSizes,
+        by: "auto-fallback",
+        warning: `Requested ${preferred} sheets cannot satisfy limits, using ${minSheets} sheets.`,
+      };
+    }
+
+    function formatSheetSummary(sheetDimensions) {
+      const grouped = new Map();
+
+      sheetDimensions.forEach((d) => {
+        const key = `${d.width.toFixed(3)} x ${d.length.toFixed(3)} in`;
+        grouped.set(key, (grouped.get(key) || 0) + 1);
+      });
+
+      return [...grouped.entries()]
+        .map(([size, count]) => (count === 1 ? size : `${count} x ${size}`))
+        .join(", ");
+    }
+
     function updateShapeFields() {
       const shape = elements.cavityShape.value;
       elements.cylinderRow.classList.toggle("hidden", shape !== "cylinder");
@@ -483,7 +726,6 @@
       const startX = cols > 1 ? -(cols - 1) * stepX / 2 : 0;
       const startY = rows > 1 ? -(rows - 1) * stepY / 2 : 0;
       let maxNeededR = 0;
-      let fits = true;
 
       for (let r = 0; r < rows; r += 1) {
         const y = startY + r * stepY;
@@ -494,7 +736,6 @@
             const needed = Math.hypot(x, y) + (diameterOrWidth / 2);
             maxNeededR = Math.max(maxNeededR, needed);
             if (needed > availR) {
-              fits = false;
               return { fit: false };
             }
             continue;
@@ -512,7 +753,6 @@
             const d = Math.hypot(cx, cy);
             maxNeededR = Math.max(maxNeededR, d);
             if (d > availR) {
-              fits = false;
               return { fit: false };
             }
           }
@@ -525,6 +765,7 @@
       const shape = elements.cavityShape.value;
       const shell = elements.shellShape.value;
       const layoutMode = elements.layoutMode.value;
+      const sizingMode = elements.sizingMode.value;
       const depth = toInchesFromInput(elements.depth, elements.depthUnit);
       const spacing = toInchesFromInput(elements.spacing, elements.spacingUnit);
       const perimeter = toInchesFromInput(elements.perimeter, elements.perimeterUnit);
@@ -532,6 +773,7 @@
       const maxL = toInchesFromInput(elements.sheetLength, elements.sheetLengthUnit);
       const maxW = toInchesFromInput(elements.sheetWidth, elements.sheetWidthUnit);
       const price = numVal(elements.price);
+      const requestedCount = Math.max(0, Math.floor(numVal(elements.targetCavityCount)));
 
       let len = toInchesFromInput(elements.length, elements.lengthUnit);
       let wid = toInchesFromInput(elements.width, elements.widthUnit);
@@ -553,19 +795,73 @@
       const cavVolumeSingle = shape === "cylinder"
         ? frustumVolume(topDiameter, bottomDiameter, depth)
         : (len * wid * depth);
+
       const stepX = len + spacing;
       const stepY = wid + spacing;
       const requiredHalfDiag = shape === "cylinder" ? len / 2 : Math.hypot(len / 2, wid / 2);
+
       let maxCols = 0;
       let maxRows = 0;
       let cavityCount = 0;
       let shellArea = 0;
       let usedL = 0;
       let usedW = 0;
-      let radiusUsed = 0;
       let warning = "";
+      let sheetCountOutput = 1;
+      let outShellText = "0 x 0 in";
 
-      if (layoutMode === "single") {
+      if (sizingMode === "target") {
+        const targetCount = layoutMode === "single" ? Math.min(1, requestedCount) : requestedCount;
+        if (layoutMode === "single" && requestedCount > 1) {
+          warning = "Target mode with single layout is capped at one cavity.";
+        }
+
+        if (shell !== "rectangle") {
+          warning = `${warning ? `${warning} ` : ""}Target mode currently supports rectangular shell only.`;
+        } else if (targetCount <= 0) {
+          warning = `${warning ? `${warning} ` : ""}Enter a target cavity count greater than 0.`;
+          cavityCount = 0;
+          shellArea = 0;
+          sheetCountOutput = 0;
+        } else {
+          const target = bestGridForTargetCount(targetCount, len, wid, spacing, perimeter);
+          const requestedSheets = numVal(elements.requestedSheets);
+          const maxColsPerSheet = maxCountPerAxis(maxW, len, spacing, perimeter);
+          const maxRowsPerSheet = maxCountPerAxis(maxL, wid, spacing, perimeter);
+          const split = splitToSheetGroups(
+            target.cols,
+            target.rows,
+            requestedSheets,
+            maxColsPerSheet,
+            maxRowsPerSheet,
+            len,
+            wid,
+            spacing,
+            perimeter
+          );
+
+          if (split.sheets === 0) {
+            warning = `${warning ? `${warning} ` : ""}${split.warning || "No feasible split."}`;
+            cavityCount = 0;
+            sheetCountOutput = 0;
+          } else {
+            cavityCount = targetCount;
+            sheetCountOutput = split.sheets;
+            shellArea = split.shellArea;
+            if (split.warning) {
+              warning = `${warning ? `${warning} ` : ""}${split.warning}`;
+            }
+
+            if (split.sheets === 1) {
+              usedL = split.sheetDimensions[0].length;
+              usedW = split.sheetDimensions[0].width;
+              outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
+            } else {
+              outShellText = `${formatSheetSummary(split.sheetDimensions)} (${split.sheets} sheets)`;
+            }
+          }
+        }
+      } else if (layoutMode === "single") {
         maxCols = 1;
         maxRows = 1;
         if (shell === "rectangle") {
@@ -578,18 +874,20 @@
             shellArea = usedL * usedW;
           } else {
             warning = "Single cavity does not fit in the current rectangular mold sheet with the current perimeter.";
+            sheetCountOutput = 0;
           }
         } else {
           const maxR = Math.min(maxL, maxW) / 2;
           const innerR = maxR - perimeter;
           if (innerR >= requiredHalfDiag && innerR > 0) {
             cavityCount = 1;
-            radiusUsed = perimeter + requiredHalfDiag;
-            shellArea = Math.PI * radiusUsed * radiusUsed;
-            const usedDiam = Math.min(radiusUsed * 2, Math.min(maxL, maxW));
+            const radius = perimeter + requiredHalfDiag;
+            shellArea = Math.PI * radius * radius;
+            const usedDiam = Math.min(radius * 2, Math.min(maxL, maxW));
             usedL = usedW = usedDiam;
           } else {
             warning = "Single cavity does not fit in the current circular mold sheet with the current perimeter.";
+            sheetCountOutput = 0;
           }
         }
       } else if (shell === "rectangle") {
@@ -604,11 +902,14 @@
           usedW = maxCols > 0 ? perimeter * 2 + maxCols * len + Math.max(0, maxCols - 1) * spacing : 0;
           usedL = maxRows > 0 ? perimeter * 2 + maxRows * wid + Math.max(0, maxRows - 1) * spacing : 0;
           shellArea = usedL * usedW;
+          outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
           if (cavityCount === 0) {
             warning = "No cavities can fit with the current perimeter and dimension limits.";
+            sheetCountOutput = 0;
           }
         } else {
           warning = "No cavities can fit with the current perimeter and dimension limits.";
+          sheetCountOutput = 0;
         }
       } else {
         const maxR = Math.min(maxL, maxW) / 2;
@@ -617,7 +918,7 @@
           const maxColsUpper = Math.max(0, Math.floor((2 * innerR + spacing) / stepX));
           const maxRowsUpper = Math.max(0, Math.floor((2 * innerR + spacing) / stepY));
           let bestCount = 0;
-          let bestR = 0;
+          let bestR = Infinity;
           let bestCols = 0;
           let bestRows = 0;
 
@@ -628,8 +929,8 @@
                 continue;
               }
               const count = cols * rows;
-              const neededR = fit.neededRadius + perimeter;
-              if (count > bestCount || (count === bestCount && neededR > 0 && neededR < bestR)) {
+              const neededR = fit.neededRadius;
+              if (count > bestCount || (count === bestCount && neededR < bestR)) {
                 bestCount = count;
                 bestR = neededR;
                 bestCols = cols;
@@ -642,16 +943,27 @@
             maxCols = bestCols;
             maxRows = bestRows;
             cavityCount = bestCount;
-            radiusUsed = bestR;
-            shellArea = Math.PI * radiusUsed * radiusUsed;
-            const usedDiam = Math.min(radiusUsed * 2, Math.min(maxL, maxW));
+            const radius = bestR + perimeter;
+            shellArea = Math.PI * radius * radius;
+            const usedDiam = Math.min(radius * 2, Math.min(maxL, maxW));
             usedL = usedW = usedDiam;
+            outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
           } else {
             warning = "No cavities can fit in the selected circular shell within perimeter limits.";
+            sheetCountOutput = 0;
           }
         } else {
           warning = "No cavities can fit with the current perimeter and dimension limits.";
+          sheetCountOutput = 0;
         }
+      }
+
+      if (sizingMode !== "target" && outShellText === "0 x 0 in" && usedW === 0 && usedL === 0) {
+        outShellText = "0 x 0 in";
+      }
+
+      if (sizingMode !== "target" && warning === "") {
+        outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
       }
 
       const totalThickness = depth + base;
@@ -665,14 +977,13 @@
       const cost = volumeGal * price;
 
       elements.outFit.textContent = String(cavityCount);
+      elements.outSheets.textContent = String(sheetCountOutput);
       elements.outThickness.textContent = `${totalThickness.toFixed(3)} in`;
       elements.outVolumeIn3.textContent = `${netSilicone.toFixed(2)} in^3`;
+      elements.outCost.textContent = `$${cost.toFixed(2)}`;
       elements.outVolumeCm3.textContent = `${volumeCm3.toFixed(2)} cm^3`;
       elements.outVolumeGal.textContent = `${volumeGal.toFixed(3)} gal`;
-      elements.outCost.textContent = `$${cost.toFixed(2)}`;
-      const usedLDisplay = usedL.toFixed(3);
-      const usedWDisplay = usedW.toFixed(3);
-      elements.outShell.textContent = `${usedLDisplay} x ${usedWDisplay} in`;
+      elements.outShell.textContent = outShellText;
       elements.outCavityVol.textContent = `${removedCavitiesVol.toFixed(2)} in^3`;
 
       if (warning) {
@@ -698,11 +1009,13 @@
       elements.perimeterUnit,
       elements.baseThicknessUnit,
       elements.sheetLengthUnit,
-      elements.sheetWidthUnit
+      elements.sheetWidthUnit,
     ].forEach((input) => input.addEventListener("change", calculate));
 
     updateShapeFields();
     calculate();
   </script>
+
 </body>
 </html>
+
