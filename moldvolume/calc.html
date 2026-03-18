@@ -1175,25 +1175,43 @@
       costPerCast,
       costPerCastPerCavity,
     }) {
-      const listIn = formatDimensionList(sheetDimsIn, "in");
-      const listCm = formatDimensionList(sheetDimsCm, "cm");
-      const perSheet = cavitiesPerSheet.length ? cavitiesPerSheet.join(", ") : "N/A";
-      const safeCasts = casts > 0 ? casts : 0;
-      const safePrice = quotedPrice > 0 ? quotedPrice : 0;
+      const safeCavityDims = typeof cavityDimText === "string" && cavityDimText.trim().length > 0
+        ? cavityDimText
+        : "Not fully specified";
+      const safeSheetCount = Number.isFinite(sheetCount) && sheetCount >= 0 ? sheetCount : 0;
+      const safeCavities = Number.isFinite(cavities) && cavities >= 0 ? Math.floor(cavities) : 0;
+      const safeCasts = Number.isFinite(casts) && casts >= 0 ? Math.floor(casts) : 0;
+      const safePrice = Number.isFinite(quotedPrice) && quotedPrice > 0 ? quotedPrice : 0;
+      const safeWeight = Number.isFinite(weightLb) && weightLb >= 0 ? weightLb : 0;
+      const safeCostPerCast = Number.isFinite(costPerCast) && costPerCast >= 0 ? costPerCast : 0;
+      const safeCostPerCastPerCavity = Number.isFinite(costPerCastPerCavity) && costPerCastPerCavity >= 0 ? costPerCastPerCavity : 0;
+      const normalizedSheets = Array.isArray(sheetDimsIn) ? sheetDimsIn : [];
+      const normalizedSheetsCm = Array.isArray(sheetDimsCm) ? sheetDimsCm : [];
+      const normalizedPerSheet = Array.isArray(cavitiesPerSheet) ? cavitiesPerSheet : [];
+
+      const listIn = formatDimensionList(normalizedSheets, "in");
+      const listCm = formatDimensionList(normalizedSheetsCm, "cm");
+      const perSheet = normalizedPerSheet.length ? normalizedPerSheet.join(", ") : "N/A";
+
+      const niceShape = shape === "cylinder"
+        ? "Round"
+        : shape === "square"
+          ? "Square"
+          : "Rectangle";
 
       const lines = [
-        `Cavity shape: ${shape === "cylinder" ? "Round" : shape === "square" ? "Square" : "Rectangle"}`,
-        `Cavity dimensions: ${cavityDimText}`,
-        `Number of sheets: ${sheetCount}`,
+        `Cavity shape: ${niceShape}`,
+        `Cavity dimensions: ${safeCavityDims}`,
+        `Number of sheets: ${safeSheetCount}`,
         `Number of cavities per sheet: ${perSheet}`,
-        `Total cavities: ${cavities}`,
+        `Total cavities: ${safeCavities}`,
         `Sheet(s) dimensions (in): ${listIn}`,
         `Sheet(s) dimensions (cm): ${listCm}`,
-        `Sheet silicone weight: ${weightLb.toFixed(2)} lb`,
+        `Sheet silicone weight: ${safeWeight.toFixed(2)} lb`,
         `Expected mold life: ${safeCasts} castings`,
         `Customer quote: $${safePrice.toFixed(2)}`,
-        `Cost per casting: $${costPerCast.toFixed(2)}`,
-        `Cost per casting per cavity: $${costPerCastPerCavity.toFixed(2)}`,
+        `Cost per casting: $${safeCostPerCast.toFixed(2)}`,
+        `Cost per casting per cavity: $${safeCostPerCastPerCavity.toFixed(2)}`,
       ];
       return lines.join("\n");
     }
