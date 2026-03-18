@@ -221,10 +221,20 @@
 
         <div class="row" id="cylinder-dimension-row">
           <div class="field">
-            <label for="cavity-diameter">Cavity diameter</label>
+            <label for="cavity-top-diameter">Cavity top diameter</label>
             <div class="value-with-unit">
-              <input id="cavity-diameter" type="number" step="0.001" min="0" value="2" />
-              <select class="unit-picker" id="cavity-diameter-unit">
+              <input id="cavity-top-diameter" type="number" step="0.001" min="0" value="2" />
+              <select class="unit-picker" id="cavity-top-diameter-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="cavity-bottom-diameter">Cavity bottom diameter</label>
+            <div class="value-with-unit">
+              <input id="cavity-bottom-diameter" type="number" step="0.001" min="0" value="2" />
+              <select class="unit-picker" id="cavity-bottom-diameter-unit">
                 <option value="in">in</option>
                 <option value="mm">mm</option>
               </select>
@@ -331,7 +341,7 @@
           </div>
         </div>
 
-        <p class="note">Each dimension input now supports its own unit (mm or in). Layout is recalculated live; single-cavity mode checks one cavity fit, while auto mode packs a full uniform grid.</p>
+        <p class="note">Each dimension input now supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom). Cavity spacing and fit checks use the larger of the two diameters. Layout is recalculated live; single-cavity mode checks one cavity fit, while auto mode packs a full uniform grid.</p>
       </section>
 
       <section>
@@ -377,10 +387,12 @@
       layoutMode: document.getElementById("layout-mode"),
       cylinderRow: document.getElementById("cylinder-dimension-row"),
       rectangleRow: document.getElementById("rectangle-dimension-row"),
-      diameter: document.getElementById("cavity-diameter"),
+      topDiameter: document.getElementById("cavity-top-diameter"),
+      bottomDiameter: document.getElementById("cavity-bottom-diameter"),
+      topDiameterUnit: document.getElementById("cavity-top-diameter-unit"),
+      bottomDiameterUnit: document.getElementById("cavity-bottom-diameter-unit"),
       length: document.getElementById("cavity-length"),
       width: document.getElementById("cavity-width"),
-      diameterUnit: document.getElementById("cavity-diameter-unit"),
       lengthUnit: document.getElementById("cavity-length-unit"),
       widthUnit: document.getElementById("cavity-width-unit"),
       widthField: document.getElementById("cavity-width-field"),
@@ -414,7 +426,10 @@
       elements.cavityShape,
       elements.layoutMode,
       elements.shellShape,
-      elements.diameter,
+      elements.topDiameter,
+      elements.bottomDiameter,
+      elements.topDiameterUnit,
+      elements.bottomDiameterUnit,
       elements.length,
       elements.width,
       elements.depth,
@@ -439,6 +454,12 @@
       const val = numVal(input);
       const unit = unitSelect?.value || "in";
       return unit === "mm" ? mmToIn(val) : val;
+    }
+
+    function frustumVolume(topDiameter, bottomDiameter, height) {
+      const rTop = topDiameter / 2;
+      const rBottom = bottomDiameter / 2;
+      return (Math.PI * height * (rTop * rTop + rTop * rBottom + rBottom * rBottom)) / 3;
     }
 
     function updateShapeFields() {
@@ -514,17 +535,24 @@
 
       let len = toInchesFromInput(elements.length, elements.lengthUnit);
       let wid = toInchesFromInput(elements.width, elements.widthUnit);
+      let topDiameter = 0;
+      let bottomDiameter = 0;
       if (shape === "cylinder") {
-        const d = toInchesFromInput(elements.diameter, elements.diameterUnit);
-        len = d;
-        wid = d;
+        topDiameter = toInchesFromInput(elements.topDiameter, elements.topDiameterUnit);
+        bottomDiameter = toInchesFromInput(elements.bottomDiameter, elements.bottomDiameterUnit);
+        if (bottomDiameter === 0) {
+          bottomDiameter = topDiameter;
+        }
+        len = Math.max(topDiameter, bottomDiameter);
+        wid = len;
       } else if (shape === "square") {
         len = toInchesFromInput(elements.length, elements.lengthUnit);
         wid = len;
       }
 
-      const cavArea = shape === "cylinder" ? Math.PI * Math.pow(len / 2, 2) : (len * wid);
-      const cavVolumeSingle = shape === "cylinder" ? cavArea * depth : cavArea * depth;
+      const cavVolumeSingle = shape === "cylinder"
+        ? frustumVolume(topDiameter, bottomDiameter, depth)
+        : (len * wid * depth);
       const stepX = len + spacing;
       const stepY = wid + spacing;
       const requiredHalfDiag = shape === "cylinder" ? len / 2 : Math.hypot(len / 2, wid / 2);
@@ -661,7 +689,8 @@
     });
     allInputs.forEach((input) => input.addEventListener("input", calculate));
     [
-      elements.diameterUnit,
+      elements.topDiameterUnit,
+      elements.bottomDiameterUnit,
       elements.lengthUnit,
       elements.widthUnit,
       elements.depthUnit,
