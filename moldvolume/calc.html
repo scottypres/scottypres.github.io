@@ -226,7 +226,7 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="row hidden" id="target-sizing-controls">
           <div class="field">
             <label for="target-cavity-count">Requested cavity count</label>
             <input id="target-cavity-count" type="number" step="1" min="0" value="0" />
@@ -405,6 +405,7 @@
       shellShape: document.getElementById("shell-shape"),
       layoutMode: document.getElementById("layout-mode"),
       sizingMode: document.getElementById("sizing-mode"),
+      targetSizingControls: document.getElementById("target-sizing-controls"),
       cylinderRow: document.getElementById("cylinder-dimension-row"),
       rectangleRow: document.getElementById("rectangle-dimension-row"),
       topDiameter: document.getElementById("cavity-top-diameter"),
@@ -449,7 +450,6 @@
       elements.cavityShape,
       elements.layoutMode,
       elements.shellShape,
-      elements.sizingMode,
       elements.topDiameter,
       elements.bottomDiameter,
       elements.topDiameterUnit,
@@ -717,6 +717,11 @@
         elements.width.value = elements.length.value;
         elements.widthUnit.value = elements.lengthUnit.value;
       }
+    }
+
+    function updateSizingModeFields() {
+      const isTargetMode = elements.sizingMode.value === "target";
+      elements.targetSizingControls.classList.toggle("hidden", !isTargetMode);
     }
 
     function maxInCircle(cols, rows, cavW, cavH, spacing, shape, diameterOrWidth, availR) {
@@ -996,6 +1001,11 @@
 
     elements.cavityShape.addEventListener("change", () => {
       updateShapeFields();
+      updateSizingModeFields();
+      calculate();
+    });
+    elements.sizingMode.addEventListener("change", () => {
+      updateSizingModeFields();
       calculate();
     });
     allInputs.forEach((input) => input.addEventListener("input", calculate));
@@ -1012,6 +1022,7 @@
       elements.sheetWidthUnit,
     ].forEach((input) => input.addEventListener("change", calculate));
 
+    updateSizingModeFields();
     updateShapeFields();
     calculate();
   </script>
