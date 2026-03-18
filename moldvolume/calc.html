@@ -106,28 +106,6 @@
       font-size: 0.95rem;
     }
 
-    .unit-switch {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .unit-switch button {
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      border-radius: 999px;
-      padding: 8px 12px;
-      background: #fff;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .unit-switch button.active {
-      background: var(--accent);
-      color: #fff;
-    }
-
     .result-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -171,6 +149,22 @@
       margin-top: 12px;
     }
 
+    .value-with-unit {
+      display: grid;
+      grid-template-columns: 1fr 74px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .unit-picker {
+      padding: 9px 8px;
+      border: 1px solid #b6c7e4;
+      border-radius: 8px;
+      background: #f8fbff;
+      color: #17365d;
+      font-size: 0.92rem;
+    }
+
     .warning {
       color: #8f2220;
       font-weight: 700;
@@ -199,11 +193,6 @@
     <div class="content">
       <section>
         <h2>Inputs</h2>
-        <div class="unit-switch" role="group" aria-label="Unit selector">
-          <span style="font-weight: 700; color: #17385f;">Units</span>
-          <button id="unit-mm" type="button">mm</button>
-          <button id="unit-in" type="button">in</button>
-        </div>
 
         <div class="row">
           <div class="field">
@@ -232,52 +221,106 @@
 
         <div class="row" id="cylinder-dimension-row">
           <div class="field">
-            <label for="cavity-diameter">Cavity diameter (<span class="unit-label">in</span>)</label>
-            <input id="cavity-diameter" type="number" step="0.001" min="0" value="2" />
+            <label for="cavity-diameter">Cavity diameter</label>
+            <div class="value-with-unit">
+              <input id="cavity-diameter" type="number" step="0.001" min="0" value="2" />
+              <select class="unit-picker" id="cavity-diameter-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="row hidden" id="rectangle-dimension-row">
           <div class="field">
-            <label for="cavity-length" id="cavity-length-label">Cavity length (<span class="unit-label">in</span>)</label>
-            <input id="cavity-length" type="number" step="0.001" min="0" value="2" />
+            <label for="cavity-length" id="cavity-length-label">Cavity length</label>
+            <div class="value-with-unit">
+              <input id="cavity-length" type="number" step="0.001" min="0" value="2" />
+              <select class="unit-picker" id="cavity-length-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
           <div class="field" id="cavity-width-field">
-            <label for="cavity-width" id="cavity-width-label">Cavity width (<span class="unit-label">in</span>)</label>
-            <input id="cavity-width" type="number" step="0.001" min="0" value="1.5" />
+            <label for="cavity-width" id="cavity-width-label">Cavity width</label>
+            <div class="value-with-unit">
+              <input id="cavity-width" type="number" step="0.001" min="0" value="1.5" />
+              <select class="unit-picker" id="cavity-width-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="row">
           <div class="field">
-            <label for="cavity-depth">Cavity depth (<span class="unit-label">in</span>)</label>
-            <input id="cavity-depth" type="number" step="0.001" min="0" value="0.5" />
+            <label for="cavity-depth">Cavity depth</label>
+            <div class="value-with-unit">
+              <input id="cavity-depth" type="number" step="0.001" min="0" value="0.5" />
+              <select class="unit-picker" id="cavity-depth-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
           <div class="field">
-            <label for="spacing">Spacing between cavities (<span class="unit-label">in</span>)</label>
-            <input id="spacing" type="number" step="0.001" min="0" value="0.25" />
+            <label for="spacing">Spacing between cavities</label>
+            <div class="value-with-unit">
+              <input id="spacing" type="number" step="0.001" min="0" value="0.25" />
+              <select class="unit-picker" id="spacing-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="row">
           <div class="field">
-            <label for="perimeter">Perimeter thickness (<span class="unit-label">in</span>)</label>
-            <input id="perimeter" type="number" step="0.001" min="0" value="0.25" />
+            <label for="perimeter">Perimeter thickness</label>
+            <div class="value-with-unit">
+              <input id="perimeter" type="number" step="0.001" min="0" value="0.25" />
+              <select class="unit-picker" id="perimeter-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
           <div class="field">
-            <label for="base-thickness">Mold base thickness (<span class="unit-label">in</span>)</label>
-            <input id="base-thickness" type="number" step="0.001" min="0" value="0.25" />
+            <label for="base-thickness">Mold base thickness</label>
+            <div class="value-with-unit">
+              <input id="base-thickness" type="number" step="0.001" min="0" value="0.25" />
+              <select class="unit-picker" id="base-thickness-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="row">
           <div class="field">
-            <label for="sheet-length">Max mold length (<span class="unit-label">in</span>)</label>
-            <input id="sheet-length" type="number" step="0.001" min="0" value="12" />
+            <label for="sheet-length">Max mold length</label>
+            <div class="value-with-unit">
+              <input id="sheet-length" type="number" step="0.001" min="0" value="12" />
+              <select class="unit-picker" id="sheet-length-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
           <div class="field">
-            <label for="sheet-width">Max mold width (<span class="unit-label">in</span>)</label>
-            <input id="sheet-width" type="number" step="0.001" min="0" value="8" />
+            <label for="sheet-width">Max mold width</label>
+            <div class="value-with-unit">
+              <input id="sheet-width" type="number" step="0.001" min="0" value="8" />
+              <select class="unit-picker" id="sheet-width-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -288,7 +331,7 @@
           </div>
         </div>
 
-        <p class="note">Layout is recalculated live. Single-cavity mode tests one cavity fit, while auto mode packs a full uniform grid. Circular shell mode checks cavity footprint containment in the sheet boundary.</p>
+        <p class="note">Each dimension input now supports its own unit (mm or in). Layout is recalculated live; single-cavity mode checks one cavity fit, while auto mode packs a full uniform grid.</p>
       </section>
 
       <section>
@@ -325,18 +368,10 @@
 
   <script>
     const mmToIn = (value) => value / 25.4;
-    const inToMm = (value) => value * 25.4;
     const inToCm3 = (in3) => in3 * 16.387064;
     const in3ToGal = (in3) => in3 / 231;
-    const unitLabels = document.querySelectorAll(".unit-label");
-
-    const state = {
-      unit: "in"
-    };
 
     const elements = {
-      unitMm: document.getElementById("unit-mm"),
-      unitIn: document.getElementById("unit-in"),
       cavityShape: document.getElementById("cavity-shape"),
       shellShape: document.getElementById("shell-shape"),
       layoutMode: document.getElementById("layout-mode"),
@@ -345,15 +380,24 @@
       diameter: document.getElementById("cavity-diameter"),
       length: document.getElementById("cavity-length"),
       width: document.getElementById("cavity-width"),
+      diameterUnit: document.getElementById("cavity-diameter-unit"),
+      lengthUnit: document.getElementById("cavity-length-unit"),
+      widthUnit: document.getElementById("cavity-width-unit"),
       widthField: document.getElementById("cavity-width-field"),
       lengthLabel: document.getElementById("cavity-length-label"),
       widthLabel: document.getElementById("cavity-width-label"),
       depth: document.getElementById("cavity-depth"),
+      depthUnit: document.getElementById("cavity-depth-unit"),
       spacing: document.getElementById("spacing"),
+      spacingUnit: document.getElementById("spacing-unit"),
       perimeter: document.getElementById("perimeter"),
+      perimeterUnit: document.getElementById("perimeter-unit"),
       baseThickness: document.getElementById("base-thickness"),
+      baseThicknessUnit: document.getElementById("base-thickness-unit"),
       sheetLength: document.getElementById("sheet-length"),
       sheetWidth: document.getElementById("sheet-width"),
+      sheetLengthUnit: document.getElementById("sheet-length-unit"),
+      sheetWidthUnit: document.getElementById("sheet-width-unit"),
       price: document.getElementById("price-per-gallon"),
       outFit: document.getElementById("cavities-fit"),
       outThickness: document.getElementById("sheet-thickness"),
@@ -391,17 +435,10 @@
       return parse(el.value);
     }
 
-    function toInches(val) {
-      return state.unit === "mm" ? mmToIn(val) : val;
-    }
-
-    function setActiveUnit(unit) {
-      state.unit = unit;
-      elements.unitMm.classList.toggle("active", unit === "mm");
-      elements.unitIn.classList.toggle("active", unit === "in");
-      unitLabels.forEach((el) => (el.textContent = unit));
-      updateShapeFields();
-      calculate();
+    function toInchesFromInput(input, unitSelect) {
+      const val = numVal(input);
+      const unit = unitSelect?.value || "in";
+      return unit === "mm" ? mmToIn(val) : val;
     }
 
     function updateShapeFields() {
@@ -409,11 +446,12 @@
       elements.cylinderRow.classList.toggle("hidden", shape !== "cylinder");
       elements.rectangleRow.classList.toggle("hidden", shape === "cylinder");
       elements.widthField.classList.toggle("hidden", shape === "square");
-      elements.lengthLabel.textContent = `Cavity ${shape === "square" ? "side" : "length"} (` + state.unit + `)`;
-      elements.widthLabel.textContent = `Cavity width (${state.unit})`;
+      elements.lengthLabel.textContent = `Cavity ${shape === "square" ? "side" : "length"}`;
+      elements.widthLabel.textContent = "Cavity width";
       const isSquare = shape === "square";
       if (isSquare) {
         elements.width.value = elements.length.value;
+        elements.widthUnit.value = elements.lengthUnit.value;
       }
     }
 
@@ -466,22 +504,22 @@
       const shape = elements.cavityShape.value;
       const shell = elements.shellShape.value;
       const layoutMode = elements.layoutMode.value;
-      const depth = toInches(numVal(elements.depth));
-      const spacing = toInches(numVal(elements.spacing));
-      const perimeter = toInches(numVal(elements.perimeter));
-      const base = toInches(numVal(elements.baseThickness));
-      const maxL = toInches(numVal(elements.sheetLength));
-      const maxW = toInches(numVal(elements.sheetWidth));
+      const depth = toInchesFromInput(elements.depth, elements.depthUnit);
+      const spacing = toInchesFromInput(elements.spacing, elements.spacingUnit);
+      const perimeter = toInchesFromInput(elements.perimeter, elements.perimeterUnit);
+      const base = toInchesFromInput(elements.baseThickness, elements.baseThicknessUnit);
+      const maxL = toInchesFromInput(elements.sheetLength, elements.sheetLengthUnit);
+      const maxW = toInchesFromInput(elements.sheetWidth, elements.sheetWidthUnit);
       const price = numVal(elements.price);
 
-      let len = toInches(numVal(elements.length));
-      let wid = toInches(numVal(elements.width));
+      let len = toInchesFromInput(elements.length, elements.lengthUnit);
+      let wid = toInchesFromInput(elements.width, elements.widthUnit);
       if (shape === "cylinder") {
-        const d = toInches(numVal(elements.diameter));
+        const d = toInchesFromInput(elements.diameter, elements.diameterUnit);
         len = d;
         wid = d;
       } else if (shape === "square") {
-        len = toInches(numVal(elements.length));
+        len = toInchesFromInput(elements.length, elements.lengthUnit);
         wid = len;
       }
 
@@ -599,14 +637,14 @@
       const cost = volumeGal * price;
 
       elements.outFit.textContent = String(cavityCount);
-      elements.outThickness.textContent = `${(state.unit === "in" ? totalThickness : inToMm(totalThickness)).toFixed(3)} ${state.unit}`;
+      elements.outThickness.textContent = `${totalThickness.toFixed(3)} in`;
       elements.outVolumeIn3.textContent = `${netSilicone.toFixed(2)} in^3`;
       elements.outVolumeCm3.textContent = `${volumeCm3.toFixed(2)} cm^3`;
       elements.outVolumeGal.textContent = `${volumeGal.toFixed(3)} gal`;
       elements.outCost.textContent = `$${cost.toFixed(2)}`;
-      const usedLDisplay = state.unit === "in" ? usedL : inToMm(usedL);
-      const usedWDisplay = state.unit === "in" ? usedW : inToMm(usedW);
-      elements.outShell.textContent = `${usedLDisplay.toFixed(3)} x ${usedWDisplay.toFixed(3)} ${state.unit}`;
+      const usedLDisplay = usedL.toFixed(3);
+      const usedWDisplay = usedW.toFixed(3);
+      elements.outShell.textContent = `${usedLDisplay} x ${usedWDisplay} in`;
       elements.outCavityVol.textContent = `${removedCavitiesVol.toFixed(2)} in^3`;
 
       if (warning) {
@@ -617,15 +655,23 @@
       }
     }
 
-    elements.unitMm.addEventListener("click", () => setActiveUnit("mm"));
-    elements.unitIn.addEventListener("click", () => setActiveUnit("in"));
     elements.cavityShape.addEventListener("change", () => {
       updateShapeFields();
       calculate();
     });
     allInputs.forEach((input) => input.addEventListener("input", calculate));
+    [
+      elements.diameterUnit,
+      elements.lengthUnit,
+      elements.widthUnit,
+      elements.depthUnit,
+      elements.spacingUnit,
+      elements.perimeterUnit,
+      elements.baseThicknessUnit,
+      elements.sheetLengthUnit,
+      elements.sheetWidthUnit
+    ].forEach((input) => input.addEventListener("change", calculate));
 
-    setActiveUnit("in");
     updateShapeFields();
     calculate();
   </script>
