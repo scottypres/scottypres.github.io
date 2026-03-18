@@ -185,10 +185,65 @@ button,
   gap: 10px;
 }
 
+.actions.compact {
+  margin: 8px 0 4px;
+}
+
 .actions button,
 .inline-actions button,
 .inline-actions .link-btn {
   width: auto;
+}
+
+.subtle {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.batch-builder {
+  margin: 14px 0 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+  background: #fff;
+}
+
+.batch-builder h3 {
+  margin: 0 0 6px;
+  font-size: 0.96rem;
+}
+
+.batch-item-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.batch-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fffcf7;
+}
+
+.batch-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.batch-item-head p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.batch-item .ghost {
+  width: auto;
+  padding: 6px 10px;
 }
 
 .stats-grid {
