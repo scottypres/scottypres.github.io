@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Silicone Mold Volume Calculator</title>
+  <style>
+    :root {
+      --bg: #f2f6ff;
+      --panel: #ffffff;
+      --panel-2: #f7f9fc;
+      --text: #102a43;
+      --accent: #1f6feb;
+      --accent-soft: #dbe9ff;
+      --shadow: 0 12px 28px rgba(9, 32, 78, 0.13);
+      --radius: 14px;
+      --line: #d8e2f2;
+      --font-heading: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      --font-body: "Nunito", "Segoe UI", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background: radial-gradient(circle at 20% 10%, #e7f0ff 0%, #d7e5ff 32%, #f7f9ff 74%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 24px 26px;
+      background: linear-gradient(90deg, #23447b, #1c3868);
+      color: #fff;
+    }
+
+    header h1 {
+      margin: 0;
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
+      letter-spacing: 0.2px;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    section {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(20, 46, 93, 0.04);
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.03rem;
+      color: #1a365f;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      margin-bottom: 10px;
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #18335a;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #b6c7e4;
+      padding: 9px 10px;
+      background: #fefeff;
+      color: #17365d;
+      font-size: 0.95rem;
+    }
+
+    .unit-switch {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .unit-switch button {
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .unit-switch button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .result-card {
+      background: var(--accent-soft);
+      border: 1px solid #b8d4ff;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .result-card strong {
+      display: block;
+      color: #11325f;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      letter-spacing: 0.1px;
+    }
+
+    .result-card span {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #1b3a68;
+    }
+
+    .result-block {
+      margin-top: 14px;
+      border-top: 1px dashed #c4d6f1;
+      padding-top: 10px;
+    }
+
+    .result-block p {
+      margin: 6px 0;
+    }
+
+    .note {
+      font-size: 0.88rem;
+      color: #4b6084;
+      margin-top: 12px;
+    }
+
+    .warning {
+      color: #8f2220;
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Silicone Mold Volume Calculator</h1>
+    </header>
+    <div class="content">
+      <section>
+        <h2>Inputs</h2>
+        <div class="unit-switch" role="group" aria-label="Unit selector">
+          <span style="font-weight: 700; color: #17385f;">Units</span>
+          <button id="unit-mm" type="button">mm</button>
+          <button id="unit-in" type="button">in</button>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="cavity-shape">Cavity shape</label>
+            <select id="cavity-shape">
+              <option value="cylinder">Round</option>
+              <option value="rectangle">Rectangle</option>
+              <option value="square">Square</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="shell-shape">Mold shell shape</label>
+            <select id="shell-shape">
+              <option value="rectangle">Rectangular sheet</option>
+              <option value="circle">Circular sheet</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="layout-mode">Layout</label>
+            <select id="layout-mode">
+              <option value="auto">Auto-fit multiple cavities</option>
+              <option value="single">Single cavity</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" id="cylinder-dimension-row">
+          <div class="field">
+            <label for="cavity-diameter">Cavity diameter (<span class="unit-label">in</span>)</label>
+            <input id="cavity-diameter" type="number" step="0.001" min="0" value="2" />
+          </div>
+        </div>
+
+        <div class="row hidden" id="rectangle-dimension-row">
+          <div class="field">
+            <label for="cavity-length" id="cavity-length-label">Cavity length (<span class="unit-label">in</span>)</label>
+            <input id="cavity-length" type="number" step="0.001" min="0" value="2" />
+          </div>
+          <div class="field" id="cavity-width-field">
+            <label for="cavity-width" id="cavity-width-label">Cavity width (<span class="unit-label">in</span>)</label>
+            <input id="cavity-width" type="number" step="0.001" min="0" value="1.5" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="cavity-depth">Cavity depth (<span class="unit-label">in</span>)</label>
+            <input id="cavity-depth" type="number" step="0.001" min="0" value="0.5" />
+          </div>
+          <div class="field">
+            <label for="spacing">Spacing between cavities (<span class="unit-label">in</span>)</label>
+            <input id="spacing" type="number" step="0.001" min="0" value="0.25" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="perimeter">Perimeter thickness (<span class="unit-label">in</span>)</label>
+            <input id="perimeter" type="number" step="0.001" min="0" value="0.25" />
+          </div>
+          <div class="field">
+            <label for="base-thickness">Mold base thickness (<span class="unit-label">in</span>)</label>
+            <input id="base-thickness" type="number" step="0.001" min="0" value="0.25" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="sheet-length">Max mold length (<span class="unit-label">in</span>)</label>
+            <input id="sheet-length" type="number" step="0.001" min="0" value="12" />
+          </div>
+          <div class="field">
+            <label for="sheet-width">Max mold width (<span class="unit-label">in</span>)</label>
+            <input id="sheet-width" type="number" step="0.001" min="0" value="8" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="price-per-gallon">Silicone price ($/gallon)</label>
+            <input id="price-per-gallon" type="number" step="0.001" min="0" value="30" />
+          </div>
+        </div>
+
+        <p class="note">Layout is recalculated live. Single-cavity mode tests one cavity fit, while auto mode packs a full uniform grid. Circular shell mode checks cavity footprint containment in the sheet boundary.</p>
+      </section>
+
+      <section>
+        <h2>Results</h2>
+        <div class="result-grid">
+          <div class="result-card">
+            <strong>Cavities that fit</strong>
+            <span id="cavities-fit">0</span>
+          </div>
+          <div class="result-card">
+            <strong>Used mold sheet thickness</strong>
+            <span id="sheet-thickness">0</span>
+          </div>
+          <div class="result-card">
+            <strong>Silicone volume</strong>
+            <span id="volume-in3">0 in^3</span>
+          </div>
+          <div class="result-card">
+            <strong>Estimated cost</strong>
+            <span id="cost-usd">$0.00</span>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <p><strong>Used outer shell:</strong> <span id="used-shell">0 x 0 (in)</span></p>
+          <p><strong>Silicone volume:</strong> <span id="volume-cm3">0 cm^3</span></p>
+          <p><strong>Silicone volume (gallons):</strong> <span id="volume-gal">0 gal</span></p>
+          <p><strong>Net removed cavity volume:</strong> <span id="cavity-volume">0 in^3</span></p>
+          <p id="fit-warning" class="note warning hidden"></p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const mmToIn = (value) => value / 25.4;
+    const inToMm = (value) => value * 25.4;
+    const inToCm3 = (in3) => in3 * 16.387064;
+    const in3ToGal = (in3) => in3 / 231;
+    const unitLabels = document.querySelectorAll(".unit-label");
+
+    const state = {
+      unit: "in"
+    };
+
+    const elements = {
+      unitMm: document.getElementById("unit-mm"),
+      unitIn: document.getElementById("unit-in"),
+      cavityShape: document.getElementById("cavity-shape"),
+      shellShape: document.getElementById("shell-shape"),
+      layoutMode: document.getElementById("layout-mode"),
+      cylinderRow: document.getElementById("cylinder-dimension-row"),
+      rectangleRow: document.getElementById("rectangle-dimension-row"),
+      diameter: document.getElementById("cavity-diameter"),
+      length: document.getElementById("cavity-length"),
+      width: document.getElementById("cavity-width"),
+      widthField: document.getElementById("cavity-width-field"),
+      lengthLabel: document.getElementById("cavity-length-label"),
+      widthLabel: document.getElementById("cavity-width-label"),
+      depth: document.getElementById("cavity-depth"),
+      spacing: document.getElementById("spacing"),
+      perimeter: document.getElementById("perimeter"),
+      baseThickness: document.getElementById("base-thickness"),
+      sheetLength: document.getElementById("sheet-length"),
+      sheetWidth: document.getElementById("sheet-width"),
+      price: document.getElementById("price-per-gallon"),
+      outFit: document.getElementById("cavities-fit"),
+      outThickness: document.getElementById("sheet-thickness"),
+      outVolumeIn3: document.getElementById("volume-in3"),
+      outCost: document.getElementById("cost-usd"),
+      outShell: document.getElementById("used-shell"),
+      outVolumeCm3: document.getElementById("volume-cm3"),
+      outVolumeGal: document.getElementById("volume-gal"),
+      outCavityVol: document.getElementById("cavity-volume"),
+      outWarning: document.getElementById("fit-warning"),
+    };
+
+    const allInputs = [
+      elements.cavityShape,
+      elements.layoutMode,
+      elements.shellShape,
+      elements.diameter,
+      elements.length,
+      elements.width,
+      elements.depth,
+      elements.spacing,
+      elements.perimeter,
+      elements.baseThickness,
+      elements.sheetLength,
+      elements.sheetWidth,
+      elements.price
+    ];
+
+    function parse(value) {
+      const num = parseFloat(value);
+      return Number.isFinite(num) && num >= 0 ? num : 0;
+    }
+
+    function numVal(el) {
+      return parse(el.value);
+    }
+
+    function toInches(val) {
+      return state.unit === "mm" ? mmToIn(val) : val;
+    }
+
+    function setActiveUnit(unit) {
+      state.unit = unit;
+      elements.unitMm.classList.toggle("active", unit === "mm");
+      elements.unitIn.classList.toggle("active", unit === "in");
+      unitLabels.forEach((el) => (el.textContent = unit));
+      updateShapeFields();
+      calculate();
+    }
+
+    function updateShapeFields() {
+      const shape = elements.cavityShape.value;
+      elements.cylinderRow.classList.toggle("hidden", shape !== "cylinder");
+      elements.rectangleRow.classList.toggle("hidden", shape === "cylinder");
+      elements.widthField.classList.toggle("hidden", shape === "square");
+      elements.lengthLabel.textContent = `Cavity ${shape === "square" ? "side" : "length"} (` + state.unit + `)`;
+      elements.widthLabel.textContent = `Cavity width (${state.unit})`;
+      const isSquare = shape === "square";
+      if (isSquare) {
+        elements.width.value = elements.length.value;
+      }
+    }
+
+    function maxInCircle(cols, rows, cavW, cavH, spacing, shape, diameterOrWidth, availR) {
+      if (cols <= 0 || rows <= 0) return { fit: false };
+      const stepX = cavW + spacing;
+      const stepY = cavH + spacing;
+      const startX = cols > 1 ? -(cols - 1) * stepX / 2 : 0;
+      const startY = rows > 1 ? -(rows - 1) * stepY / 2 : 0;
+      let maxNeededR = 0;
+      let fits = true;
+
+      for (let r = 0; r < rows; r += 1) {
+        const y = startY + r * stepY;
+        for (let c = 0; c < cols; c += 1) {
+          const x = startX + c * stepX;
+
+          if (shape === "cylinder") {
+            const needed = Math.hypot(x, y) + (diameterOrWidth / 2);
+            maxNeededR = Math.max(maxNeededR, needed);
+            if (needed > availR) {
+              fits = false;
+              return { fit: false };
+            }
+            continue;
+          }
+
+          const px = cavW / 2;
+          const py = cavH / 2;
+          const corners = [
+            [x - px, y - py],
+            [x - px, y + py],
+            [x + px, y - py],
+            [x + px, y + py],
+          ];
+          for (const [cx, cy] of corners) {
+            const d = Math.hypot(cx, cy);
+            maxNeededR = Math.max(maxNeededR, d);
+            if (d > availR) {
+              fits = false;
+              return { fit: false };
+            }
+          }
+        }
+      }
+      return { fit: true, neededRadius: maxNeededR };
+    }
+
+    function calculate() {
+      const shape = elements.cavityShape.value;
+      const shell = elements.shellShape.value;
+      const layoutMode = elements.layoutMode.value;
+      const depth = toInches(numVal(elements.depth));
+      const spacing = toInches(numVal(elements.spacing));
+      const perimeter = toInches(numVal(elements.perimeter));
+      const base = toInches(numVal(elements.baseThickness));
+      const maxL = toInches(numVal(elements.sheetLength));
+      const maxW = toInches(numVal(elements.sheetWidth));
+      const price = numVal(elements.price);
+
+      let len = toInches(numVal(elements.length));
+      let wid = toInches(numVal(elements.width));
+      if (shape === "cylinder") {
+        const d = toInches(numVal(elements.diameter));
+        len = d;
+        wid = d;
+      } else if (shape === "square") {
+        len = toInches(numVal(elements.length));
+        wid = len;
+      }
+
+      const cavArea = shape === "cylinder" ? Math.PI * Math.pow(len / 2, 2) : (len * wid);
+      const cavVolumeSingle = shape === "cylinder" ? cavArea * depth : cavArea * depth;
+      const stepX = len + spacing;
+      const stepY = wid + spacing;
+      const requiredHalfDiag = shape === "cylinder" ? len / 2 : Math.hypot(len / 2, wid / 2);
+      let maxCols = 0;
+      let maxRows = 0;
+      let cavityCount = 0;
+      let shellArea = 0;
+      let usedL = 0;
+      let usedW = 0;
+      let radiusUsed = 0;
+      let warning = "";
+
+      if (layoutMode === "single") {
+        maxCols = 1;
+        maxRows = 1;
+        if (shell === "rectangle") {
+          const innerL = maxL - perimeter * 2;
+          const innerW = maxW - perimeter * 2;
+          if (innerL >= len && innerW >= wid && innerL > 0 && innerW > 0) {
+            cavityCount = 1;
+            usedL = perimeter * 2 + len;
+            usedW = perimeter * 2 + wid;
+            shellArea = usedL * usedW;
+          } else {
+            warning = "Single cavity does not fit in the current rectangular mold sheet with the current perimeter.";
+          }
+        } else {
+          const maxR = Math.min(maxL, maxW) / 2;
+          const innerR = maxR - perimeter;
+          if (innerR >= requiredHalfDiag && innerR > 0) {
+            cavityCount = 1;
+            radiusUsed = perimeter + requiredHalfDiag;
+            shellArea = Math.PI * radiusUsed * radiusUsed;
+            const usedDiam = Math.min(radiusUsed * 2, Math.min(maxL, maxW));
+            usedL = usedW = usedDiam;
+          } else {
+            warning = "Single cavity does not fit in the current circular mold sheet with the current perimeter.";
+          }
+        }
+      } else if (shell === "rectangle") {
+        const innerL = maxL - perimeter * 2;
+        const innerW = maxW - perimeter * 2;
+        if (innerL > 0 && innerW > 0 && stepX > 0 && stepY > 0) {
+          maxCols = Math.floor((innerW + spacing) / stepX);
+          maxRows = Math.floor((innerL + spacing) / stepY);
+          maxCols = Math.max(0, maxCols);
+          maxRows = Math.max(0, maxRows);
+          cavityCount = maxCols * maxRows;
+          usedW = maxCols > 0 ? perimeter * 2 + maxCols * len + Math.max(0, maxCols - 1) * spacing : 0;
+          usedL = maxRows > 0 ? perimeter * 2 + maxRows * wid + Math.max(0, maxRows - 1) * spacing : 0;
+          shellArea = usedL * usedW;
+          if (cavityCount === 0) {
+            warning = "No cavities can fit with the current perimeter and dimension limits.";
+          }
+        } else {
+          warning = "No cavities can fit with the current perimeter and dimension limits.";
+        }
+      } else {
+        const maxR = Math.min(maxL, maxW) / 2;
+        const innerR = maxR - perimeter;
+        if (innerR > 0 && stepX > 0 && stepY > 0) {
+          const maxColsUpper = Math.max(0, Math.floor((2 * innerR + spacing) / stepX));
+          const maxRowsUpper = Math.max(0, Math.floor((2 * innerR + spacing) / stepY));
+          let bestCount = 0;
+          let bestR = 0;
+          let bestCols = 0;
+          let bestRows = 0;
+
+          for (let cols = 1; cols <= maxColsUpper; cols += 1) {
+            for (let rows = 1; rows <= maxRowsUpper; rows += 1) {
+              const fit = maxInCircle(cols, rows, len, wid, spacing, shape, len, innerR);
+              if (!fit.fit) {
+                continue;
+              }
+              const count = cols * rows;
+              const neededR = fit.neededRadius + perimeter;
+              if (count > bestCount || (count === bestCount && neededR > 0 && neededR < bestR)) {
+                bestCount = count;
+                bestR = neededR;
+                bestCols = cols;
+                bestRows = rows;
+              }
+            }
+          }
+
+          if (bestCount > 0) {
+            maxCols = bestCols;
+            maxRows = bestRows;
+            cavityCount = bestCount;
+            radiusUsed = bestR;
+            shellArea = Math.PI * radiusUsed * radiusUsed;
+            const usedDiam = Math.min(radiusUsed * 2, Math.min(maxL, maxW));
+            usedL = usedW = usedDiam;
+          } else {
+            warning = "No cavities can fit in the selected circular shell within perimeter limits.";
+          }
+        } else {
+          warning = "No cavities can fit with the current perimeter and dimension limits.";
+        }
+      }
+
+      const totalThickness = depth + base;
+      const grossSiliconeVol = shellArea * totalThickness;
+      const removedCavitiesVol = cavVolumeSingle * cavityCount;
+      let netSilicone = grossSiliconeVol - removedCavitiesVol;
+      if (netSilicone < 0) netSilicone = 0;
+
+      const volumeCm3 = inToCm3(netSilicone);
+      const volumeGal = in3ToGal(netSilicone);
+      const cost = volumeGal * price;
+
+      elements.outFit.textContent = String(cavityCount);
+      elements.outThickness.textContent = `${(state.unit === "in" ? totalThickness : inToMm(totalThickness)).toFixed(3)} ${state.unit}`;
+      elements.outVolumeIn3.textContent = `${netSilicone.toFixed(2)} in^3`;
+      elements.outVolumeCm3.textContent = `${volumeCm3.toFixed(2)} cm^3`;
+      elements.outVolumeGal.textContent = `${volumeGal.toFixed(3)} gal`;
+      elements.outCost.textContent = `$${cost.toFixed(2)}`;
+      const usedLDisplay = state.unit === "in" ? usedL : inToMm(usedL);
+      const usedWDisplay = state.unit === "in" ? usedW : inToMm(usedW);
+      elements.outShell.textContent = `${usedLDisplay.toFixed(3)} x ${usedWDisplay.toFixed(3)} ${state.unit}`;
+      elements.outCavityVol.textContent = `${removedCavitiesVol.toFixed(2)} in^3`;
+
+      if (warning) {
+        elements.outWarning.classList.remove("hidden");
+        elements.outWarning.textContent = warning;
+      } else {
+        elements.outWarning.classList.add("hidden");
+      }
+    }
+
+    elements.unitMm.addEventListener("click", () => setActiveUnit("mm"));
+    elements.unitIn.addEventListener("click", () => setActiveUnit("in"));
+    elements.cavityShape.addEventListener("change", () => {
+      updateShapeFields();
+      calculate();
+    });
+    allInputs.forEach((input) => input.addEventListener("input", calculate));
+
+    setActiveUnit("in");
+    updateShapeFields();
+    calculate();
+  </script>
+</body>
+</html>
