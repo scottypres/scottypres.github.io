@@ -1,0 +1,21 @@
+{
+  "name": "emotional-intimacy-qa-app",
+  "version": "1.0.0",
+  "description": "A full-stack Q&A tracker for emotional intimacy conversations.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "relationships",
+    "express",
+    "qa",
+    "journal"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

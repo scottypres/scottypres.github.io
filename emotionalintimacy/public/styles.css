@@ -1,0 +1,269 @@
+:root {
+  --bg: #f7f5ef;
+  --paper: #fffdf8;
+  --ink: #1f2a2d;
+  --muted: #5d6769;
+  --accent: #c2573e;
+  --accent-soft: #f2d6cf;
+  --danger: #8b1e2d;
+  --line: #d9d4c8;
+  --shadow: 0 15px 45px rgba(72, 53, 36, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 20% 20%, #fff8ec, var(--bg) 55%);
+  color: var(--ink);
+  position: relative;
+}
+
+.aurora {
+  position: fixed;
+  width: 42vw;
+  height: 42vw;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(28px);
+  opacity: 0.28;
+}
+
+.aurora-a {
+  background: #f4b8aa;
+  left: -8vw;
+  top: -10vw;
+}
+
+.aurora-b {
+  background: #b6d9d4;
+  right: -6vw;
+  bottom: -12vw;
+}
+
+.shell {
+  width: min(1040px, 94vw);
+  margin: 28px auto 40px;
+  display: grid;
+  gap: 18px;
+}
+
+.hero {
+  background: linear-gradient(120deg, #efe8d8 10%, #ffe7de 60%, #e0efe9 100%);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 26px 24px;
+  box-shadow: var(--shadow);
+}
+
+.hero h1 {
+  margin: 4px 0 8px;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+input,
+textarea,
+select,
+button {
+  width: 100%;
+  font: inherit;
+  border-radius: 12px;
+}
+
+input,
+textarea,
+select {
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--ink);
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+button,
+.link-btn {
+  border: 1px solid transparent;
+  padding: 10px 12px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+
+.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+  font-weight: 500;
+}
+
+.danger {
+  background: var(--danger);
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+.parse-preview {
+  margin: 12px 0;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 0.9rem;
+}
+
+.actions,
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.actions button,
+.inline-actions button,
+.inline-actions .link-btn {
+  width: auto;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.stat-card {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.stat-card p {
+  margin: 0;
+}
+
+.stat-card .value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.entry-list {
+  display: grid;
+  gap: 12px;
+}
+
+.entry-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+
+.entry-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.entry-card .meta,
+.entry-card .type,
+.entry-card .topics {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.entry-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.entry-card .answer {
+  margin: 0 0 10px;
+  white-space: pre-wrap;
+}
+
+.entry-card footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.entry-card footer button {
+  width: auto;
+}
+
+@media (max-width: 720px) {
+  .hero,
+  .panel {
+    border-radius: 14px;
+    padding: 14px;
+  }
+}
