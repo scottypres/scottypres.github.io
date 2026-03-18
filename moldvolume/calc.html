@@ -106,6 +106,29 @@
       font-size: 0.95rem;
     }
 
+    textarea,
+    button {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #b6c7e4;
+      padding: 9px 10px;
+      background: #fefeff;
+      color: #17365d;
+      font-size: 0.95rem;
+    }
+
+    button {
+      cursor: pointer;
+      background: #1f6feb;
+      color: #fff;
+      border: none;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: #1657c7;
+    }
+
     .result-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -147,6 +170,17 @@
       font-size: 0.88rem;
       color: #4b6084;
       margin-top: 12px;
+    }
+
+    .quote-box {
+      min-height: 165px;
+      resize: vertical;
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .quote-note {
+      margin-top: 4px;
     }
 
     .value-with-unit {
@@ -385,11 +419,35 @@
 
         <div class="result-block">
           <p><strong>Sheets used:</strong> <span id="sheet-count-output">0</span></p>
-          <p><strong>Used outer shell:</strong> <span id="used-shell">0 x 0 (in)</span></p>
+          <p><strong>Overall mold sheet dimensions (in):</strong> <span id="used-shell-in">0 x 0 in</span></p>
+          <p><strong>Overall mold sheet dimensions (cm):</strong> <span id="used-shell-cm">0 x 0 cm</span></p>
           <p><strong>Silicone volume:</strong> <span id="volume-cm3">0 cm^3</span></p>
           <p><strong>Silicone volume (gallons):</strong> <span id="volume-gal">0 gal</span></p>
           <p><strong>Net removed cavity volume:</strong> <span id="cavity-volume">0 in^3</span></p>
+          <p><strong>Per cavity net removed volume:</strong> <span id="cavity-volume-per-in3">0 in^3</span> / <span id="cavity-volume-per-cm3">0 cm^3</span> / <span id="cavity-volume-per-standard">~0</span></p>
           <p id="fit-warning" class="note warning hidden"></p>
+        </div>
+
+        <div class="result-block">
+          <h2>Quote helper</h2>
+          <div class="row">
+            <div class="field">
+              <label for="casts-endure">Number of castings before wear</label>
+              <input id="casts-endure" type="number" step="1" min="0" value="0" />
+            </div>
+            <div class="field">
+              <label for="customer-price">Customer quote total ($)</label>
+              <input id="customer-price" type="number" step="0.01" min="0" value="0" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="quote-text">Customer quote text (copy/paste)</label>
+            <textarea id="quote-text" class="quote-box" rows="10" readonly></textarea>
+          </div>
+          <div class="field">
+            <button id="copy-quote" type="button">Copy quote text</button>
+            <p id="quote-copy-hint" class="note quote-note hidden"></p>
+          </div>
         </div>
       </section>
     </div>
@@ -397,8 +455,13 @@
 
   <script>
     const mmToIn = (value) => value / 25.4;
+    const inToCm = (inches) => inches * 2.54;
     const inToCm3 = (in3) => in3 * 16.387064;
     const in3ToGal = (in3) => in3 / 231;
+    const in3ToCup = (in3) => in3 / 14.4375;
+    const in3ToTablespoon = (in3) => in3 / 0.90234;
+    const in3ToTeaspoon = (in3) => in3 / 0.30078;
+    const in3ToFluidOunce = (in3) => in3 / 1.80469;
 
     const elements = {
       cavityShape: document.getElementById("cavity-shape"),
@@ -439,11 +502,20 @@
       outThickness: document.getElementById("sheet-thickness"),
       outVolumeIn3: document.getElementById("volume-in3"),
       outCost: document.getElementById("cost-usd"),
-      outShell: document.getElementById("used-shell"),
+      outShellIn: document.getElementById("used-shell-in"),
+      outShellCm: document.getElementById("used-shell-cm"),
       outVolumeCm3: document.getElementById("volume-cm3"),
       outVolumeGal: document.getElementById("volume-gal"),
       outCavityVol: document.getElementById("cavity-volume"),
+      outCavityVolPerIn3: document.getElementById("cavity-volume-per-in3"),
+      outCavityVolPerCm3: document.getElementById("cavity-volume-per-cm3"),
+      outCavityVolPerStandard: document.getElementById("cavity-volume-per-standard"),
       outWarning: document.getElementById("fit-warning"),
+      castsEndure: document.getElementById("casts-endure"),
+      customerQuote: document.getElementById("customer-price"),
+      quoteText: document.getElementById("quote-text"),
+      copyQuote: document.getElementById("copy-quote"),
+      copyQuoteHint: document.getElementById("quote-copy-hint"),
     };
 
     const allInputs = [
@@ -465,6 +537,8 @@
       elements.targetCavityCount,
       elements.requestedSheets,
       elements.price,
+      elements.castsEndure,
+      elements.customerQuote,
     ];
 
     function parse(value) {
@@ -565,6 +639,7 @@
 
       const describe = (colSizes, rowSizes) => {
         const sheetDimensions = [];
+        const cavitiesPerSheet = [];
         let shellArea = 0;
         let maxSheetArea = 0;
         let maxSheetSide = 0;
@@ -573,6 +648,7 @@
           for (const colCount of colSizes) {
             const dims = sheetCountsToDimensions(colCount, rowCount, len, wid, spacing, perimeter);
             sheetDimensions.push(dims);
+            cavitiesPerSheet.push(colCount * rowCount);
             shellArea += dims.area;
             maxSheetArea = Math.max(maxSheetArea, dims.area);
             maxSheetSide = Math.max(maxSheetSide, dims.width, dims.length);
@@ -583,6 +659,7 @@
           sheetDimensions,
           shellArea,
           sheets: sheetDimensions.length,
+          cavitiesPerSheet,
           maxSheetArea,
           maxSheetSide,
         };
@@ -595,6 +672,7 @@
       if (totalCols <= 0 || totalRows <= 0) {
         return {
           sheetDimensions: [],
+          cavitiesPerSheet: [],
           shellArea: 0,
           sheets: 0,
           maxSheetArea: 0,
@@ -607,6 +685,7 @@
       if (maxColsPerSheet === 0 || maxRowsPerSheet === 0) {
         return {
           sheetDimensions: [],
+          cavitiesPerSheet: [],
           shellArea: 0,
           sheets: 0,
           maxSheetArea: 0,
@@ -621,8 +700,9 @@
         const rowGroups = autoRowGroups;
         const colSizes = toGroupList(totalCols, colGroups);
         const rowSizes = toGroupList(totalRows, rowGroups);
+        const report = describe(colSizes, rowSizes);
         return {
-          ...describe(colSizes, rowSizes),
+          ...report,
           colGroups,
           rowGroups,
           colSizes,
@@ -681,8 +761,9 @@
 
       const fallbackColSizes = toGroupList(totalCols, autoColGroups);
       const fallbackRowSizes = toGroupList(totalRows, autoRowGroups);
+      const fallbackReport = describe(fallbackColSizes, fallbackRowSizes);
       return {
-        ...describe(fallbackColSizes, fallbackRowSizes),
+        ...fallbackReport,
         colGroups: autoColGroups,
         rowGroups: autoRowGroups,
         colSizes: fallbackColSizes,
@@ -692,17 +773,128 @@
       };
     }
 
-    function formatSheetSummary(sheetDimensions) {
+    function formatDimensionSummary(sheetDimensions, unit = "in") {
       const grouped = new Map();
+      const converter = unit === "cm" ? inToCm : (v) => v;
+      const unitLabel = unit === "cm" ? "cm" : "in";
+      const digits = unit === "cm" ? 2 : 3;
 
       sheetDimensions.forEach((d) => {
-        const key = `${d.width.toFixed(3)} x ${d.length.toFixed(3)} in`;
+        const w = converter(d.width).toFixed(digits);
+        const l = converter(d.length).toFixed(digits);
+        const key = `${w} x ${l} ${unitLabel}`;
         grouped.set(key, (grouped.get(key) || 0) + 1);
       });
+
+      if (grouped.size === 0) {
+        return unit === "cm" ? "0 x 0 cm" : "0 x 0 in";
+      }
 
       return [...grouped.entries()]
         .map(([size, count]) => (count === 1 ? size : `${count} x ${size}`))
         .join(", ");
+    }
+
+    function formatDimensionList(sheetDimensions, unit = "in") {
+      const converter = unit === "cm" ? inToCm : (v) => v;
+      const unitLabel = unit === "cm" ? "cm" : "in";
+      const digits = unit === "cm" ? 2 : 3;
+
+      if (!sheetDimensions.length) {
+        return `No sheets`;
+      }
+
+      return sheetDimensions
+        .map((d, index) => `Sheet ${index + 1}: ${(converter(d.width)).toFixed(digits)} x ${(converter(d.length)).toFixed(digits)} ${unitLabel}`)
+        .join("\n");
+    }
+
+    function formatClosestStandardVolume(in3Volume) {
+      if (in3Volume <= 0) {
+        return "~0";
+      }
+
+      const candidates = [
+        { label: "cup", amount: in3ToCup(in3Volume), priority: 0 },
+        { label: "tablespoon", amount: in3ToTablespoon(in3Volume), priority: 1 },
+        { label: "fluid ounce", amount: in3ToFluidOunce(in3Volume), priority: 2 },
+        { label: "teaspoon", amount: in3ToTeaspoon(in3Volume), priority: 3 },
+      ];
+
+      let best = null;
+      let bestScore = Infinity;
+      for (const candidate of candidates) {
+        const amount = candidate.amount;
+        if (!Number.isFinite(amount) || amount <= 0) {
+          continue;
+        }
+        const roundedQuarter = Math.round(amount * 4) / 4;
+        const score = Math.abs(amount - roundedQuarter) + (amount < 0.25 ? 10 : 0);
+
+        if (score < bestScore || (score === bestScore && candidate.priority < best?.priority)) {
+          best = { ...candidate, amount: roundedQuarter };
+          bestScore = score;
+        }
+      }
+
+      if (!best) {
+        return `${in3Volume.toFixed(2)} in^3`;
+      }
+
+      const amountText = Number.isInteger(best.amount)
+        ? `${best.amount.toFixed(0)}`
+        : best.amount.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+      const unitText = best.amount === 1 ? best.label : `${best.label}s`;
+      return `~${amountText} ${unitText}`;
+    }
+
+    function getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter) {
+      if (shape === "cylinder") {
+        const top = topDiameter.toFixed(3);
+        const bottom = bottomDiameter.toFixed(3);
+        return `Top diameter: ${top} in, Bottom diameter: ${bottom} in, Depth: ${depth.toFixed(3)} in`;
+      }
+      if (shape === "square") {
+        return `Side: ${len.toFixed(3)} in, Depth: ${depth.toFixed(3)} in`;
+      }
+      return `Length: ${len.toFixed(3)} in, Width: ${wid.toFixed(3)} in, Depth: ${depth.toFixed(3)} in`;
+    }
+
+    function makeQuoteText({
+      shape,
+      cavityDimText,
+      sheetCount,
+      cavities,
+      cavitiesPerSheet,
+      sheetDimsIn,
+      sheetDimsCm,
+      quotedPrice,
+      casts,
+      weightLb,
+      costPerCast,
+      costPerCastPerCavity,
+    }) {
+      const listIn = formatDimensionList(sheetDimsIn, "in");
+      const listCm = formatDimensionList(sheetDimsCm, "cm");
+      const perSheet = cavitiesPerSheet.length ? cavitiesPerSheet.join(", ") : "N/A";
+      const safeCasts = casts > 0 ? casts : 0;
+      const safePrice = quotedPrice > 0 ? quotedPrice : 0;
+
+      const lines = [
+        `Cavity shape: ${shape === "cylinder" ? "Round" : shape === "square" ? "Square" : "Rectangle"}`,
+        `Cavity dimensions: ${cavityDimText}`,
+        `Number of sheets: ${sheetCount}`,
+        `Number of cavities per sheet: ${perSheet}`,
+        `Total cavities: ${cavities}`,
+        `Sheet(s) dimensions (in): ${listIn}`,
+        `Sheet(s) dimensions (cm): ${listCm}`,
+        `Sheet silicone weight: ${weightLb.toFixed(2)} lb`,
+        `Expected mold life: ${safeCasts} castings`,
+        `Customer quote: $${safePrice.toFixed(2)}`,
+        `Cost per casting: $${costPerCast.toFixed(2)}`,
+        `Cost per casting per cavity: $${costPerCastPerCavity.toFixed(2)}`,
+      ];
+      return lines.join("\n");
     }
 
     function updateShapeFields() {
@@ -779,6 +971,8 @@
       const maxW = toInchesFromInput(elements.sheetWidth, elements.sheetWidthUnit);
       const price = numVal(elements.price);
       const requestedCount = Math.max(0, Math.floor(numVal(elements.targetCavityCount)));
+      const casts = Math.max(0, Math.floor(numVal(elements.castsEndure)));
+      const quotedPrice = numVal(elements.customerQuote);
 
       let len = toInchesFromInput(elements.length, elements.lengthUnit);
       let wid = toInchesFromInput(elements.width, elements.widthUnit);
@@ -813,7 +1007,8 @@
       let usedW = 0;
       let warning = "";
       let sheetCountOutput = 1;
-      let outShellText = "0 x 0 in";
+      let sheetDimensions = [];
+      let cavitiesPerSheet = [];
 
       if (sizingMode === "target") {
         const targetCount = layoutMode === "single" ? Math.min(1, requestedCount) : requestedCount;
@@ -823,11 +1018,18 @@
 
         if (shell !== "rectangle") {
           warning = `${warning ? `${warning} ` : ""}Target mode currently supports rectangular shell only.`;
+          cavityCount = 0;
+          shellArea = 0;
+          sheetCountOutput = 0;
+          sheetDimensions = [];
+          cavitiesPerSheet = [];
         } else if (targetCount <= 0) {
           warning = `${warning ? `${warning} ` : ""}Enter a target cavity count greater than 0.`;
           cavityCount = 0;
           shellArea = 0;
           sheetCountOutput = 0;
+          sheetDimensions = [];
+          cavitiesPerSheet = [];
         } else {
           const target = bestGridForTargetCount(targetCount, len, wid, spacing, perimeter);
           const requestedSheets = numVal(elements.requestedSheets);
@@ -848,11 +1050,15 @@
           if (split.sheets === 0) {
             warning = `${warning ? `${warning} ` : ""}${split.warning || "No feasible split."}`;
             cavityCount = 0;
+            sheetDimensions = [];
+            cavitiesPerSheet = [];
             sheetCountOutput = 0;
           } else {
             cavityCount = targetCount;
             sheetCountOutput = split.sheets;
             shellArea = split.shellArea;
+            sheetDimensions = split.sheetDimensions;
+            cavitiesPerSheet = split.cavitiesPerSheet || [];
             if (split.warning) {
               warning = `${warning ? `${warning} ` : ""}${split.warning}`;
             }
@@ -860,9 +1066,6 @@
             if (split.sheets === 1) {
               usedL = split.sheetDimensions[0].length;
               usedW = split.sheetDimensions[0].width;
-              outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
-            } else {
-              outShellText = `${formatSheetSummary(split.sheetDimensions)} (${split.sheets} sheets)`;
             }
           }
         }
@@ -877,6 +1080,8 @@
             usedL = perimeter * 2 + len;
             usedW = perimeter * 2 + wid;
             shellArea = usedL * usedW;
+            sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
+            cavitiesPerSheet = [1];
           } else {
             warning = "Single cavity does not fit in the current rectangular mold sheet with the current perimeter.";
             sheetCountOutput = 0;
@@ -890,6 +1095,8 @@
             shellArea = Math.PI * radius * radius;
             const usedDiam = Math.min(radius * 2, Math.min(maxL, maxW));
             usedL = usedW = usedDiam;
+            sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
+            cavitiesPerSheet = [1];
           } else {
             warning = "Single cavity does not fit in the current circular mold sheet with the current perimeter.";
             sheetCountOutput = 0;
@@ -907,7 +1114,8 @@
           usedW = maxCols > 0 ? perimeter * 2 + maxCols * len + Math.max(0, maxCols - 1) * spacing : 0;
           usedL = maxRows > 0 ? perimeter * 2 + maxRows * wid + Math.max(0, maxRows - 1) * spacing : 0;
           shellArea = usedL * usedW;
-          outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
+          sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
+          cavitiesPerSheet = [cavityCount];
           if (cavityCount === 0) {
             warning = "No cavities can fit with the current perimeter and dimension limits.";
             sheetCountOutput = 0;
@@ -952,7 +1160,8 @@
             shellArea = Math.PI * radius * radius;
             const usedDiam = Math.min(radius * 2, Math.min(maxL, maxW));
             usedL = usedW = usedDiam;
-            outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
+            sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
+            cavitiesPerSheet = [cavityCount];
           } else {
             warning = "No cavities can fit in the selected circular shell within perimeter limits.";
             sheetCountOutput = 0;
@@ -963,12 +1172,14 @@
         }
       }
 
-      if (sizingMode !== "target" && outShellText === "0 x 0 in" && usedW === 0 && usedL === 0) {
-        outShellText = "0 x 0 in";
+      if (sheetDimensions.length === 0 && usedW > 0 && usedL > 0) {
+        sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
       }
-
-      if (sizingMode !== "target" && warning === "") {
-        outShellText = `${usedW.toFixed(3)} x ${usedL.toFixed(3)} in`;
+      if (sheetDimensions.length > 0 && cavitiesPerSheet.length === 0) {
+        cavitiesPerSheet = [cavityCount];
+      }
+      if (sheetDimensions.length === 0 && warning === "" && cavityCount > 0) {
+        sheetCountOutput = 0;
       }
 
       const totalThickness = depth + base;
@@ -980,6 +1191,14 @@
       const volumeCm3 = inToCm3(netSilicone);
       const volumeGal = in3ToGal(netSilicone);
       const cost = volumeGal * price;
+      const sheetWeightLb = volumeCm3 * 1.1 / 453.592;
+      const costPerCasting = casts > 0 ? quotedPrice / casts : 0;
+      const costPerCastingPerCavity = cavityCount > 0 && casts > 0 ? costPerCasting / cavityCount : 0;
+      const perCavityIn3 = cavityCount > 0 ? cavVolumeSingle : 0;
+      const perCavityCm3 = inToCm3(perCavityIn3);
+      const perCavityStandard = formatClosestStandardVolume(perCavityIn3);
+      const sheetSummaryIn = formatDimensionSummary(sheetDimensions, "in");
+      const sheetSummaryCm = formatDimensionSummary(sheetDimensions, "cm");
 
       elements.outFit.textContent = String(cavityCount);
       elements.outSheets.textContent = String(sheetCountOutput);
@@ -988,8 +1207,29 @@
       elements.outCost.textContent = `$${cost.toFixed(2)}`;
       elements.outVolumeCm3.textContent = `${volumeCm3.toFixed(2)} cm^3`;
       elements.outVolumeGal.textContent = `${volumeGal.toFixed(3)} gal`;
-      elements.outShell.textContent = outShellText;
+      elements.outShellIn.textContent = sheetSummaryIn;
+      elements.outShellCm.textContent = sheetSummaryCm;
       elements.outCavityVol.textContent = `${removedCavitiesVol.toFixed(2)} in^3`;
+      elements.outCavityVolPerIn3.textContent = `${perCavityIn3.toFixed(2)} in^3`;
+      elements.outCavityVolPerCm3.textContent = `${perCavityCm3.toFixed(2)} cm^3`;
+      elements.outCavityVolPerStandard.textContent = perCavityStandard;
+
+      elements.quoteText.value = makeQuoteText({
+        shape,
+        cavityDimText: getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter),
+        sheetCount: sheetCountOutput,
+        cavities: cavityCount,
+        cavitiesPerSheet,
+        sheetDimsIn: sheetDimensions,
+        sheetDimsCm: sheetDimensions,
+        quotedPrice,
+        casts,
+        weightLb: sheetWeightLb,
+        costPerCast: costPerCasting,
+        costPerCastPerCavity,
+      });
+
+      elements.copyQuoteHint.classList.add("hidden");
 
       if (warning) {
         elements.outWarning.classList.remove("hidden");
@@ -1021,6 +1261,17 @@
       elements.sheetLengthUnit,
       elements.sheetWidthUnit,
     ].forEach((input) => input.addEventListener("change", calculate));
+
+    elements.copyQuote.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(elements.quoteText.value);
+        elements.copyQuoteHint.classList.remove("hidden");
+        elements.copyQuoteHint.textContent = "Quote text copied to clipboard.";
+      } catch (error) {
+        elements.copyQuoteHint.classList.remove("hidden");
+        elements.copyQuoteHint.textContent = "Copy failed; manually select and copy.";
+      }
+    });
 
     updateSizingModeFields();
     updateShapeFields();
