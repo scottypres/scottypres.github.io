@@ -256,6 +256,7 @@
             <select id="sizing-mode">
               <option value="bounds">Fit to max sheet dimensions</option>
               <option value="target">Target cavity count</option>
+              <option value="manual">Manual cavity quantity</option>
             </select>
           </div>
         </div>
@@ -269,6 +270,14 @@
             <label for="sheet-count">Preferred sheet count (0 = auto)</label>
             <input id="sheet-count" type="number" step="1" min="0" value="0" />
           </div>
+        </div>
+
+        <div class="row hidden" id="manual-sizing-controls">
+          <div class="field">
+            <label for="manual-cavity-count">Manual cavity quantity</label>
+            <input id="manual-cavity-count" type="number" step="1" min="0" value="1" />
+          </div>
+          <div class="field"></div>
         </div>
 
         <div class="row" id="cylinder-dimension-row">
@@ -365,7 +374,7 @@
 
         <div class="row">
           <div class="field">
-            <label for="sheet-length">Max mold length</label>
+            <label for="sheet-length" id="sheet-length-label">Max mold length</label>
             <div class="value-with-unit">
               <input id="sheet-length" type="number" step="0.001" min="0" value="250" />
               <select class="unit-picker" id="sheet-length-unit">
@@ -375,7 +384,7 @@
             </div>
           </div>
           <div class="field">
-            <label for="sheet-width">Max mold width</label>
+            <label for="sheet-width" id="sheet-width-label">Max mold width</label>
             <div class="value-with-unit">
               <input id="sheet-width" type="number" step="0.001" min="0" value="210" />
               <select class="unit-picker" id="sheet-width-unit">
@@ -422,7 +431,7 @@
           </div>
         </div>
 
-        <p class="note">Each dimension input supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom) and use the larger diameter for spacing checks. Layout is recalculated live; single mode checks one cavity, and target mode can compute the exact sheet size for a requested cavity count and split it across sheets with optional max sheet width/length.</p>
+        <p class="note">Each dimension input supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom) and use the larger diameter for spacing checks. Layout is recalculated live. Use target mode for exact count planning with sheet splitting limits, or manual mode to enter mold dimensions and cavity quantity directly and calculate net silicone by subtraction (spacing and perimeter are ignored in manual mode).</p>
       </section>
 
       <section>
@@ -499,6 +508,7 @@
       layoutMode: document.getElementById("layout-mode"),
       sizingMode: document.getElementById("sizing-mode"),
       targetSizingControls: document.getElementById("target-sizing-controls"),
+      manualSizingControls: document.getElementById("manual-sizing-controls"),
       cylinderRow: document.getElementById("cylinder-dimension-row"),
       rectangleRow: document.getElementById("rectangle-dimension-row"),
       topDiameter: document.getElementById("cavity-top-diameter"),
@@ -522,9 +532,12 @@
       baseThicknessUnit: document.getElementById("base-thickness-unit"),
       sheetLength: document.getElementById("sheet-length"),
       sheetWidth: document.getElementById("sheet-width"),
+      sheetLengthLabel: document.getElementById("sheet-length-label"),
+      sheetWidthLabel: document.getElementById("sheet-width-label"),
       sheetLengthUnit: document.getElementById("sheet-length-unit"),
       sheetWidthUnit: document.getElementById("sheet-width-unit"),
       targetCavityCount: document.getElementById("target-cavity-count"),
+      manualCavityCount: document.getElementById("manual-cavity-count"),
       requestedSheets: document.getElementById("sheet-count"),
       price: document.getElementById("price-per-gallon"),
       saveConfigName: document.getElementById("save-config-name"),
@@ -575,6 +588,7 @@
       elements.sheetLength,
       elements.sheetWidth,
       elements.targetCavityCount,
+      elements.manualCavityCount,
       elements.requestedSheets,
       elements.price,
       elements.castsEndure,
@@ -742,6 +756,7 @@
         sheetLengthUnit: elements.sheetLengthUnit.value,
         sheetWidthUnit: elements.sheetWidthUnit.value,
         targetCavityCount: elements.targetCavityCount.value,
+        manualCavityCount: elements.manualCavityCount.value,
         requestedSheets: elements.requestedSheets.value,
         price: elements.price.value,
         castsEndure: elements.castsEndure.value,
@@ -782,6 +797,7 @@
           [elements.sheetLengthUnit, config.sheetLengthUnit],
           [elements.sheetWidthUnit, config.sheetWidthUnit],
           [elements.targetCavityCount, config.targetCavityCount],
+          [elements.manualCavityCount, config.manualCavityCount],
           [elements.requestedSheets, config.requestedSheets],
           [elements.price, config.price],
           [elements.castsEndure, config.castsEndure],
@@ -1285,7 +1301,63 @@
 
     function updateSizingModeFields() {
       const isTargetMode = elements.sizingMode.value === "target";
+      const isManualMode = elements.sizingMode.value === "manual";
       elements.targetSizingControls.classList.toggle("hidden", !isTargetMode);
+      elements.manualSizingControls.classList.toggle("hidden", !isManualMode);
+      if (elements.sheetLengthLabel) {
+        elements.sheetLengthLabel.textContent = isManualMode ? "Mold length" : "Max mold length";
+      }
+      if (elements.sheetWidthLabel) {
+        elements.sheetWidthLabel.textContent = isManualMode ? "Mold width" : "Max mold width";
+      }
+      elements.layoutMode.disabled = isManualMode;
+      elements.spacing.disabled = isManualMode;
+      elements.spacingUnit.disabled = isManualMode;
+      elements.perimeter.disabled = isManualMode;
+      elements.perimeterUnit.disabled = isManualMode;
+    }
+
+    function bestRectGridInRectangle(innerLength, innerWidth, cavityLength, cavityWidth, spacing, perimeter) {
+      const countForOrientation = (cellAlongLength, cellAlongWidth) => {
+        const stepLength = cellAlongLength + spacing;
+        const stepWidth = cellAlongWidth + spacing;
+        if (innerLength <= 0 || innerWidth <= 0 || stepLength <= 0 || stepWidth <= 0) {
+          return {
+            count: 0,
+            rows: 0,
+            cols: 0,
+            usedLength: 0,
+            usedWidth: 0,
+          };
+        }
+
+        const rows = Math.max(0, Math.floor((innerLength + spacing) / stepLength));
+        const cols = Math.max(0, Math.floor((innerWidth + spacing) / stepWidth));
+        const count = rows * cols;
+        const usedLength = rows > 0 ? perimeter * 2 + rows * cellAlongLength + Math.max(0, rows - 1) * spacing : 0;
+        const usedWidth = cols > 0 ? perimeter * 2 + cols * cellAlongWidth + Math.max(0, cols - 1) * spacing : 0;
+        return {
+          count,
+          rows,
+          cols,
+          usedLength,
+          usedWidth,
+        };
+      };
+
+      const primary = countForOrientation(cavityLength, cavityWidth);
+      const rotated = countForOrientation(cavityWidth, cavityLength);
+      if (rotated.count > primary.count) {
+        return rotated;
+      }
+      if (rotated.count === primary.count && rotated.count > 0) {
+        const primaryArea = primary.usedLength * primary.usedWidth;
+        const rotatedArea = rotated.usedLength * rotated.usedWidth;
+        if (rotatedArea < primaryArea) {
+          return rotated;
+        }
+      }
+      return primary;
     }
 
     function maxInCircle(cols, rows, cavW, cavH, spacing, shape, diameterOrWidth, availR) {
@@ -1336,13 +1408,16 @@
       const layoutMode = elements.layoutMode.value;
       const sizingMode = elements.sizingMode.value;
       const depth = toInchesFromInput(elements.depth, elements.depthUnit);
-      const spacing = toInchesFromInput(elements.spacing, elements.spacingUnit);
-      const perimeter = toInchesFromInput(elements.perimeter, elements.perimeterUnit);
+      const inputSpacing = toInchesFromInput(elements.spacing, elements.spacingUnit);
+      const inputPerimeter = toInchesFromInput(elements.perimeter, elements.perimeterUnit);
+      const spacing = sizingMode === "manual" ? 0 : inputSpacing;
+      const perimeter = sizingMode === "manual" ? 0 : inputPerimeter;
       const base = toInchesFromInput(elements.baseThickness, elements.baseThicknessUnit);
       const maxL = toInchesFromInput(elements.sheetLength, elements.sheetLengthUnit);
       const maxW = toInchesFromInput(elements.sheetWidth, elements.sheetWidthUnit);
       const price = numVal(elements.price);
       const requestedCount = Math.max(0, Math.floor(numVal(elements.targetCavityCount)));
+      const manualCount = Math.max(0, Math.floor(numVal(elements.manualCavityCount)));
       const casts = Math.max(0, Math.floor(numVal(elements.castsEndure)));
       const quotedPrice = numVal(elements.customerQuote);
 
@@ -1382,7 +1457,40 @@
       let sheetDimensions = [];
       let cavitiesPerSheet = [];
 
-      if (sizingMode === "target") {
+      if (sizingMode === "manual") {
+        if (manualCount <= 0) {
+          warning = "Enter a manual cavity quantity greater than 0.";
+          sheetCountOutput = 0;
+        } else if (shell === "rectangle") {
+          if (maxL > 0 && maxW > 0) {
+            cavityCount = manualCount;
+            usedL = maxL;
+            usedW = maxW;
+            shellArea = usedL * usedW;
+            sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
+            cavitiesPerSheet = [cavityCount];
+          } else {
+            warning = "Enter mold length and width greater than 0 for manual mode.";
+            sheetCountOutput = 0;
+          }
+        } else {
+          const manualDiameter = Math.min(maxL, maxW);
+          if (manualDiameter > 0) {
+            cavityCount = manualCount;
+            const radius = manualDiameter / 2;
+            shellArea = Math.PI * radius * radius;
+            usedL = usedW = manualDiameter;
+            sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
+            cavitiesPerSheet = [cavityCount];
+            if (Math.abs(maxL - maxW) > 1e-6) {
+              warning = "Manual circular mode uses the smaller of mold length/width as the diameter.";
+            }
+          } else {
+            warning = "Enter mold length and width greater than 0 for manual mode.";
+            sheetCountOutput = 0;
+          }
+        }
+      } else if (sizingMode === "target") {
         const targetCount = layoutMode === "single" ? Math.min(1, requestedCount) : requestedCount;
         if (layoutMode === "single" && requestedCount > 1) {
           warning = "Target mode with single layout is capped at one cavity.";
@@ -1477,10 +1585,14 @@
         if (shell === "rectangle") {
           const innerL = maxL - perimeter * 2;
           const innerW = maxW - perimeter * 2;
-          if (innerL >= len && innerW >= wid && innerL > 0 && innerW > 0) {
+          const fitsPrimary = innerL >= len && innerW >= wid;
+          const fitsRotated = innerL >= wid && innerW >= len;
+          if (innerL > 0 && innerW > 0 && (fitsPrimary || fitsRotated)) {
+            const cellLength = fitsPrimary ? len : wid;
+            const cellWidth = fitsPrimary ? wid : len;
             cavityCount = 1;
-            usedL = perimeter * 2 + len;
-            usedW = perimeter * 2 + wid;
+            usedL = perimeter * 2 + cellLength;
+            usedW = perimeter * 2 + cellWidth;
             shellArea = usedL * usedW;
             sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
             cavitiesPerSheet = [1];
@@ -1508,13 +1620,12 @@
         const innerL = maxL - perimeter * 2;
         const innerW = maxW - perimeter * 2;
         if (innerL > 0 && innerW > 0 && stepX > 0 && stepY > 0) {
-          maxCols = Math.floor((innerW + spacing) / stepX);
-          maxRows = Math.floor((innerL + spacing) / stepY);
-          maxCols = Math.max(0, maxCols);
-          maxRows = Math.max(0, maxRows);
-          cavityCount = maxCols * maxRows;
-          usedW = maxCols > 0 ? perimeter * 2 + maxCols * len + Math.max(0, maxCols - 1) * spacing : 0;
-          usedL = maxRows > 0 ? perimeter * 2 + maxRows * wid + Math.max(0, maxRows - 1) * spacing : 0;
+          const bestGrid = bestRectGridInRectangle(innerL, innerW, len, wid, spacing, perimeter);
+          maxCols = bestGrid.cols;
+          maxRows = bestGrid.rows;
+          cavityCount = bestGrid.count;
+          usedW = bestGrid.usedWidth;
+          usedL = bestGrid.usedLength;
           shellArea = usedL * usedW;
           sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
           cavitiesPerSheet = [cavityCount];
@@ -1587,6 +1698,9 @@
       const totalThickness = depth + base;
       const grossSiliconeVol = shellArea * totalThickness;
       const removedCavitiesVol = cavVolumeSingle * cavityCount;
+      if (sizingMode === "manual" && cavityCount > 0 && removedCavitiesVol > grossSiliconeVol) {
+        warning = `${warning ? `${warning} ` : ""}Manual cavity removal exceeds mold volume; net silicone is clamped to 0.`;
+      }
       let netSilicone = grossSiliconeVol - removedCavitiesVol;
       if (netSilicone < 0) netSilicone = 0;
 
