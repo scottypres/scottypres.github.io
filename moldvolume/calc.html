@@ -235,6 +235,7 @@
               <option value="cylinder">Round</option>
               <option value="rectangle">Rectangle</option>
               <option value="square">Square</option>
+              <option value="ellipse">Ellipse</option>
             </select>
           </div>
           <div class="field">
@@ -242,6 +243,7 @@
             <select id="shell-shape">
               <option value="rectangle">Rectangular sheet</option>
               <option value="circle">Circular sheet</option>
+              <option value="autofit">Auto-fit to cavity shape (single)</option>
             </select>
           </div>
           <div class="field">
@@ -319,6 +321,40 @@
             <div class="value-with-unit">
               <input id="cavity-width" type="number" step="0.001" min="0" value="1.5" />
               <select class="unit-picker" id="cavity-width-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row hidden" id="ellipse-profile-row">
+          <div class="field">
+            <label for="ellipse-mode">Ellipse profile</label>
+            <select id="ellipse-mode">
+              <option value="fixed">Fixed (same top and bottom)</option>
+              <option value="tapered">Tapered (different top and bottom)</option>
+            </select>
+          </div>
+          <div class="field"></div>
+        </div>
+
+        <div class="row hidden" id="ellipse-bottom-dimension-row">
+          <div class="field">
+            <label for="cavity-bottom-length">Cavity bottom length</label>
+            <div class="value-with-unit">
+              <input id="cavity-bottom-length" type="number" step="0.001" min="0" value="2" />
+              <select class="unit-picker" id="cavity-bottom-length-unit">
+                <option value="in">in</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="cavity-bottom-width">Cavity bottom width</label>
+            <div class="value-with-unit">
+              <input id="cavity-bottom-width" type="number" step="0.001" min="0" value="1.5" />
+              <select class="unit-picker" id="cavity-bottom-width-unit">
                 <option value="in">in</option>
                 <option value="mm">mm</option>
               </select>
@@ -431,7 +467,7 @@
           </div>
         </div>
 
-        <p class="note">Each dimension input supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom) and use the larger diameter for spacing checks. Layout is recalculated live. Use target mode for exact count planning with sheet splitting limits, or manual mode to enter mold dimensions and cavity quantity directly and calculate net silicone by subtraction (spacing and perimeter are ignored in manual mode).</p>
+        <p class="note">Each dimension input supports its own unit (mm or in). Round cavities support tapered diameters (top/bottom). Elliptical cavities support fixed and tapered profiles; when tapered is selected you can enter bottom length and bottom width. For single-cavity layout, shell shape "Auto-fit to cavity shape" builds the outer mold directly from cavity footprint + perimeter. Layout spacing and fit checks use the largest cavity length and width. Layout is recalculated live. Use target mode for exact count planning with sheet splitting limits, or manual mode to enter mold dimensions and cavity quantity directly and calculate net silicone by subtraction (spacing and perimeter are ignored in manual mode).</p>
       </section>
 
       <section>
@@ -511,14 +547,21 @@
       manualSizingControls: document.getElementById("manual-sizing-controls"),
       cylinderRow: document.getElementById("cylinder-dimension-row"),
       rectangleRow: document.getElementById("rectangle-dimension-row"),
+      ellipseProfileRow: document.getElementById("ellipse-profile-row"),
+      ellipseBottomRow: document.getElementById("ellipse-bottom-dimension-row"),
+      ellipseMode: document.getElementById("ellipse-mode"),
       topDiameter: document.getElementById("cavity-top-diameter"),
       bottomDiameter: document.getElementById("cavity-bottom-diameter"),
       topDiameterUnit: document.getElementById("cavity-top-diameter-unit"),
       bottomDiameterUnit: document.getElementById("cavity-bottom-diameter-unit"),
       length: document.getElementById("cavity-length"),
       width: document.getElementById("cavity-width"),
+      bottomLength: document.getElementById("cavity-bottom-length"),
+      bottomWidth: document.getElementById("cavity-bottom-width"),
       lengthUnit: document.getElementById("cavity-length-unit"),
       widthUnit: document.getElementById("cavity-width-unit"),
+      bottomLengthUnit: document.getElementById("cavity-bottom-length-unit"),
+      bottomWidthUnit: document.getElementById("cavity-bottom-width-unit"),
       widthField: document.getElementById("cavity-width-field"),
       lengthLabel: document.getElementById("cavity-length-label"),
       widthLabel: document.getElementById("cavity-width-label"),
@@ -573,6 +616,7 @@
 
     const allInputs = [
       elements.cavityShape,
+      elements.ellipseMode,
       elements.layoutMode,
       elements.shellShape,
       elements.topDiameter,
@@ -581,6 +625,8 @@
       elements.bottomDiameterUnit,
       elements.length,
       elements.width,
+      elements.bottomLength,
+      elements.bottomWidth,
       elements.depth,
       elements.spacing,
       elements.perimeter,
@@ -732,6 +778,7 @@
       return {
         version: 1,
         cavityShape: elements.cavityShape.value,
+        ellipseMode: elements.ellipseMode.value,
         shellShape: elements.shellShape.value,
         layoutMode: elements.layoutMode.value,
         sizingMode: elements.sizingMode.value,
@@ -741,8 +788,12 @@
         bottomDiameterUnit: elements.bottomDiameterUnit.value,
         length: elements.length.value,
         width: elements.width.value,
+        bottomLength: elements.bottomLength.value,
+        bottomWidth: elements.bottomWidth.value,
         lengthUnit: elements.lengthUnit.value,
         widthUnit: elements.widthUnit.value,
+        bottomLengthUnit: elements.bottomLengthUnit.value,
+        bottomWidthUnit: elements.bottomWidthUnit.value,
         depth: elements.depth.value,
         depthUnit: elements.depthUnit.value,
         spacing: elements.spacing.value,
@@ -773,6 +824,7 @@
       try {
         const assignments = [
           [elements.cavityShape, config.cavityShape],
+          [elements.ellipseMode, config.ellipseMode],
           [elements.shellShape, config.shellShape],
           [elements.layoutMode, config.layoutMode],
           [elements.sizingMode, config.sizingMode],
@@ -782,8 +834,12 @@
           [elements.bottomDiameterUnit, config.bottomDiameterUnit],
           [elements.length, config.length],
           [elements.width, config.width],
+          [elements.bottomLength, config.bottomLength],
+          [elements.bottomWidth, config.bottomWidth],
           [elements.lengthUnit, config.lengthUnit],
           [elements.widthUnit, config.widthUnit],
+          [elements.bottomLengthUnit, config.bottomLengthUnit],
+          [elements.bottomWidthUnit, config.bottomWidthUnit],
           [elements.depth, config.depth],
           [elements.depthUnit, config.depthUnit],
           [elements.spacing, config.spacing],
@@ -878,6 +934,20 @@
       const rTop = topDiameter / 2;
       const rBottom = bottomDiameter / 2;
       return (Math.PI * height * (rTop * rTop + rTop * rBottom + rBottom * rBottom)) / 3;
+    }
+
+    function ellipseFrustumVolume(topLength, topWidth, bottomLength, bottomWidth, height) {
+      const aTop = topLength / 2;
+      const bTop = topWidth / 2;
+      const aBottom = bottomLength / 2;
+      const bBottom = bottomWidth / 2;
+      const deltaA = aBottom - aTop;
+      const deltaB = bBottom - bTop;
+      return Math.PI * height * (
+        aTop * bTop +
+        ((aTop * deltaB) + (bTop * deltaA)) / 2 +
+        (deltaA * deltaB) / 3
+      );
     }
 
     function splitCount(total, groups) {
@@ -1194,16 +1264,34 @@
       return `~${amountText} ${unitText}`;
     }
 
-    function getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter) {
+    function getCavityDimensionSummary(
+      shape,
+      len,
+      wid,
+      depth,
+      topDiameter,
+      bottomDiameter,
+      ellipseTopLength,
+      ellipseTopWidth,
+      ellipseBottomLength,
+      ellipseBottomWidth
+    ) {
       const safeLen = toFixedNumber(len, 3);
       const safeWid = toFixedNumber(wid, 3);
       const safeDepth = toFixedNumber(depth, 3);
       const safeTop = formatInWithMm(topDiameter);
       const safeBottom = formatInWithMm(bottomDiameter);
       const safeDepthWithMm = formatInWithMm(depth);
+      const safeEllipseTopLength = formatInWithMm(ellipseTopLength);
+      const safeEllipseTopWidth = formatInWithMm(ellipseTopWidth);
+      const safeEllipseBottomLength = formatInWithMm(ellipseBottomLength);
+      const safeEllipseBottomWidth = formatInWithMm(ellipseBottomWidth);
 
       if (shape === "cylinder") {
         return `Top diameter: ${safeTop}, Bottom diameter: ${safeBottom}, Depth: ${safeDepthWithMm}`;
+      }
+      if (shape === "ellipse") {
+        return `Top length: ${safeEllipseTopLength}, Top width: ${safeEllipseTopWidth}, Bottom length: ${safeEllipseBottomLength}, Bottom width: ${safeEllipseBottomWidth}, Depth: ${safeDepthWithMm}`;
       }
       if (shape === "square") {
         return `Side: ${safeLen} in (${safeLen === "N/A" ? "N/A" : toFixedNumber(len * 25.4, 0)}mm), Depth: ${safeDepth} in (${safeDepth === "N/A" ? "N/A" : toFixedNumber(depth * 25.4, 0)}mm)`;
@@ -1263,6 +1351,8 @@
         ? "Round"
         : shape === "square"
           ? "Square"
+          : shape === "ellipse"
+            ? "Ellipse"
           : "Rectangle";
       const totalCavitiesLabel = shape === "cylinder"
         ? "Total Cavities"
@@ -1287,11 +1377,20 @@
 
     function updateShapeFields() {
       const shape = elements.cavityShape.value;
+      const ellipseMode = elements.ellipseMode.value;
+      const isEllipse = shape === "ellipse";
       elements.cylinderRow.classList.toggle("hidden", shape !== "cylinder");
       elements.rectangleRow.classList.toggle("hidden", shape === "cylinder");
+      elements.ellipseProfileRow.classList.toggle("hidden", !isEllipse);
+      elements.ellipseBottomRow.classList.toggle("hidden", !(isEllipse && ellipseMode === "tapered"));
       elements.widthField.classList.toggle("hidden", shape === "square");
-      elements.lengthLabel.textContent = `Cavity ${shape === "square" ? "side" : "length"}`;
-      elements.widthLabel.textContent = "Cavity width";
+      if (isEllipse) {
+        elements.lengthLabel.textContent = "Cavity top length";
+        elements.widthLabel.textContent = "Cavity top width";
+      } else {
+        elements.lengthLabel.textContent = `Cavity ${shape === "square" ? "side" : "length"}`;
+        elements.widthLabel.textContent = "Cavity width";
+      }
       const isSquare = shape === "square";
       if (isSquare) {
         elements.width.value = elements.length.value;
@@ -1382,6 +1481,15 @@
             continue;
           }
 
+          if (shape === "ellipse") {
+            const needed = Math.hypot(x, y) + Math.max(cavW, cavH) / 2;
+            maxNeededR = Math.max(maxNeededR, needed);
+            if (needed > availR) {
+              return { fit: false };
+            }
+            continue;
+          }
+
           const px = cavW / 2;
           const py = cavH / 2;
           const corners = [
@@ -1404,6 +1512,7 @@
 
     function calculate() {
       const shape = elements.cavityShape.value;
+      const ellipseMode = elements.ellipseMode.value;
       const shell = elements.shellShape.value;
       const layoutMode = elements.layoutMode.value;
       const sizingMode = elements.sizingMode.value;
@@ -1425,6 +1534,10 @@
       let wid = toInchesFromInput(elements.width, elements.widthUnit);
       let topDiameter = 0;
       let bottomDiameter = 0;
+      let ellipseTopLength = len;
+      let ellipseTopWidth = wid;
+      let ellipseBottomLength = len;
+      let ellipseBottomWidth = wid;
       if (shape === "cylinder") {
         topDiameter = toInchesFromInput(elements.topDiameter, elements.topDiameterUnit);
         bottomDiameter = toInchesFromInput(elements.bottomDiameter, elements.bottomDiameterUnit);
@@ -1433,6 +1546,24 @@
         }
         len = Math.max(topDiameter, bottomDiameter);
         wid = len;
+      } else if (shape === "ellipse") {
+        ellipseTopLength = toInchesFromInput(elements.length, elements.lengthUnit);
+        ellipseTopWidth = toInchesFromInput(elements.width, elements.widthUnit);
+        if (ellipseMode === "tapered") {
+          ellipseBottomLength = toInchesFromInput(elements.bottomLength, elements.bottomLengthUnit);
+          ellipseBottomWidth = toInchesFromInput(elements.bottomWidth, elements.bottomWidthUnit);
+        } else {
+          ellipseBottomLength = ellipseTopLength;
+          ellipseBottomWidth = ellipseTopWidth;
+        }
+        if (ellipseBottomLength === 0) {
+          ellipseBottomLength = ellipseTopLength;
+        }
+        if (ellipseBottomWidth === 0) {
+          ellipseBottomWidth = ellipseTopWidth;
+        }
+        len = Math.max(ellipseTopLength, ellipseBottomLength);
+        wid = Math.max(ellipseTopWidth, ellipseBottomWidth);
       } else if (shape === "square") {
         len = toInchesFromInput(elements.length, elements.lengthUnit);
         wid = len;
@@ -1440,11 +1571,17 @@
 
       const cavVolumeSingle = shape === "cylinder"
         ? frustumVolume(topDiameter, bottomDiameter, depth)
-        : (len * wid * depth);
+        : shape === "ellipse"
+          ? ellipseFrustumVolume(ellipseTopLength, ellipseTopWidth, ellipseBottomLength, ellipseBottomWidth, depth)
+          : (len * wid * depth);
 
       const stepX = len + spacing;
       const stepY = wid + spacing;
-      const requiredHalfDiag = shape === "cylinder" ? len / 2 : Math.hypot(len / 2, wid / 2);
+      const requiredHalfDiag = shape === "cylinder"
+        ? len / 2
+        : shape === "ellipse"
+          ? Math.max(len, wid) / 2
+          : Math.hypot(len / 2, wid / 2);
 
       let maxCols = 0;
       let maxRows = 0;
@@ -1490,7 +1627,7 @@
             sheetCountOutput = 0;
           }
         }
-      } else if (sizingMode === "target") {
+      } else if (sizingMode === "target" && !(layoutMode === "single" && shell === "autofit")) {
         const targetCount = layoutMode === "single" ? Math.min(1, requestedCount) : requestedCount;
         if (layoutMode === "single" && requestedCount > 1) {
           warning = "Target mode with single layout is capped at one cavity.";
@@ -1582,7 +1719,36 @@
       } else if (layoutMode === "single") {
         maxCols = 1;
         maxRows = 1;
-        if (shell === "rectangle") {
+        if (shell === "autofit") {
+          if (len <= 0 || wid <= 0) {
+            warning = "Enter cavity dimensions greater than 0 for single auto-fit shell.";
+            sheetCountOutput = 0;
+          } else {
+            cavityCount = 1;
+
+            if (shape === "cylinder") {
+              const outerDiameter = len + perimeter * 2;
+              const radius = outerDiameter / 2;
+              shellArea = Math.PI * radius * radius;
+              usedL = usedW = outerDiameter;
+            } else if (shape === "ellipse") {
+              const outerLength = len + perimeter * 2;
+              const outerWidth = wid + perimeter * 2;
+              shellArea = Math.PI * (outerLength / 2) * (outerWidth / 2);
+              usedL = outerLength;
+              usedW = outerWidth;
+            } else {
+              const outerLength = len + perimeter * 2;
+              const outerWidth = wid + perimeter * 2;
+              shellArea = outerLength * outerWidth;
+              usedL = outerLength;
+              usedW = outerWidth;
+            }
+
+            sheetDimensions = [{ width: usedW, length: usedL, area: usedL * usedW }];
+            cavitiesPerSheet = [1];
+          }
+        } else if (shell === "rectangle") {
           const innerL = maxL - perimeter * 2;
           const innerW = maxW - perimeter * 2;
           const fitsPrimary = innerL >= len && innerW >= wid;
@@ -1600,7 +1766,7 @@
             warning = "Single cavity does not fit in the current rectangular mold sheet with the current perimeter.";
             sheetCountOutput = 0;
           }
-        } else {
+        } else if (shell === "circle") {
           const maxR = Math.min(maxL, maxW) / 2;
           const innerR = maxR - perimeter;
           if (innerR >= requiredHalfDiag && innerR > 0) {
@@ -1615,6 +1781,9 @@
             warning = "Single cavity does not fit in the current circular mold sheet with the current perimeter.";
             sheetCountOutput = 0;
           }
+        } else {
+          warning = "Unsupported shell shape for single-cavity layout.";
+          sheetCountOutput = 0;
         }
       } else if (shell === "rectangle") {
         const innerL = maxL - perimeter * 2;
@@ -1637,7 +1806,7 @@
           warning = "No cavities can fit with the current perimeter and dimension limits.";
           sheetCountOutput = 0;
         }
-      } else {
+      } else if (shell === "circle") {
         const maxR = Math.min(maxL, maxW) / 2;
         const innerR = maxR - perimeter;
         if (innerR > 0 && stepX > 0 && stepY > 0) {
@@ -1683,6 +1852,9 @@
           warning = "No cavities can fit with the current perimeter and dimension limits.";
           sheetCountOutput = 0;
         }
+      } else {
+        warning = "Auto-fit shell is only available with single-cavity layout.";
+        sheetCountOutput = 0;
       }
 
       if (sheetDimensions.length === 0 && usedW > 0 && usedL > 0) {
@@ -1733,7 +1905,18 @@
       try {
         elements.quoteText.value = makeQuoteText({
           shape,
-          cavityDimText: getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter),
+          cavityDimText: getCavityDimensionSummary(
+            shape,
+            len,
+            wid,
+            depth,
+            topDiameter,
+            bottomDiameter,
+            ellipseTopLength,
+            ellipseTopWidth,
+            ellipseBottomLength,
+            ellipseBottomWidth
+          ),
           sheetCount: sheetCountOutput,
           cavities: cavityCount,
           cavitiesPerSheet,
@@ -1753,7 +1936,18 @@
         console.error("Quote generation failed", error);
         elements.quoteText.value = makeQuoteText({
           shape,
-          cavityDimText: getCavityDimensionSummary(shape, len, wid, depth, topDiameter, bottomDiameter),
+          cavityDimText: getCavityDimensionSummary(
+            shape,
+            len,
+            wid,
+            depth,
+            topDiameter,
+            bottomDiameter,
+            ellipseTopLength,
+            ellipseTopWidth,
+            ellipseBottomLength,
+            ellipseBottomWidth
+          ),
           sheetCount: sheetCountOutput,
           cavities: cavityCount,
           cavitiesPerSheet,
@@ -1786,6 +1980,10 @@
       updateSizingModeFields();
       calculate();
     });
+    elements.ellipseMode.addEventListener("change", () => {
+      updateShapeFields();
+      calculate();
+    });
     elements.sizingMode.addEventListener("change", () => {
       updateSizingModeFields();
       calculate();
@@ -1796,6 +1994,8 @@
       elements.bottomDiameterUnit,
       elements.lengthUnit,
       elements.widthUnit,
+      elements.bottomLengthUnit,
+      elements.bottomWidthUnit,
       elements.depthUnit,
       elements.spacingUnit,
       elements.perimeterUnit,
