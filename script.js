@@ -176,7 +176,7 @@ function deleteLocationFromSavedLocations(index) {
     setCookie('savedLocations', JSON.stringify(savedLocations), 365);
     updateSavedLocationsList();
 }
-function loadWeatherDataForLocation(coords) {
+async function loadWeatherDataForLocation(coords) {
         userLocation.latitude = coords.lat;
         userLocation.longitude = coords.lon;
         setCookie('userLatitude', userLocation.latitude, 365);
@@ -186,7 +186,21 @@ if (bestDaysButton) {
 bestDaysButton.textContent = 'Best Hours'; // Reset the button text
 }
 
-        fetchAllModelsData();
+        Swal.fire({
+            title: 'Loading...',
+            text: 'Please wait while we prepare the tables.',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            customClass: {
+                container: 'full-screen-modal'
+            },
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        await fetchAllModelsData();
+        Swal.close();
     }
     function getSavedLocations() {
             // Try to get the saved locations from a cookie
