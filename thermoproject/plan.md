@@ -1,3 +1,5 @@
+ALL WORK AND CODING SHOULD BE PERFORMED WITHIN THE THERMOPROJECT SUBFOLDER. DO NOT EDIT ANY CODE IN GIT ROOT
+
 CycleViz — Interactive Thermodynamic Cycle Explorer
 Complete Build Plan (v1.0)
 
