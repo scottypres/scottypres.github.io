@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import SaturationDome from './components/SaturationDome/SaturationDome';
 import ParticleAnimation from './components/ParticleAnimation/ParticleAnimation';
 import PropertyLookup from './components/PropertyLookup/PropertyLookup';
@@ -6,6 +6,9 @@ import CycleDiagram from './components/CycleDiagram/CycleDiagram';
 import SchematicRenderer from './components/Schematic/SchematicRenderer';
 import CycleControls from './components/CycleControls/CycleControls';
 import CycleMetrics from './components/CycleMetrics/CycleMetrics';
+import SankeyDiagram from './components/Sankey/SankeyDiagram';
+import CycleComparison from './components/CycleComparison/CycleComparison';
+import ExergyChart from './components/Exergy/ExergyChart';
 import Quiz from './components/Quiz/Quiz';
 import { getCycleById, getCyclesByCategory, CATEGORY_LABELS } from './engine/cycles/cycleRegistry';
 import { calculateCycle } from './engine/cycles/index.js';
@@ -13,6 +16,7 @@ import { getSchematicLayout, applyMetricsToLayout } from './components/Schematic
 
 const TABS = [
   { id: 'cycles', label: 'Cycles' },
+  { id: 'compare', label: 'Compare' },
   { id: 'dome', label: 'Dome' },
   { id: 'lookup', label: 'Lookup' },
   { id: 'quiz', label: 'Quiz' },
@@ -20,6 +24,17 @@ const TABS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('cycles');
+  const [isLandscape, setIsLandscape] = useState(false);
+
+  // Detect landscape orientation for mobile
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight && window.innerWidth < 1024);
+    };
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    return () => window.removeEventListener('resize', checkOrientation);
+  }, []);
 
   // Dome state (preserved from original)
   const [thermoState, setThermoState] = useState({
@@ -34,6 +49,13 @@ export default function App() {
   const [cycleStates, setCycleStates] = useState([]);
   const [cycleMetrics, setCycleMetrics] = useState({});
   const [cycleError, setCycleError] = useState(null);
+
+  // View toggle for schematic area: 'schematic' | 'sankey' | 'exergy'
+  const [schematicView, setSchematicView] = useState('schematic');
+
+  // Diagram swipe support
+  const [diagramIndex, setDiagramIndex] = useState(0);
+  const touchStartRef = useRef(null);
 
   const cycleDef = useMemo(() => getCycleById(selectedCycleId), [selectedCycleId]);
   const cycleCategories = useMemo(() => getCyclesByCategory(), []);
@@ -54,6 +76,7 @@ export default function App() {
   // Initialize inputs from cycle defaults when cycle changes
   const handleCycleChange = useCallback((id) => {
     setSelectedCycleId(id);
+    setDiagramIndex(0);
     const defaults = getDefaultInputs(id);
     setCycleInputs(defaults);
     runCycle(id, defaults);
@@ -75,6 +98,26 @@ export default function App() {
     return applyMetricsToLayout(base, cycleMetrics);
   }, [selectedCycleId, cycleMetrics]);
 
+  // Available diagram types for swipe
+  const availableDiagrams = cycleDef?.diagrams || ['Ts'];
+
+  // Touch handlers for diagram swipe
+  const handleTouchStart = useCallback((e) => {
+    touchStartRef.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (touchStartRef.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 50) return;
+    if (dx < 0 && diagramIndex < availableDiagrams.length - 1) {
+      setDiagramIndex(i => i + 1);
+    } else if (dx > 0 && diagramIndex > 0) {
+      setDiagramIndex(i => i - 1);
+    }
+  }, [diagramIndex, availableDiagrams.length]);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -95,7 +138,7 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        {/* ═══ CYCLES TAB ═══ */}
+        {/* CYCLES TAB */}
         {activeTab === 'cycles' && (
           <div className="cycles-view">
             {/* Cycle Selector */}
@@ -117,7 +160,7 @@ export default function App() {
               </select>
             </div>
 
-            <div className="cycles-layout">
+            <div className={`cycles-layout ${isLandscape ? 'cycles-layout-landscape' : ''}`}>
               {/* Left column: Controls */}
               <div className="cycles-sidebar">
                 <CycleControls
@@ -128,10 +171,21 @@ export default function App() {
               </div>
 
               {/* Center column: Diagrams */}
-              <div className="cycles-main">
-                <div className="panel">
+              <div
+                className="cycles-main"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className="panel diagram-panel-pinchable">
                   <div className="panel-title">
                     {cycleDef?.name || 'Select a Cycle'}
+                    {availableDiagrams.length > 1 && (
+                      <span className="diagram-dots">
+                        {availableDiagrams.map((d, i) => (
+                          <span key={d} className={`diagram-dot ${i === diagramIndex ? 'active' : ''}`} />
+                        ))}
+                      </span>
+                    )}
                   </div>
                   {cycleError && (
                     <div className="cycle-error-banner">
@@ -141,14 +195,34 @@ export default function App() {
                   <CycleDiagram
                     cycleDef={cycleDef}
                     states={cycleStates}
+                    diagramType={availableDiagrams[diagramIndex]}
                     showDome={cycleDef?.hasDome}
                   />
                 </div>
 
-                {cycleDef?.hasSchematic && schematicLayout && (
+                {/* Schematic / Sankey / Exergy toggle */}
+                {cycleDef?.hasSchematic && (
                   <div className="panel" style={{ marginTop: 12 }}>
-                    <div className="panel-title">Energy Flow Schematic</div>
-                    <SchematicRenderer layout={schematicLayout} />
+                    <div className="view-toggle">
+                      <button className={schematicView === 'schematic' ? 'active' : ''} onClick={() => setSchematicView('schematic')}>Schematic</button>
+                      <button className={schematicView === 'sankey' ? 'active' : ''} onClick={() => setSchematicView('sankey')}>Sankey</button>
+                      <button className={schematicView === 'exergy' ? 'active' : ''} onClick={() => setSchematicView('exergy')}>Exergy</button>
+                    </div>
+
+                    {schematicView === 'schematic' && schematicLayout && (
+                      <SchematicRenderer layout={schematicLayout} />
+                    )}
+                    {schematicView === 'sankey' && (
+                      <SankeyDiagram metrics={cycleMetrics} cycleDef={cycleDef} />
+                    )}
+                    {schematicView === 'exergy' && (
+                      <ExergyChart
+                        states={cycleStates}
+                        metrics={cycleMetrics}
+                        cycleDef={cycleDef}
+                        T0={cycleInputs.T0 || 298.15}
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -165,7 +239,12 @@ export default function App() {
           </div>
         )}
 
-        {/* ═══ DOME TAB ═══ */}
+        {/* COMPARE TAB */}
+        {activeTab === 'compare' && (
+          <CycleComparison />
+        )}
+
+        {/* DOME TAB */}
         {activeTab === 'dome' && (
           <div className="dome-view">
             <div className="dome-container">
@@ -177,10 +256,10 @@ export default function App() {
           </div>
         )}
 
-        {/* ═══ LOOKUP TAB ═══ */}
+        {/* LOOKUP TAB */}
         {activeTab === 'lookup' && <PropertyLookup />}
 
-        {/* ═══ QUIZ TAB ═══ */}
+        {/* QUIZ TAB */}
         {activeTab === 'quiz' && (
           <Quiz />
         )}

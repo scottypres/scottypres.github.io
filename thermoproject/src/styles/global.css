@@ -666,6 +666,113 @@ html, body {
   color: var(--text-muted);
 }
 
+/* ═══ Sankey ═══ */
+.sankey-wrapper {
+  min-height: 200px;
+}
+
+.sankey-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 40px 0;
+  font-size: 0.85rem;
+}
+
+/* ═══ Exergy ═══ */
+.exergy-wrapper {
+  min-height: 200px;
+}
+
+/* ═══ Cycle Comparison ═══ */
+.cycle-comparison {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.comparison-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.comparison-selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.comparison-selector label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.comparison-efficiency {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.comparison-eta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comparison-eta-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.comparison-eta-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══ Diagram swipe dots ═══ */
+.diagram-dots {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.diagram-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.diagram-dot.active {
+  background: var(--primary);
+}
+
+/* ═══ Pinch-to-zoom on diagrams ═══ */
+.diagram-panel-pinchable {
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+.diagram-panel-pinchable svg {
+  touch-action: pinch-zoom;
+}
+
+/* ═══ Landscape layout ═══ */
+.cycles-layout-landscape {
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: auto auto;
+}
+
+.cycles-layout-landscape .cycles-sidebar {
+  grid-column: 1 / -1;
+}
+
 /* ═══ Responsive ═══ */
 @media (max-width: 768px) {
   .dome-view {
@@ -686,6 +793,10 @@ html, body {
     font-size: 1.25rem;
   }
 
+  .app-header .subtitle {
+    display: none;
+  }
+
   .property-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -699,7 +810,14 @@ html, body {
     background: var(--bg);
     border-top: 1px solid var(--border);
     border-bottom: none;
-    padding: 4px 8px 8px;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .tab-btn {
+    font-size: 0.75rem;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 4px;
   }
 
   .app-main {
@@ -724,5 +842,89 @@ html, body {
 
   .quiz-options {
     grid-template-columns: 1fr;
+  }
+
+  .comparison-selectors {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-presets {
+    justify-content: center;
+  }
+
+  .step-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .view-toggle button {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+}
+
+/* Small phone (iPhone SE) */
+@media (max-width: 375px) {
+  .app-main {
+    padding: 8px;
+    padding-bottom: 72px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tab-btn {
+    font-size: 0.68rem;
+  }
+}
+
+/* Landscape on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .app-header {
+    padding: 4px 12px 2px;
+  }
+
+  .app-header h1 {
+    font-size: 1rem;
+  }
+
+  .app-header .subtitle {
+    display: none;
+  }
+
+  .tab-bar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: auto;
+    width: 60px;
+    flex-direction: column;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    padding: 4px;
+    z-index: 100;
+  }
+
+  .tab-btn {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    height: auto;
+    min-height: 44px;
+    font-size: 0.7rem;
+  }
+
+  .app-main {
+    margin-left: 60px;
+    padding-bottom: 16px;
+  }
+
+  .cycles-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cycles-layout .cycles-sidebar {
+    grid-column: 1 / -1;
   }
 }
