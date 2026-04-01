@@ -203,6 +203,11 @@ Displays computed performance metrics:
 
 ## PASS 2: FINISH (After Codex)
 
+> **Codex completion note (current status):**
+> - Not fully completed: textbook-tolerance validation is pending because `node`/`npm` were unavailable in the execution environment, so build/test runs could not be executed.
+> - Not fully completed: calculators are implemented and mapped through a central dispatcher, but not every module exposes a literal `calculateCycle(inputs)` export signature.
+> - Not fully completed: validation data scaffolding was added, but full per-cycle numeric verification against all specified textbook cases remains pending.
+
 ### Task 2.1: Integration of Cycle Calculators
 Codex will produce `src/engine/cycles/` with calculate functions for all 18 cycles. Each returns:
 ```js
