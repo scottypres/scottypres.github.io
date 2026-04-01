@@ -316,6 +316,7 @@ When complete, commit with message:
 ## PROMPT 3: OPUS PASS 2 FINISH
 
 ```
+Complete any unfinished items from Codex_plan.md
 You are completing CycleViz by integrating Codex's cycle calculators, building advanced features, and polishing.
 
 CONTEXT:
