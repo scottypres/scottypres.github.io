@@ -336,8 +336,22 @@ export function getStateFromPh(P, h) {
   const sat = getSatPropsAtTemp(T);
 
   if (h < sat.hf) {
+    // For compressed liquid, estimate T by inverting hf(T) ≈ h
+    // (compressed liquid enthalpy ≈ saturated liquid enthalpy at same T)
+    let lo = WATER.T_triple;
+    let hi = T; // saturation temperature at this pressure is upper bound
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (hf(mid) < h) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    const Tcl = (lo + hi) / 2;
+    const satCl = getSatPropsAtTemp(Tcl);
     return {
-      T, P, v: sat.vf, h, s: sat.sf, u: sat.uf,
+      T: Tcl, P, v: satCl.vf, h, s: satCl.sf, u: satCl.uf,
       x: null,
       phase: PHASE.COMPRESSED_LIQUID,
     };
