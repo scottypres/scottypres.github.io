@@ -262,7 +262,261 @@ html, body {
   overflow-x: auto;
 }
 
-/* Responsive */
+/* ═══ Cycles View ═══ */
+.cycles-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cycle-selector {
+  padding: 12px;
+}
+
+.cycles-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 12px;
+  align-items: start;
+}
+
+.cycles-sidebar,
+.cycles-main,
+.cycles-metrics {
+  min-width: 0;
+}
+
+/* ═══ Cycle Controls ═══ */
+.cycle-controls {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+.controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.control-item-sm {
+  gap: 2px;
+}
+
+.control-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.control-unit {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slider {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
+
+.step-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.step-btn:hover {
+  background: var(--bg-card-hover);
+}
+
+.slider-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.slider-value-inline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cyan);
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.real-toggle-section {
+  margin-top: 8px;
+}
+
+.efficiency-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+/* ═══ Cycle Diagram ═══ */
+.cycle-diagram-wrapper {
+  position: relative;
+}
+
+.process-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 4px 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 3px;
+  border-radius: 1px;
+}
+
+.legend-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ═══ Schematic ═══ */
+.schematic-wrapper svg {
+  width: 100%;
+  height: auto;
+}
+
+/* ═══ Metrics ═══ */
+.cycle-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.metrics-panel {
+  padding: 12px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.metric-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metric-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-unit {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ═══ State Table ═══ */
+.state-table-panel {
+  padding: 12px;
+}
+
+.state-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.state-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.state-table th,
+.state-table td {
+  padding: 4px 6px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.state-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.state-table td {
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.state-table .state-num {
+  text-align: center;
+  font-weight: 700;
+  color: var(--cyan);
+}
+
+/* ═══ Responsive ═══ */
 @media (max-width: 768px) {
   .dome-view {
     flex-direction: column;
@@ -300,5 +554,17 @@ html, body {
 
   .app-main {
     padding-bottom: 72px;
+  }
+
+  .cycles-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cycle-controls {
+    max-height: none;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
