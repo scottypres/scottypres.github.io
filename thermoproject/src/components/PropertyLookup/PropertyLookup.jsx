@@ -6,6 +6,7 @@ const SUBSTANCES = [
   { value: 'water', label: 'Water' },
   { value: 'r134a', label: 'R-134a' },
   { value: 'r410a', label: 'R-410a' },
+  { value: 'ammonia', label: 'Ammonia (NH3)' },
   { value: 'air', label: 'Air' },
   { value: 'nitrogen', label: 'Nitrogen' },
   { value: 'co2', label: 'CO2' },

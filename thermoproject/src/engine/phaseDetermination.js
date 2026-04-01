@@ -5,6 +5,7 @@
 
 import { getWaterProps } from './water.js';
 import { getRefrigerantProps } from './refrigerants.js';
+import { getAmmoniaProps } from './ammonia.js';
 import { getIdealGasProps } from './idealGas.js';
 import { IDEAL_GASES, PHASE, SUBSTANCES } from './constants.js';
 
@@ -288,7 +289,9 @@ function lookupWater(substanceId, prop1Name, prop1Value, prop2Name, prop2Value) 
  * @private
  */
 function lookupRefrigerant(substanceId, prop1Name, prop1Value, prop2Name, prop2Value) {
-  const state = getRefrigerantProps(substanceId, prop1Name, prop1Value, prop2Name, prop2Value);
+  const state = substanceId === 'ammonia'
+    ? getAmmoniaProps(prop1Name, prop1Value, prop2Name, prop2Value)
+    : getRefrigerantProps(substanceId, prop1Name, prop1Value, prop2Name, prop2Value);
 
   // Determine phase from quality if available
   let phase = state.phase || null;

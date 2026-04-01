@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import SaturationDome from './components/SaturationDome/SaturationDome';
 import ParticleAnimation from './components/ParticleAnimation/ParticleAnimation';
 import PropertyLookup from './components/PropertyLookup/PropertyLookup';
@@ -6,7 +6,9 @@ import CycleDiagram from './components/CycleDiagram/CycleDiagram';
 import SchematicRenderer from './components/Schematic/SchematicRenderer';
 import CycleControls from './components/CycleControls/CycleControls';
 import CycleMetrics from './components/CycleMetrics/CycleMetrics';
+import Quiz from './components/Quiz/Quiz';
 import { getCycleById, getCyclesByCategory, CATEGORY_LABELS } from './engine/cycles/cycleRegistry';
+import { calculateCycle } from './engine/cycles/index.js';
 import { getSchematicLayout, applyMetricsToLayout } from './components/Schematic/layouts/index';
 
 const TABS = [
@@ -28,35 +30,43 @@ export default function App() {
 
   // Cycle state
   const [selectedCycleId, setSelectedCycleId] = useState('rankine-basic');
-  const [cycleInputs, setCycleInputs] = useState({});
+  const [cycleInputs, setCycleInputs] = useState(() => getDefaultInputs('rankine-basic'));
   const [cycleStates, setCycleStates] = useState([]);
   const [cycleMetrics, setCycleMetrics] = useState({});
+  const [cycleError, setCycleError] = useState(null);
 
   const cycleDef = useMemo(() => getCycleById(selectedCycleId), [selectedCycleId]);
   const cycleCategories = useMemo(() => getCyclesByCategory(), []);
 
+  const runCycle = useCallback((cycleId, values) => {
+    const result = calculateCycle(cycleId, values, values?.isReal === true);
+    if (result?.error) {
+      setCycleStates([]);
+      setCycleMetrics({});
+      setCycleError(result.message || 'Cycle calculation failed.');
+      return;
+    }
+    setCycleStates(result?.states || []);
+    setCycleMetrics(result?.metrics || {});
+    setCycleError(null);
+  }, []);
+
   // Initialize inputs from cycle defaults when cycle changes
   const handleCycleChange = useCallback((id) => {
     setSelectedCycleId(id);
-    const def = getCycleById(id);
-    if (def) {
-      const defaults = {};
-      for (const input of def.inputs) {
-        defaults[input.id] = input.default;
-      }
-      setCycleInputs(defaults);
-    }
-    // Clear computed data (Codex will plug in calculators)
-    setCycleStates([]);
-    setCycleMetrics({});
-  }, []);
+    const defaults = getDefaultInputs(id);
+    setCycleInputs(defaults);
+    runCycle(id, defaults);
+  }, [runCycle]);
 
   const handleInputChange = useCallback((newValues) => {
     setCycleInputs(newValues);
-    // TODO: Codex will plug cycle calculator here
-    // const result = calculateCycle(selectedCycleId, newValues);
-    // setCycleStates(result.states);
-    // setCycleMetrics(result.metrics);
+    runCycle(selectedCycleId, newValues);
+  }, [selectedCycleId, runCycle]);
+
+  useEffect(() => {
+    runCycle(selectedCycleId, cycleInputs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Schematic layout with runtime metrics applied
@@ -123,6 +133,11 @@ export default function App() {
                   <div className="panel-title">
                     {cycleDef?.name || 'Select a Cycle'}
                   </div>
+                  {cycleError && (
+                    <div className="cycle-error-banner">
+                      {cycleError}
+                    </div>
+                  )}
                   <CycleDiagram
                     cycleDef={cycleDef}
                     states={cycleStates}
@@ -167,14 +182,19 @@ export default function App() {
 
         {/* ═══ QUIZ TAB ═══ */}
         {activeTab === 'quiz' && (
-          <div className="panel" style={{ textAlign: 'center', padding: '48px 16px' }}>
-            <div className="panel-title">Quiz Mode</div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Coming soon — test your thermodynamics knowledge with interactive problems.
-            </p>
-          </div>
+          <Quiz />
         )}
       </main>
     </div>
   );
+}
+
+function getDefaultInputs(cycleId) {
+  const def = getCycleById(cycleId);
+  if (!def) return {};
+  const defaults = {};
+  for (const input of def.inputs || []) {
+    defaults[input.id] = input.default;
+  }
+  return defaults;
 }

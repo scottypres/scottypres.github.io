@@ -172,6 +172,7 @@ html, body {
 .phase-badge.saturated-vapor { background: #5c2d0e; color: #fb923c; }
 .phase-badge.superheated-vapor { background: #5c1a1a; color: #f87171; }
 .phase-badge.supercritical { background: #4a1a1a; color: #fca5a5; }
+.phase-badge.liquid { background: #143157; color: #7dd3fc; }
 
 /* Buttons */
 .btn {
@@ -328,22 +329,32 @@ html, body {
 
 .slider {
   flex: 1;
-  height: 4px;
+  height: 8px;
   -webkit-appearance: none;
   appearance: none;
-  background: var(--border);
-  border-radius: 2px;
+  background: linear-gradient(90deg, #1d4ed8, #06b6d4);
+  border-radius: 999px;
   outline: none;
 }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--primary);
+  background: #e2e8f0;
   cursor: pointer;
-  border: 2px solid var(--bg);
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.12);
+}
+
+.slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  cursor: pointer;
+  border: 3px solid var(--primary);
 }
 
 .step-btn {
@@ -516,6 +527,145 @@ html, body {
   color: var(--cyan);
 }
 
+.state-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.cycle-error-banner {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  font-size: 0.8rem;
+}
+
+.cycle-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.76);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+}
+
+.cycle-selector-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 92vw);
+  max-height: 82vh;
+  overflow-y: auto;
+  z-index: 91;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+}
+
+.phase-badge.rankine { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.phase-badge.brayton { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+.phase-badge.refrigeration { background: rgba(14, 165, 233, 0.2); color: #7dd3fc; }
+.phase-badge.combined { background: rgba(249, 115, 22, 0.2); color: #fdba74; }
+.phase-badge.reference { background: rgba(148, 163, 184, 0.25); color: #cbd5e1; }
+.phase-badge.special { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; }
+
+@keyframes flowPulse {
+  0% { opacity: 0.4; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(4px); }
+  100% { opacity: 0.4; transform: translateX(0); }
+}
+
+.energy-arrow-animated {
+  animation: flowPulse 1.4s ease-in-out infinite;
+}
+
+.quiz-panel {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.quiz-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.quiz-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.quiz-timer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-question {
+  font-size: 1.02rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.quiz-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.quiz-option {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.quiz-option.correct {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.2);
+}
+
+.quiz-option.incorrect {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.quiz-explanation {
+  border-left: 3px solid var(--cyan);
+  background: rgba(14, 116, 144, 0.16);
+  padding: 10px 12px;
+  font-size: 0.86rem;
+  margin-bottom: 12px;
+}
+
+.quiz-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.quiz-summary {
+  text-align: center;
+  display: grid;
+  gap: 8px;
+}
+
+.quiz-empty {
+  color: var(--text-muted);
+}
+
 /* ═══ Responsive ═══ */
 @media (max-width: 768px) {
   .dome-view {
@@ -566,5 +716,13 @@ html, body {
 
   .metrics-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .quiz-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .quiz-options {
+    grid-template-columns: 1fr;
   }
 }
