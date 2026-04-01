@@ -44,6 +44,7 @@ export default function PropertyLookup() {
   const [prop1Value, setProp1Value] = useState('');
   const [prop2Name, setProp2Name] = useState('P');
   const [prop2Value, setProp2Value] = useState('');
+  const [tempUnit, setTempUnit] = useState('C'); // 'C' or 'K'
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [showSteps, setShowSteps] = useState(false);
@@ -52,8 +53,8 @@ export default function PropertyLookup() {
     setError(null);
     setResults(null);
 
-    const v1 = parseFloat(prop1Value);
-    const v2 = parseFloat(prop2Value);
+    let v1 = parseFloat(prop1Value);
+    let v2 = parseFloat(prop2Value);
 
     if (isNaN(v1) || isNaN(v2)) {
       setError('Please enter valid numeric values for both properties.');
@@ -65,6 +66,12 @@ export default function PropertyLookup() {
       return;
     }
 
+    // Convert K to C for the engine (engine works in C internally)
+    if (tempUnit === 'K') {
+      if (prop1Name === 'T') v1 = v1 - 273.15;
+      if (prop2Name === 'T') v2 = v2 - 273.15;
+    }
+
     try {
       const result = lookupProperties(substance, prop1Name, v1, prop2Name, v2);
       setResults(result);
@@ -73,14 +80,15 @@ export default function PropertyLookup() {
     }
   };
 
+  const displayT = results ? (tempUnit === 'K' ? results.T + 273.15 : results.T) : null;
   const resultEntries = results
     ? [
-        { label: 'T', value: results.T, unit: 'C' },
+        { label: 'T', value: displayT, unit: tempUnit === 'K' ? 'K' : '°C' },
         { label: 'P', value: results.P, unit: 'kPa' },
-        { label: 'v', value: results.v, unit: 'm3/kg' },
+        { label: 'v', value: results.v, unit: 'm³/kg' },
         { label: 'u', value: results.u, unit: 'kJ/kg' },
         { label: 'h', value: results.h, unit: 'kJ/kg' },
-        { label: 's', value: results.s, unit: 'kJ/kg-K' },
+        { label: 's', value: results.s, unit: 'kJ/(kg·K)' },
         { label: 'x', value: results.x, unit: '' },
       ]
     : [];
@@ -103,6 +111,17 @@ export default function PropertyLookup() {
             <option key={s.value} value={s.value}>{s.label}</option>
           ))}
         </select>
+      </div>
+
+      {/* Temperature unit toggle */}
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+          Temperature Unit
+        </label>
+        <div className="view-toggle">
+          <button className={tempUnit === 'C' ? 'active' : ''} onClick={() => setTempUnit('C')}>°C</button>
+          <button className={tempUnit === 'K' ? 'active' : ''} onClick={() => setTempUnit('K')}>K</button>
+        </div>
       </div>
 
       {/* Property 1 */}

@@ -148,8 +148,8 @@ export default function DraggablePoint({
       {/* Crosshair lines when dragging */}
       {dragging && (
         <>
-          <line x1={cx} y1={cy - 18} x2={cx} y2={cy + 18} stroke="#06b6d4" strokeWidth="0.5" opacity="0.6" />
-          <line x1={cx - 18} y1={cy} x2={cx + 18} y2={cy} stroke="#06b6d4" strokeWidth="0.5" opacity="0.6" />
+          <line x1={cx} y1={cy - 30} x2={cx} y2={cy + 30} stroke="#06b6d4" strokeWidth="0.5" opacity="0.6" />
+          <line x1={cx - 30} y1={cy} x2={cx + 30} y2={cy} stroke="#06b6d4" strokeWidth="0.5" opacity="0.6" />
         </>
       )}
 
@@ -157,7 +157,7 @@ export default function DraggablePoint({
       <circle
         cx={cx}
         cy={cy}
-        r={20}
+        r={30}
         fill="transparent"
         onMouseDown={handlePointerDown}
         onTouchStart={handlePointerDown}
@@ -167,18 +167,18 @@ export default function DraggablePoint({
       <circle
         cx={cx}
         cy={cy}
-        r={dragging ? 14 : 12}
+        r={dragging ? 20 : 18}
         fill="#06b6d4"
-        fillOpacity={0.25}
+        fillOpacity={0.2}
         stroke="#06b6d4"
-        strokeWidth="2"
+        strokeWidth="2.5"
         filter="url(#pointGlow)"
         style={{ pointerEvents: 'none', transition: dragging ? 'none' : 'cx 0.1s, cy 0.1s' }}
       />
       <circle
         cx={cx}
         cy={cy}
-        r={4}
+        r={6}
         fill="#06b6d4"
         style={{ pointerEvents: 'none' }}
       />
