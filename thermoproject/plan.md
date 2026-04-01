@@ -461,7 +461,52 @@ Consider PWA manifest for "Add to Home Screen" behavior
 
 
 SUGGESTED BUILD PHASES
-PhaseFeaturesNotes1Interactive Saturation Dome (Feature 4) + Particle Animation (Feature 5) + Table Lookup engine (Feature 3)Foundation — validates the property calculation engine that everything depends on. Professor specifically requested the draggable dome.2Carnot + Polytropic Sandbox + Otto + Diesel + Brayton (ideal gas cycles, Features 1 & 2 partial)These all use ideal gas relations only (no steam tables), so they're self-contained. Includes energy flow schematics for each.3Rankine + Reheat + Regenerative + Vapor-Compression Refrigeration (phase-change cycles)Requires the steam/refrigerant property engine from Phase 1. Includes energy flow schematics.4Remaining cycles: Stirling, Atkinson, Miller, Jet Propulsion, Air-Standard Refrigeration, Cogeneration, Absorption Refrigeration, Combined Brayton-RankineBuilds on Phases 2 and 3.5Cycle Comparison Mode (Feature 6), Ideal vs. Real Toggle (Feature 7), Exergy Tracker (Feature 8), Sankey Diagrams (Feature 2F)Enhancement layer.6Quiz Mode (Feature 9), final mobile polish, PWA manifestPolish and pedagogy.
+## SUGGESTED BUILD PHASES
+
+### Phase 1: Foundation (Features 3, 4, 5)
+- Interactive Saturation Dome (Feature 4)
+- Particle Animation (Feature 5)
+- Table Lookup engine (Feature 3)
+- Notes: Foundation — validates the property calculation engine that everything depends on. Professor specifically requested the draggable dome.
+
+### Phase 2: Ideal Gas Cycles (Features 1 & 2, partial)
+- Carnot Cycle
+- Polytropic Process Sandbox
+- Otto Cycle
+- Diesel Cycle
+- Brayton Cycle (basic)
+- Notes: These all use ideal gas relations only (no steam tables), so they're self-contained. Includes energy flow schematics for each.
+
+### Phase 3: Phase-Change Cycles (Features 1 & 2, continued)
+- Rankine Cycle (basic)
+- Reheat Rankine Cycle
+- Regenerative Rankine Cycle
+- Vapor-Compression Refrigeration Cycle
+- Notes: Requires the steam/refrigerant property engine from Phase 1. Includes energy flow schematics.
+
+### Phase 4: Remaining Cycles (Features 1 & 2, completed)
+- Stirling Cycle
+- Atkinson Cycle
+- Miller Cycle
+- Jet Propulsion Cycle
+- Air-Standard Refrigeration Cycle
+- Cogeneration Cycle
+- Absorption Refrigeration Cycle
+- Combined Brayton-Rankine Cycle
+- Notes: Builds on Phases 2 and 3.
+
+### Phase 5: Enhancements (Features 6, 7, 8, 2F)
+- Cycle Comparison Mode (Feature 6)
+- Ideal vs. Real Toggle (Feature 7)
+- Exergy Destruction Tracker (Feature 8)
+- Sankey Diagrams (Feature 2F)
+- Notes: Enhancement layer that adds analytical depth.
+
+### Phase 6: Polish (Feature 9)
+- Quiz Mode (Feature 9)
+- Final mobile polish
+- PWA manifest for "Add to Home Screen"
+- Notes: Polish and pedagogy layer.
 
 KEY THERMODYNAMIC RELATIONS REFERENCE
 For the builder's reference — these are the core equations used across all features:
