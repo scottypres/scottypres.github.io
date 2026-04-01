@@ -6,6 +6,7 @@ import CycleDiagram from './components/CycleDiagram/CycleDiagram';
 import SchematicRenderer from './components/Schematic/SchematicRenderer';
 import CycleControls from './components/CycleControls/CycleControls';
 import CycleMetrics from './components/CycleMetrics/CycleMetrics';
+import EquationsPanel from './components/CycleDiagram/EquationsPanel';
 import SankeyDiagram from './components/Sankey/SankeyDiagram';
 import CycleComparison from './components/CycleComparison/CycleComparison';
 import ExergyChart from './components/Exergy/ExergyChart';
@@ -234,6 +235,7 @@ export default function App() {
                   metrics={cycleMetrics}
                   cycleDef={cycleDef}
                 />
+                <EquationsPanel cycleDef={cycleDef} />
               </div>
             </div>
           </div>

@@ -79,6 +79,26 @@ function stateToSvgPos(state, viewType, toSvgX, toSvgY) {
   return { cx: toSvgX(rawX), cy: toSvgY(rawY) };
 }
 
+/**
+ * Given a constraint type ('fixT', 'fixP', 'fixV', 'fixS') and the current view,
+ * determine which axis to lock. Returns 'lockX', 'lockY', or null.
+ *
+ * The view axes are:
+ *   Tv: X=v, Y=T    Ts: X=s, Y=T    Pv: X=v, Y=P    Ph: X=h, Y=P
+ */
+function getAxisLock(constraint, viewType) {
+  if (!constraint || constraint === 'none') return null;
+
+  const axisMap = {
+    Tv: { fixT: 'lockY', fixV: 'lockX' },
+    Ts: { fixT: 'lockY', fixS: 'lockX' },
+    Pv: { fixP: 'lockY', fixV: 'lockX' },
+    Ph: { fixP: 'lockY' },
+  };
+
+  return axisMap[viewType]?.[constraint] || null;
+}
+
 export default function DraggablePoint({
   svgRef,
   viewType,
@@ -88,6 +108,7 @@ export default function DraggablePoint({
   toSvgY,
   fromSvgX,
   fromSvgY,
+  constraint = 'none',
 }) {
   const [dragging, setDragging] = useState(false);
 
@@ -107,14 +128,27 @@ export default function DraggablePoint({
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const { x, y } = clientToSvg(svgEl, clientX, clientY);
 
-      const rawX = fromSvgX(x);
-      const rawY = fromSvgY(y);
+      let rawX = fromSvgX(x);
+      let rawY = fromSvgY(y);
+
+      // Apply constraint: lock one axis to the current state value
+      const lock = getAxisLock(constraint, viewType);
+      if (lock === 'lockX') {
+        // Keep X at current state position
+        const curPos = stateToSvgPos(thermoState, viewType, toSvgX, toSvgY);
+        rawX = fromSvgX(curPos.cx);
+      } else if (lock === 'lockY') {
+        // Keep Y at current state position
+        const curPos = stateToSvgPos(thermoState, viewType, toSvgX, toSvgY);
+        rawY = fromSvgY(curPos.cy);
+      }
+
       const newState = resolveState(rawX, rawY, viewType);
       if (newState) {
         onStateChange(newState);
       }
     },
-    [dragging, svgRef, fromSvgX, fromSvgY, viewType, onStateChange]
+    [dragging, svgRef, fromSvgX, fromSvgY, toSvgX, toSvgY, viewType, onStateChange, constraint, thermoState]
   );
 
   const handlePointerUp = useCallback(() => {
@@ -145,13 +179,19 @@ export default function DraggablePoint({
 
   return (
     <g style={{ cursor: dragging ? 'grabbing' : 'grab' }}>
-      {/* Crosshair lines when dragging */}
-      {dragging && (
-        <>
-          <line x1={cx} y1={cy - 30} x2={cx} y2={cy + 30} stroke="#06b6d4" strokeWidth="0.5" opacity="0.6" />
-          <line x1={cx - 30} y1={cy} x2={cx + 30} y2={cy} stroke="#06b6d4" strokeWidth="0.5" opacity="0.6" />
-        </>
-      )}
+      {/* Crosshair lines when dragging - extend locked axis line fully */}
+      {dragging && (() => {
+        const lock = getAxisLock(constraint, viewType);
+        const vLen = lock === 'lockY' ? 600 : 30;
+        const hLen = lock === 'lockX' ? 600 : 30;
+        const lockColor = lock ? '#fbbf24' : '#06b6d4';
+        return (
+          <>
+            <line x1={cx} y1={cy - vLen} x2={cx} y2={cy + vLen} stroke={lock === 'lockY' ? lockColor : '#06b6d4'} strokeWidth={lock === 'lockY' ? '1' : '0.5'} opacity="0.6" />
+            <line x1={cx - hLen} y1={cy} x2={cx + hLen} y2={cy} stroke={lock === 'lockX' ? lockColor : '#06b6d4'} strokeWidth={lock === 'lockX' ? '1' : '0.5'} opacity="0.6" />
+          </>
+        );
+      })()}
 
       {/* Invisible larger hit area for touch */}
       <circle

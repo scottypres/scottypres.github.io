@@ -23,10 +23,19 @@ export function calculateBrayton(inputs, isReal = false) {
     if (P_1 <= 0) return validationError('P_1 must be greater than zero');
 
     const exponent = (gas.k - 1) / gas.k;
-    const T_2 = T_1 * Math.pow(r_p, exponent);
+    let T_2 = T_1 * Math.pow(r_p, exponent);
     const P_2 = P_1 * r_p;
-    const T_4 = T_3 / Math.pow(r_p, exponent);
+    let T_4 = T_3 / Math.pow(r_p, exponent);
     const P_4 = P_1;
+
+    if (isReal) {
+      const eta_c = Math.max(0.01, Math.min(1, inputs.eta_compressor ?? 0.80));
+      const eta_t = Math.max(0.01, Math.min(1, inputs.eta_turbine ?? 0.85));
+      const T_2s = T_2;
+      T_2 = T_1 + (T_2s - T_1) / eta_c;
+      const T_4s = T_4;
+      T_4 = T_3 - eta_t * (T_3 - T_4s);
+    }
 
     const s1 = propertyCall(getIdealGasProps, gas.id, 'T', T_1, 'P', P_1);
     if (s1.error) return s1;

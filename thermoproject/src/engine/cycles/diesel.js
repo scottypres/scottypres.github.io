@@ -23,12 +23,22 @@ export function calculateDiesel(inputs, isReal = false) {
     if (T_1 <= 0) return validationError('T_1 must be a positive temperature');
     if (Q_in <= 0) return validationError('Q_in must be greater than zero');
 
-    const T_2 = T_1 * Math.pow(r, gas.k - 1);
+    let T_2 = T_1 * Math.pow(r, gas.k - 1);
+    if (isReal) {
+      const eta_c = Math.max(0.01, Math.min(1, inputs.eta_compressor ?? inputs.eta_mechanical ?? 0.85));
+      const T_2s = T_2;
+      T_2 = T_1 + (T_2s - T_1) / eta_c;
+    }
     const P_2 = P_1 * Math.pow(r, gas.k);
     const T_3 = T_2 + Q_in / gas.cp;
     const r_c = r_c_input ?? (T_3 / T_2);
     const P_3 = P_2;
-    const T_4 = T_3 * Math.pow(r_c / r, gas.k - 1);
+    let T_4 = T_3 * Math.pow(r_c / r, gas.k - 1);
+    if (isReal) {
+      const eta_e = Math.max(0.01, Math.min(1, inputs.eta_expansion ?? inputs.eta_mechanical ?? 0.85));
+      const T_4s = T_4;
+      T_4 = T_3 - eta_e * (T_3 - T_4s);
+    }
     const P_4 = P_3 * Math.pow(r_c / r, gas.k);
 
     const s1 = propertyCall(getIdealGasProps, gas.id, 'T', T_1, 'P', P_1);

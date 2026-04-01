@@ -132,6 +132,8 @@ export default function CycleComparison() {
           defA={defA} statesA={resultA?.states || []}
           defB={defB} statesB={resultB?.states || []}
           mergedStates={mergedStates}
+          nameA={defA?.name || 'Cycle A'}
+          nameB={defB?.name || 'Cycle B'}
         />
       </div>
     </div>
@@ -147,7 +149,7 @@ const PAD = { top: 20, right: 20, bottom: 50, left: 65 };
 const PLOT_W = WIDTH - PAD.left - PAD.right;
 const PLOT_H = HEIGHT - PAD.top - PAD.bottom;
 
-function ComparisonDiagram({ defA, statesA, defB, statesB, mergedStates }) {
+function ComparisonDiagram({ defA, statesA, defB, statesB, mergedStates, nameA, nameB }) {
   const ax = useMemo(() => {
     if (mergedStates.length === 0) return { xLabel: 's (kJ/(kg·K))', yLabel: 'T (K)', xProp: 's', yProp: 'T', xLog: false, yLog: false, xMin: 0, xMax: 10, yMin: 250, yMax: 700 };
     return computeAxisRanges(mergedStates, 'Ts');
@@ -193,12 +195,18 @@ function ComparisonDiagram({ defA, statesA, defB, statesB, mergedStates }) {
 
   return (
     <svg className="dome-svg" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="compareClip">
+          <rect x={PAD.left} y={PAD.top} width={PLOT_W} height={PLOT_H} />
+        </clipPath>
+      </defs>
       <rect x={PAD.left} y={PAD.top} width={PLOT_W} height={PLOT_H} fill="#0f172a" rx="2" />
 
       {/* Grid */}
       {xTicks.map(v => <line key={`gx-${v}`} x1={toSvgX(v, ax)} y1={PAD.top} x2={toSvgX(v, ax)} y2={PAD.top + PLOT_H} stroke="#1e293b" strokeWidth="0.5" />)}
       {yTicks.map(v => <line key={`gy-${v}`} x1={PAD.left} y1={toSvgY(v, ax)} x2={PAD.left + PLOT_W} y2={toSvgY(v, ax)} stroke="#1e293b" strokeWidth="0.5" />)}
 
+      <g clipPath="url(#compareClip)">
       {/* Cycle A paths (solid) */}
       {pathsA.map((pp, i) => (
         <path key={`a-${i}`} d={pp.svgPath} fill="none" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" />
@@ -230,6 +238,7 @@ function ComparisonDiagram({ defA, statesA, defB, statesB, mergedStates }) {
           </g>
         );
       })}
+      </g>
 
       {/* Tick labels */}
       {xTicks.map(v => <text key={`tx-${v}`} x={toSvgX(v, ax)} y={PAD.top + PLOT_H + 16} textAnchor="middle" fill="#94a3b8" fontSize="10">{v % 1 === 0 ? v : v.toFixed(1)}</text>)}
@@ -241,9 +250,9 @@ function ComparisonDiagram({ defA, statesA, defB, statesB, mergedStates }) {
 
       {/* Legend */}
       <rect x={PAD.left + 8} y={PAD.top + 8} width="10" height="3" rx="1" fill="#06b6d4" />
-      <text x={PAD.left + 22} y={PAD.top + 12} fill="#06b6d4" fontSize="9">Cycle A</text>
+      <text x={PAD.left + 22} y={PAD.top + 12} fill="#06b6d4" fontSize="9">{nameA}</text>
       <rect x={PAD.left + 8} y={PAD.top + 20} width="10" height="3" rx="1" fill="#f97316" />
-      <text x={PAD.left + 22} y={PAD.top + 24} fill="#f97316" fontSize="9">Cycle B</text>
+      <text x={PAD.left + 22} y={PAD.top + 24} fill="#f97316" fontSize="9">{nameB}</text>
 
       <rect x={PAD.left} y={PAD.top} width={PLOT_W} height={PLOT_H} fill="none" stroke="#334155" strokeWidth="1" />
     </svg>

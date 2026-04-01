@@ -11,6 +11,7 @@ import {
   getProcessColor,
   DIAGRAM_AXES,
 } from './processPath.js';
+import { COMPONENT_PALETTE } from '../../engine/cycles/cycleRegistry.js';
 
 const WIDTH = 600;
 const HEIGHT = 400;
@@ -130,10 +131,13 @@ export default function CycleDiagram({
     return buildDomePath(ax, diagramType);
   }, [hasDome, ax, diagramType]);
 
+  // Use per-component colors when there are many processes sharing process types
+  const useComponentColors = processes.length > 4;
+
   // Build process paths
   const processPaths = useMemo(() => {
     if (states.length < 2 || processes.length === 0) return [];
-    return processes.map((proc) => {
+    return processes.map((proc, idx) => {
       const from = states.find(s => s.stateNum === proc.from);
       const to = states.find(s => s.stateNum === proc.to);
       if (!from || !to) return null;
@@ -143,10 +147,14 @@ export default function CycleDiagram({
         ...result,
         processType: proc.type,
         component: proc.component,
-        color: getProcessColor(proc.type),
+        from: proc.from,
+        to: proc.to,
+        color: useComponentColors
+          ? COMPONENT_PALETTE[idx % COMPONENT_PALETTE.length]
+          : getProcessColor(proc.type),
       };
     }).filter(Boolean);
-  }, [states, processes, diagramType, ax]);
+  }, [states, processes, diagramType, ax, useComponentColors]);
 
   // Build area path (net work on P-v, net heat on T-s)
   const areaPath = useMemo(() => {
@@ -219,6 +227,9 @@ export default function CycleDiagram({
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          <clipPath id="plotClip">
+            <rect x={PAD.left} y={PAD.top} width={PLOT_W} height={PLOT_H} />
+          </clipPath>
         </defs>
 
         {/* Background */}
@@ -234,6 +245,7 @@ export default function CycleDiagram({
           return <line key={`gy-${v}`} x1={PAD.left} y1={sy} x2={PAD.left + PLOT_W} y2={sy} stroke="#1e293b" strokeWidth="0.5" />;
         })}
 
+        <g clipPath="url(#plotClip)">
         {/* Saturation dome */}
         {dome && (
           <>
@@ -266,11 +278,7 @@ export default function CycleDiagram({
         ))}
 
         {/* State points */}
-        {statePositions.map(sp => {
-          const inBounds = sp.svg.x >= PAD.left && sp.svg.x <= PAD.left + PLOT_W
-            && sp.svg.y >= PAD.top && sp.svg.y <= PAD.top + PLOT_H;
-          if (!inBounds) return null;
-          return (
+        {statePositions.map(sp => (
             <g key={sp.stateNum} filter="url(#stateGlow)">
               <circle
                 cx={sp.svg.x}
@@ -295,8 +303,8 @@ export default function CycleDiagram({
                 {sp.stateNum}
               </text>
             </g>
-          );
-        })}
+        ))}
+        </g>
 
         {/* Tick labels */}
         {xTicks.map(v => (
@@ -374,7 +382,9 @@ export default function CycleDiagram({
           {processPaths.map((pp, i) => (
             <span key={i} className="legend-item">
               <span className="legend-swatch" style={{ background: pp.color, opacity: pp.dashed ? 0.6 : 1 }} />
-              <span className="legend-label">{pp.component}</span>
+              <span className="legend-label">
+                {pp.from}→{pp.to} {pp.component}
+              </span>
             </span>
           ))}
         </div>

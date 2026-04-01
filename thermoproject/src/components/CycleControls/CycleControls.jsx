@@ -1,4 +1,58 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+
+// Map cycle component names to the efficiency parameters they support
+function getEfficiencySliders(cycleDef) {
+  if (!cycleDef) return [];
+  const components = (cycleDef.processes || []).map(p => p.component);
+  const sliders = [];
+  const seen = new Set();
+
+  const hasTurbine = components.some(c => c.includes('turbine'));
+  const hasCompressor = components.some(c => c.includes('compressor') || c === 'compression');
+  const hasPump = components.some(c => c.includes('pump'));
+  const hasNozzle = components.some(c => c === 'nozzle');
+  const hasDiffuser = components.some(c => c === 'diffuser');
+  const hasExpansion = components.some(c => c === 'expansion' || c === 'over-expansion');
+  const hasRegenOrHX = components.some(c =>
+    c.includes('regenerator') || c.includes('heat-exchanger') || c === 'hrsg'
+  );
+
+  if (hasTurbine && !seen.has('eta_turbine')) {
+    sliders.push({ id: 'eta_turbine', label: 'Turbine Efficiency', default: 0.85 });
+    seen.add('eta_turbine');
+  }
+  if (hasCompressor && !seen.has('eta_compressor')) {
+    sliders.push({ id: 'eta_compressor', label: 'Compressor Efficiency', default: 0.80 });
+    seen.add('eta_compressor');
+  }
+  if (hasPump && !seen.has('eta_pump')) {
+    sliders.push({ id: 'eta_pump', label: 'Pump Efficiency', default: 0.75 });
+    seen.add('eta_pump');
+  }
+  if (hasNozzle && !seen.has('eta_nozzle')) {
+    sliders.push({ id: 'eta_nozzle', label: 'Nozzle Efficiency', default: 0.90 });
+    seen.add('eta_nozzle');
+  }
+  if (hasDiffuser && !seen.has('eta_diffuser')) {
+    sliders.push({ id: 'eta_diffuser', label: 'Diffuser Efficiency', default: 0.90 });
+    seen.add('eta_diffuser');
+  }
+  if (hasExpansion && !hasTurbine && !seen.has('eta_expansion')) {
+    sliders.push({ id: 'eta_expansion', label: 'Expansion Efficiency', default: 0.85 });
+    seen.add('eta_expansion');
+  }
+  if (hasRegenOrHX && !seen.has('epsilon_regen')) {
+    sliders.push({ id: 'epsilon_regen', label: 'Regenerator Effectiveness', default: 0.80 });
+    seen.add('epsilon_regen');
+  }
+
+  // Fallback: if no specific components matched, offer a generic mechanical efficiency
+  if (sliders.length === 0) {
+    sliders.push({ id: 'eta_mechanical', label: 'Mechanical Efficiency', default: 0.90 });
+  }
+
+  return sliders;
+}
 
 /**
  * CycleControls — generic controls panel driven by a cycle definition's `inputs` array.
@@ -15,6 +69,7 @@ export default function CycleControls({ cycleDef, values, onChange }) {
   if (!cycleDef) return null;
 
   const inputs = cycleDef.inputs || [];
+  const efficiencySliders = useMemo(() => getEfficiencySliders(cycleDef), [cycleDef]);
 
   const handleChange = useCallback((id, newVal) => {
     onChange({ ...values, [id]: newVal });
@@ -27,18 +82,20 @@ export default function CycleControls({ cycleDef, values, onChange }) {
   const handleRealToggle = useCallback(() => {
     const next = !isReal;
     setIsReal(next);
-    // When toggling to real, inject default efficiency values
     if (next) {
       const newVals = { ...values, isReal: true };
-      if (!newVals.eta_turbine) newVals.eta_turbine = 0.85;
-      if (!newVals.eta_compressor) newVals.eta_compressor = 0.80;
-      if (!newVals.eta_pump) newVals.eta_pump = 0.75;
+      for (const eff of efficiencySliders) {
+        if (newVals[eff.id] == null) newVals[eff.id] = eff.default;
+      }
       onChange(newVals);
     } else {
-      const { eta_turbine, eta_compressor, eta_pump, isReal: _, ...rest } = values;
-      onChange({ ...rest, isReal: false });
+      const newVals = { ...values, isReal: false };
+      for (const eff of efficiencySliders) {
+        delete newVals[eff.id];
+      }
+      onChange(newVals);
     }
-  }, [isReal, values, onChange]);
+  }, [isReal, values, onChange, efficiencySliders]);
 
   return (
     <div className="panel cycle-controls">
@@ -118,11 +175,7 @@ export default function CycleControls({ cycleDef, values, onChange }) {
 
         {isReal && (
           <div className="efficiency-sliders">
-            {[
-              { id: 'eta_turbine', label: 'Turbine Efficiency', default: 0.85 },
-              { id: 'eta_compressor', label: 'Compressor Efficiency', default: 0.80 },
-              { id: 'eta_pump', label: 'Pump Efficiency', default: 0.75 },
-            ].map(eff => (
+            {efficiencySliders.map(eff => (
               <div key={eff.id} className="control-item control-item-sm">
                 <label className="control-label">{eff.label}</label>
                 <div className="slider-row">

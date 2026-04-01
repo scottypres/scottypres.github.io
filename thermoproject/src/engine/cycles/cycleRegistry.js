@@ -506,7 +506,7 @@ export const CATEGORY_LABELS = {
   'combined': 'Combined / Special Cycles',
 };
 
-/** Process type color map */
+/** Process type color map (used as fallback) */
 export const PROCESS_COLORS = {
   isothermal: '#3b82f6',   // blue
   isentropic: '#22c55e',   // green
@@ -515,5 +515,24 @@ export const PROCESS_COLORS = {
   polytropic: '#a855f7',   // purple
   throttling: '#94a3b8',   // gray dashed
 };
+
+/**
+ * Palette of distinct colors for per-component coloring.
+ * Used when a cycle has many processes sharing the same type.
+ */
+export const COMPONENT_PALETTE = [
+  '#06b6d4', // cyan
+  '#f97316', // orange
+  '#22c55e', // green
+  '#ef4444', // red
+  '#a855f7', // purple
+  '#3b82f6', // blue
+  '#fbbf24', // amber
+  '#ec4899', // pink
+  '#14b8a6', // teal
+  '#f43f5e', // rose
+  '#8b5cf6', // violet
+  '#84cc16', // lime
+];
 
 export { CYCLE_DEFINITIONS };

@@ -928,3 +928,54 @@ html, body {
     grid-column: 1 / -1;
   }
 }
+
+/* Equations Panel */
+.equations-panel {
+  margin-top: 12px;
+}
+.equations-section {
+  margin-bottom: 10px;
+}
+.equations-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cyan);
+  margin-bottom: 4px;
+}
+.equations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.equation-item {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 3px;
+  border-left: 2px solid var(--border);
+}
+
+/* Constraint selector for dome view */
+.constraint-selector {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.constraint-selector .constraint-btn {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.constraint-selector .constraint-btn.active {
+  background: var(--cyan);
+  color: #fff;
+  border-color: var(--cyan);
+}

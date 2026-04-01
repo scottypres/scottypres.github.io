@@ -198,7 +198,7 @@ function fmtTick(val, isLog) {
   return val.toFixed(val % 1 === 0 ? 0 : 1);
 }
 
-export default function DomeSVG({ viewType, thermoState, onStateChange }) {
+export default function DomeSVG({ viewType, thermoState, onStateChange, constraint = 'none' }) {
   const svgRef = useRef(null);
   const ax = AXES[viewType];
 
@@ -424,6 +424,7 @@ export default function DomeSVG({ viewType, thermoState, onStateChange }) {
         toSvgY={mapToSvgY}
         fromSvgX={mapFromSvgX}
         fromSvgY={mapFromSvgY}
+        constraint={constraint}
       />
     </svg>
   );
