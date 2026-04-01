@@ -360,3 +360,77 @@ export function getStateFromPh(P, h) {
     };
   }
 }
+
+/**
+ * Master water property lookup accepting any two independent properties.
+ */
+export function getWaterProps(prop1Name, prop1Value, prop2Name, prop2Value) {
+  const props = {};
+  props[prop1Name] = prop1Value;
+  props[prop2Name] = prop2Value;
+  const has = (k) => props[k] !== undefined;
+
+  if (has('T') && has('v')) return getStateFromTv(props.T, props.v);
+  if (has('T') && has('s')) return getStateFromTs(props.T, props.s);
+  if (has('P') && has('v')) return getStateFromPv(props.P, props.v);
+  if (has('P') && has('h')) return getStateFromPh(props.P, props.h);
+
+  if (has('T') && has('P')) {
+    const Psat = satPressure(props.T);
+    if (props.T >= WATER.T_critical) {
+      return { T: props.T, P: props.P, v: WATER.v_critical, h: 2084, s: 4.41, u: 2014, x: null, phase: PHASE.SUPERCRITICAL };
+    }
+    if (Math.abs(props.P - Psat) / Math.max(Psat, 0.01) < 0.01) {
+      const sat = getSatPropsAtTemp(props.T);
+      return { T: props.T, P: props.P, v: sat.vg, h: sat.hg, s: sat.sg, u: sat.ug, x: 1, phase: PHASE.SATURATED_VAPOR };
+    }
+    if (props.P > Psat) {
+      const sat = getSatPropsAtTemp(props.T);
+      return { T: props.T, P: props.P, v: sat.vf, h: sat.hf, s: sat.sf, u: sat.uf, x: null, phase: PHASE.COMPRESSED_LIQUID };
+    }
+    const Tk = props.T + 273.15;
+    const v = WATER.R * Tk / props.P;
+    const sat = getSatPropsAtTemp(props.T);
+    return { T: props.T, P: props.P, v, h: sat.hg + 2.0 * (props.T - sat.T), s: sat.sg, u: sat.ug, x: null, phase: PHASE.SUPERHEATED_VAPOR };
+  }
+
+  if (has('T') && has('x')) {
+    const sat = getSatPropsAtTemp(props.T);
+    const x = Math.max(0, Math.min(1, props.x));
+    return {
+      T: props.T, P: sat.P,
+      v: sat.vf + x * (sat.vg - sat.vf),
+      h: sat.hf + x * sat.hfg, s: sat.sf + x * sat.sfg,
+      u: sat.uf + x * (sat.ug - sat.uf), x,
+      phase: x < 0.001 ? PHASE.SATURATED_LIQUID : x > 0.999 ? PHASE.SATURATED_VAPOR : PHASE.TWO_PHASE,
+    };
+  }
+
+  if (has('P') && has('x')) {
+    const T = satTemperature(props.P);
+    const sat = getSatPropsAtTemp(T);
+    const x = Math.max(0, Math.min(1, props.x));
+    return {
+      T, P: props.P,
+      v: sat.vf + x * (sat.vg - sat.vf),
+      h: sat.hf + x * sat.hfg, s: sat.sf + x * sat.sfg,
+      u: sat.uf + x * (sat.ug - sat.uf), x,
+      phase: x < 0.001 ? PHASE.SATURATED_LIQUID : x > 0.999 ? PHASE.SATURATED_VAPOR : PHASE.TWO_PHASE,
+    };
+  }
+
+  if (has('P') && has('s')) {
+    const T = satTemperature(props.P);
+    return getStateFromTs(T, props.s);
+  }
+
+  if (has('T') && has('h')) {
+    const sat = getSatPropsAtTemp(props.T);
+    if (props.h <= sat.hf) return { T: props.T, P: sat.P, v: sat.vf, h: props.h, s: sat.sf, u: sat.uf, x: null, phase: PHASE.COMPRESSED_LIQUID };
+    if (props.h >= sat.hg) return { T: props.T, P: sat.P, v: sat.vg, h: props.h, s: sat.sg, u: sat.ug, x: null, phase: PHASE.SUPERHEATED_VAPOR };
+    const x = (props.h - sat.hf) / sat.hfg;
+    return { T: props.T, P: sat.P, v: sat.vf + x * (sat.vg - sat.vf), h: props.h, s: sat.sf + x * sat.sfg, u: sat.uf + x * (sat.ug - sat.uf), x, phase: PHASE.TWO_PHASE };
+  }
+
+  throw new Error(`Unsupported property pair: ${prop1Name}, ${prop2Name}`);
+}
