@@ -37,6 +37,17 @@ ALL WORK MUST BE IN THE `thermoproject/` SUBFOLDER. Do not edit files in the git
 
 ---
 
+## CRITICAL: READ IMPLEMENTATION_SPECS.md FIRST
+
+Before starting any task, read `src/engine/../IMPLEMENTATION_SPECS.md`:
+- § 3: SVG coordinate transformation math (REQUIRED for Task 1.2, 1.3)
+- § 7: State array standard format (REQUIRED for Task 1.2, 2.1)
+- § 9: Schematic component specs (REQUIRED for Task 1.4, 1.5)
+
+All diagram rendering MUST use the coordinate transforms specified in § 3. All cycle integration MUST handle state arrays in § 7 format.
+
+---
+
 ## PASS 1: GROUNDWORK (Before Gemini)
 
 ### Task 1.1: Cycle Data Architecture
@@ -94,18 +105,29 @@ Key: This renderer is GENERIC. It takes data, not cycle-specific logic. Every cy
 ### Task 1.3: Process Path Geometry
 Create `src/components/CycleDiagram/processPath.js` — SVG path generators for each thermodynamic process type.
 
+**See IMPLEMENTATION_SPECS.md § 3 for coordinate transformation math and process path equations.**
+
 For each process type, generate an SVG path `d` attribute between two state points:
-- **Isentropic on T-s:** vertical line (constant s). On P-v: curve following Pv^k = C
-- **Isothermal on T-s:** horizontal line (constant T). On P-v: curve following Pv = C (or Pv^1 = C)
+- **Isentropic on T-s:** vertical line (constant s). On P-v: curve following Pv^k = C (sample 30 points)
+- **Isothermal on T-s:** horizontal line (constant T). On P-v: curve following Pv = C (sample 30 points)
 - **Isobaric on P-v:** horizontal line (constant P). On T-s: curve following ds = cp·dT/T
 - **Isochoric on P-v:** vertical line (constant v). On T-s: curve following ds = cv·dT/T
-- **Polytropic:** general curve following Pv^n = C
-- **Throttling (isenthalpic):** on T-s, a horizontal zigzag or dashed line showing irreversibility
-- **Two-phase paths:** must follow the dome boundary when the process crosses the saturation region
+- **Polytropic:** general curve following Pv^n = C (sample 20-30 points)
+- **Throttling (isenthalpic):** on T-s, a horizontal dashed line showing entropy increase
+- **Two-phase paths:** must follow saturation dome boundary when process crosses from vapor to mixture or mixture to liquid
 
-Each function returns: `{ d: "M...C...L...", points: [{x,y}, ...] }` where `d` is the SVG path and `points` are intermediate samples for animation.
+Each function signature:
+```js
+function drawProcess(state_from, state_to, processType, diagramType, saturationDome) {
+  // Returns: { svgPath: "M ... C ... L ...", intermediatePoints: [{x, y}, ...] }
+  // Must handle:
+  // - Log scale axes (T-v, P-v, P-h)
+  // - Two-phase transitions (check if path crosses dome, follow boundary if so)
+  // - Validation: all intermediate points must be valid (T > 0, P > 0, etc.)
+}
+```
 
-Use cubic Bezier curves (C commands) for smooth paths. Sample ~20 intermediate points per process for accuracy.
+Use cubic Bezier curves (C commands) for smooth paths. Test against saturation dome to avoid plotting impossible states.
 
 ### Task 1.4: Energy Flow Schematic Framework
 Create `src/components/Schematic/SchematicRenderer.jsx` — generic energy flow schematic renderer.

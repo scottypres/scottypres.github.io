@@ -7,27 +7,90 @@ You are generating all 18 thermodynamic cycle calculators, property data, test s
 
 ---
 
+## READ FIRST: IMPLEMENTATION_SPECS.md
+
+Before writing any calculator, read `IMPLEMENTATION_SPECS.md`:
+- § 1: Unit conversions (T in K internally, inputs may be °C)
+- § 2: Error handling template and validation rules
+- § 5: Test cases with expected values and tolerances
+- § 7: State array standard format (MUST follow exactly)
+- § 8: Property engine integration rules (use existing functions only)
+- § 9: Schematic layout specifications
+
+---
+
 ## PHASE 2: IDEAL GAS CYCLES (5 cycles)
 
 ### Carnot Cycle
 File: `src/engine/cycles/carnot.js`
 
 ```js
-export function calculateCarnot(inputs) {
-  const { T_H, T_L, P_1 } = inputs;  // K, K, kPa
-  const substance = 'air';  // or steam toggle
+import { getIdealGasProps } from '../idealGas.js';
+
+export function calculateCarnot(inputs, isReal = false) {
+  // inputs: { T_H_celsius, T_L_celsius, P_1, substance: 'air' or 'steam' }
+  // Convert: T_H_kelvin = T_H_celsius + 273.15
   
-  // State 1: (T_H, P_1, initial state)
-  // State 2: isentropic expansion to T_L
-  // State 3: isothermal compression at T_L
-  // State 4: isentropic compression back to state 1
-  
-  // Return: { states: [{T, P, v, h, s, u, x}, ...], metrics: {eta, W_net, Q_H, Q_L, eta_carnot} }
+  try {
+    // Validate
+    const T_H = inputs.T_H + 273.15;
+    const T_L = inputs.T_L + 273.15;
+    if (T_H <= T_L) return { error: true, message: 'T_H must exceed T_L' };
+    if (T_H < 273.15 || T_H > 2000) return { error: true, message: 'T_H out of range' };
+    
+    // Four states
+    // State 1: (T_H, P_1)
+    const state1 = getIdealGasProps('Air', 'T_P', T_H, inputs.P_1);
+    if (state1.error) return state1;
+    
+    // State 2: isentropic expansion to T_L, P decreases
+    // For isentropic ideal gas: T_2/T_1 = (P_2/P_1)^((k-1)/k)
+    // T_L/T_H = (P_2/P_1)^((k-1)/k) => P_2 = P_1 * (T_L/T_H)^(k/(k-1))
+    // But also must compute v_2 from ideal gas law
+    const k = 1.4; // for air
+    const P_2 = inputs.P_1 * Math.pow(T_L / T_H, k / (k - 1));
+    const state2 = getIdealGasProps('Air', 'T_P', T_L, P_2);
+    if (state2.error) return state2;
+    
+    // State 3: isothermal compression at T_L back to P_1
+    const state3 = { ...state2, P: inputs.P_1 };
+    // For isothermal: Pv = const, so v_3 = v_2 * P_2 / P_1
+    state3.v = state2.v * P_2 / inputs.P_1;
+    state3.h = state2.h;  // h depends only on T for ideal gas
+    // For isothermal: Δs = R * ln(v_3/v_2) = R * ln(P_2/P_1)
+    const R = 0.287;
+    state3.s = state2.s + R * Math.log(P_2 / inputs.P_1);
+    
+    // State 4: isentropic compression back to state 1
+    const state4 = getIdealGasProps('Air', 'T_P', T_H, inputs.P_1);
+    if (state4.error) return state4;
+    
+    const states = [state1, state2, state3, state4];
+    
+    // Metrics
+    const W_12 = state1.h - state2.h + inputs.P_1 * (state1.v - state2.v) / 1000;  // boundary work
+    const Q_H = state1.h - state3.h;  // heat input (isothermal expansion)
+    const eta = 1 - T_L / T_H;
+    
+    return {
+      error: false,
+      states,
+      metrics: {
+        eta_thermal: eta,
+        eta_carnot: eta,
+        W_net: Q_H * eta,
+        Q_H: Q_H,
+        Q_L: Q_H * (T_L / T_H)
+      }
+    };
+  } catch (e) {
+    return { error: true, message: 'Carnot calculation failed: ' + e.message };
+  }
 }
 ```
 
-Inputs: T_H (K), T_L (K), P_1 (kPa)
-Outputs: State table (T, P, v, h, s, u for each of 4 states), η = 1 - T_L/T_H, W_net, Q_H, Q_L
+Inputs: `{ T_H: number (°C), T_L: number (°C), P_1: number (kPa), substance: 'air' }`
+Outputs: 4-state array + metrics per IMPLEMENTATION_SPECS.md § 7
 
 ### Polytropic Process Sandbox
 File: `src/engine/cycles/polytropic.js`
@@ -296,10 +359,100 @@ Manually compute expected values from textbook examples and validate calculation
 
 ---
 
+## VALIDATION TEST CASES
+
+**Run each calculator against these test cases. Results must be within tolerance.**
+
+### Rankine Cycle
+**Source: Borgnakke & Sonntag Example 11.3, page 564**
+```js
+const input = { P_high: 6000, P_low: 10, T_3: 400 };
+const result = calculateRankine(input);
+
+// Expected
+console.assert(Math.abs(result.metrics.eta_thermal - 0.298) < 0.01, 'η should be ~0.298');
+console.assert(Math.abs(result.metrics.W_net - 904.74) < 10, 'W_net should be ~904.74 kJ/kg');
+console.assert(result.states[0].h > 191 && result.states[0].h < 192, 'State 1 h');
+```
+
+### Brayton Cycle
+**Source: Borgnakke & Sonntag Example 12.2, page 652**
+```js
+const input = { T_1: 20, P_1: 100, r_p: 8, T_3: 800 };
+const result = calculateBrayton(input);
+
+console.assert(Math.abs(result.metrics.eta_thermal - 0.496) < 0.01, 'η should be ~0.496');
+console.assert(Math.abs(result.metrics.W_net - 261.2) < 5, 'W_net should be ~261.2 kJ/kg');
+console.assert(Math.abs(result.metrics.BWR - 0.498) < 0.02, 'BWR should be ~0.498');
+```
+
+### Otto Cycle
+**Source: Borgnakke & Sonntag Example 12.6, page 685**
+```js
+const input = { r: 8, T_1: 27, P_1: 100, Q_in: 2000 };
+const result = calculateOtto(input);
+
+console.assert(Math.abs(result.metrics.eta_thermal - 0.563) < 0.005, 'η should be ~0.563');
+console.assert(Math.abs(result.metrics.W_net - 1133) < 50, 'W_net should be ~1133 kJ/kg');
+```
+
+### Vapor-Compression Refrigeration
+**Source: Borgnakke & Sonntag Example 11.5, page 580 (R-134a)**
+```js
+const input = { refrigerant: 'R-134a', T_evap: -10, T_cond: 30 };
+const result = calculateVaporCompression(input);
+
+console.assert(Math.abs(result.metrics.COP - 3.544) < 0.05, 'COP should be ~3.544');
+console.assert(Math.abs(result.metrics.Q_L - 129.93) < 2, 'Q_L should be ~129.93 kJ/kg');
+```
+
+See IMPLEMENTATION_SPECS.md § 4 for complete test cases with all expected values.
+
+---
+
 ## NOTES
 
-- **Use existing property engines:** Every cycle should call `getWaterProps()`, `getRefrigerantProps()`, or `getIdealGasProps()` from existing engines. Do NOT rewrite property logic.
-- **State array format:** Always return `[{T, P, v, h, s, u, x}, {T, P, v, h, s, u, x}, ...]` so Opus diagram renderer can consume it directly.
-- **Metrics format:** Always include `{eta_thermal, W_net, Q_H, Q_L, eta_carnot, COP}` where applicable.
-- **No interactive features:** Just pure math functions and data. SVG rendering, dragging, animations are Opus's job.
-- **Test against textbook:** Validate calculations against Borgnakke & Sonntag examples to ensure correctness.
+- **Reference IMPLEMENTATION_SPECS.md before coding.** It specifies error handling, coordinate math, validated test cases, and state array formats.
+- **Use existing property engines ONLY:** Every cycle must call `getWaterProps()`, `getRefrigerantProps()`, or `getIdealGasProps()`. Do NOT rewrite property logic or hardcode table values.
+- **State array format (CRITICAL):** Must match IMPLEMENTATION_SPECS.md § 7 exactly:
+  ```js
+  states: [
+    {
+      stateNum: 1,
+      T: 318.96,          // Kelvin
+      P: 10,              // kPa
+      v: 0.14670,         // m³/kg
+      h: 191.81,          // kJ/kg
+      s: 0.6493,          // kJ/kg·K
+      u: 191.25,          // kJ/kg
+      x: 0,               // quality (or null if not two-phase)
+      phase: 'liquid',
+      component: 'pump'
+    },
+    // ... more states
+  ]
+  ```
+- **Metrics format (CRITICAL):** Include all applicable metrics with correct keys:
+  ```js
+  metrics: {
+    eta_thermal: 0.298,
+    eta_carnot: 0.526,
+    W_net: 904.74,
+    Q_H: 3036.93,
+    Q_L: 2132.19,
+    W_turbine: 906.9,
+    W_compressor: 2.16,
+    W_pump: 2.16,
+    BWR: undefined,  // only for Brayton
+    COP: undefined   // only for refrigeration
+  }
+  ```
+- **Error handling (CRITICAL):** Return error object, never throw:
+  ```js
+  if (T_H <= T_L) {
+    return { error: true, message: 'T_H must exceed T_L' };
+  }
+  ```
+- **Unit conversions:** Inputs are in °C, kPa. Convert to K internally. See IMPLEMENTATION_SPECS.md § 1.
+- **No interactive features:** Pure math functions and data only. Rendering, dragging, animations are Opus's job.
+- **Test against textbook:** Validate against Borgnakke & Sonntag examples before submitting. Within ±1% on efficiency, ±5% on work values.
