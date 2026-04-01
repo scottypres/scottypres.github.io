@@ -42,7 +42,7 @@
 
 ## 2. ERROR HANDLING SPECIFICATION
 
-### Gemini (Cycle Calculators)
+### Codex (Cycle Calculators)
 
 All calculator functions must follow this pattern:
 
@@ -497,14 +497,14 @@ Expected Results:
 
 ## 5. QUALITY ASSURANCE CHECKLIST
 
-### Before Gemini Generates Code
+### Before Codex Generates Code
 - [ ] All 18 cycle definitions reviewed and validated against textbook
 - [ ] All input ranges and validation rules defined
 - [ ] Test cases extracted from Borgnakke & Sonntag with page numbers
 - [ ] Unit conversion rules specified in code comments
 - [ ] Error messages templated (copy-paste ready)
 
-### After Gemini Generates Calculators
+### After Codex Generates Calculators
 - [ ] Each calculator runs against test case, result within tolerance
 - [ ] All error paths tested (invalid inputs return error object, not exception)
 - [ ] Real vs. ideal modes both tested for applicable cycles
@@ -592,7 +592,7 @@ Every cycle calculator must return:
 
 ## 8. PROPERTY ENGINE INTEGRATION RULES
 
-### Gemini Must Use These Existing Functions
+### Codex Must Use These Existing Functions
 
 **For water/steam:**
 ```js

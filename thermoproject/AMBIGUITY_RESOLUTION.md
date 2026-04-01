@@ -1,4 +1,4 @@
-# Ambiguity Resolution — Quick Reference for Opus & Gemini
+# Ambiguity Resolution — Quick Reference for Opus & Codex
 
 **This document resolves integration ambiguities. Each section is self-contained and copy-pastable. Reference by section name in your prompts.**
 
@@ -30,13 +30,13 @@
 
 **Rule:** Dome is drawn if cycle involves phase change (water, refrigerant). Ideal gas cycles (Brayton, Otto, Stirling, etc.) do NOT show dome.
 
-**For Gemini:** Return `diagrams: ['Ts', 'Pv']` (or subset) in cycle state object. For Absorption, return `diagrams: []` (schematic only).
+**For Codex:** Return `diagrams: ['Ts', 'Pv']` (or subset) in cycle state object. For Absorption, return `diagrams: []` (schematic only).
 
 ---
 
 ## B. COMPONENT LABELS IN STATE ARRAY
 
-**Gemini MUST include `component` field in each state. Opus uses this to label diagrams and map to schematic.**
+**Codex MUST include `component` field in each state. Opus uses this to label diagrams and map to schematic.**
 
 | Cycle | State 1 | State 2 | State 3 | State 4 | State 5 | State 6 |
 |-------|---------|---------|---------|---------|---------|---------|
@@ -48,7 +48,7 @@
 | Otto | cylinder_start | after_compression | after_combustion | after_expansion | - | - |
 | Vapor-Compression | evaporator_outlet | compressor_outlet | condenser_outlet | throttle_outlet | - | - |
 
-**Code example (Gemini):**
+**Code example (Codex):**
 ```js
 states[0].component = 'pump_inlet';
 states[1].component = 'pump_outlet';
@@ -65,7 +65,7 @@ states[3].component = 'turbine_outlet';
 
 ## C. ISENTROPIC EFFICIENCY DEFAULTS & RANGES
 
-**When "Ideal → Real" toggle is ON, these sliders appear. Gemini must use these values.**
+**When "Ideal → Real" toggle is ON, these sliders appear. Codex must use these values.**
 
 | Component | Default | Min | Max | Notes |
 |-----------|---------|-----|-----|-------|
@@ -74,7 +74,7 @@ states[3].component = 'turbine_outlet';
 | η_pump | 0.90 | 0.75 | 0.98 | Pumps higher efficiency (~0.90) |
 | Dead state T₀ | 298.15 K (25°C) | 273.15 K | 323.15 K | For exergy calculations |
 
-**Gemini Implementation Rule:**
+**Codex Implementation Rule:**
 ```js
 // When isReal === true, apply isentropic efficiencies
 if (isReal && inputs.eta_turbine) {
@@ -129,7 +129,7 @@ if (isReal && inputs.eta_turbine) {
 
 ## E. TWO-PHASE PATH HANDLING ALGORITHM
 
-**When a process crosses the saturation dome, follow boundary. Gemini specifies path type; Opus draws it.**
+**When a process crosses the saturation dome, follow boundary. Codex specifies path type; Opus draws it.**
 
 ### Algorithm for Turbine Expansion (State 3 → 4)
 
@@ -150,7 +150,7 @@ if (isReal && inputs.eta_turbine) {
    In P-v diagram: path curves following Pv^k = C, then follows saturation dome edge
 ```
 
-**Gemini MUST check for this:**
+**Codex MUST check for this:**
 ```js
 const x_at_exit = (v_4 - v_f) / v_fg;  // quality at state 4
 if (x_at_exit > 0 && x_at_exit < 1) {
@@ -217,7 +217,7 @@ thickness(value) = minThickness + (value / maxValue) * (maxThickness - minThickn
 
 ## I. REAL vs. IDEAL STATE ARRAY FORMAT
 
-**Gemini returns both ideal and real states when `isReal === true`. Format:**
+**Codex returns both ideal and real states when `isReal === true`. Format:**
 
 ```js
 {
@@ -260,13 +260,13 @@ const nearCritical = (state.T > T_crit - 5) || (state.P > P_crit - 1000);
 - Label dome region as "Supercritical" above critical point
 - Do NOT attempt to calculate quality if state is supercritical
 
-**Gemini:** Set `x: null` and `phase: 'supercritical'` for states above critical point.
+**Codex:** Set `x: null` and `phase: 'supercritical'` for states above critical point.
 
 ---
 
 ## K. CYCLE REGISTRY REQUIRED FIELDS
 
-**Gemini doesn't need to know this, but Opus needs these fields for each cycle in cycleRegistry.js:**
+**Codex doesn't need to know this, but Opus needs these fields for each cycle in cycleRegistry.js:**
 
 ```js
 {
@@ -298,7 +298,7 @@ const nearCritical = (state.T > T_crit - 5) || (state.P > P_crit - 1000);
 
 ## L. VALIDATION TOLERANCE MATRIX
 
-**When Gemini produces results, acceptable error ranges:**
+**When Codex produces results, acceptable error ranges:**
 
 | Metric | Tolerance | Source |
 |--------|-----------|--------|
@@ -309,13 +309,13 @@ const nearCritical = (state.T > T_crit - 5) || (state.P > P_crit - 1000);
 | COP (refrigeration) | ±2% | Depends on refrigerant tables |
 | BWR (Brayton) | ±3% | Work ratio is sensitive to T ratios |
 
-**Opus checks these during integration. If Gemini result is outside tolerance, Opus investigates property engine or cycle logic.**
+**Opus checks these during integration. If Codex result is outside tolerance, Opus investigates property engine or cycle logic.**
 
 ---
 
 ## QUICK REFERENCE FOR PROMPTING
 
-**When prompting Gemini:**
+**When prompting Codex:**
 - Reference: "See AMBIGUITY_RESOLUTION § B for component labels"
 - Copy-paste: Component label table from § B
 - Code example: Use § E algorithm for two-phase paths

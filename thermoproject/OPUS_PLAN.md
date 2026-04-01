@@ -2,8 +2,8 @@
 
 ## Overview
 You are building visual/interactive features for CycleViz, a thermodynamic cycle explorer app. This plan covers TWO passes:
-- **Pass 1 (Groundwork):** Build the visual infrastructure that Gemini will plug cycle logic into
-- **Pass 2 (Finish):** Integrate Gemini's output, build complex visual features, polish
+- **Pass 1 (Groundwork):** Build the visual infrastructure that Codex will plug cycle logic into
+- **Pass 2 (Finish):** Integrate Codex's output, build complex visual features, polish
 
 ALL WORK MUST BE IN THE `thermoproject/` SUBFOLDER. Do not edit files in the git root.
 
@@ -48,7 +48,7 @@ All diagram rendering MUST use the coordinate transforms specified in § 3. All 
 
 ---
 
-## PASS 1: GROUNDWORK (Before Gemini)
+## PASS 1: GROUNDWORK (Before Codex)
 
 ### Task 1.1: Cycle Data Architecture
 Create `src/engine/cycles/cycleRegistry.js` — a registry that defines the shape of every cycle:
@@ -80,7 +80,7 @@ Create `src/engine/cycles/cycleRegistry.js` — a registry that defines the shap
 }
 ```
 
-Register all 18 cycles with their full metadata. This is the contract that Gemini's calculation functions will plug into.
+Register all 18 cycles with their full metadata. This is the contract that Codex's calculation functions will plug into.
 
 ### Task 1.2: Cycle Diagram Renderer
 Create `src/components/CycleDiagram/CycleDiagram.jsx` — a generic SVG cycle diagram renderer.
@@ -201,10 +201,10 @@ Displays computed performance metrics:
 
 ---
 
-## PASS 2: FINISH (After Gemini)
+## PASS 2: FINISH (After Codex)
 
 ### Task 2.1: Integration of Cycle Calculators
-Gemini will produce `src/engine/cycles/` with calculate functions for all 18 cycles. Each returns:
+Codex will produce `src/engine/cycles/` with calculate functions for all 18 cycles. Each returns:
 ```js
 { states: [{T, P, v, h, s, u, x}, ...], metrics: {eta, W_net, Q_H, ...} }
 ```
