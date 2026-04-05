@@ -823,6 +823,56 @@ document.getElementById('fetchCoordinatesButton').addEventListener('click', func
         }
     });
 
+document.getElementById('gpsLocationButton').addEventListener('click', function () {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+    }
+    const btn = this;
+    btn.textContent = 'Locating...';
+    btn.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+        function (position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const input = $('#location-input');
+            input.data('lat', lat);
+            input.data('lon', lon);
+            userLocation.latitude = lat;
+            userLocation.longitude = lon;
+            setCookie('userLatitude', lat, 365);
+            setCookie('userLongitude', lon, 365);
+            setCookie('lastSelectedLat', lat, 1);
+            setCookie('lastSelectedLon', lon, 1);
+
+            // Reverse geocode to get city name
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                .then(r => r.json())
+                .then(data => {
+                    const city = data.address.city || data.address.town || data.address.village || data.address.county || 'My Location';
+                    $('#cityName').text(city);
+                    setCookie('cityName', city, 365);
+                    document.getElementById('cityName').style.display = 'block';
+                })
+                .catch(() => {
+                    $('#cityName').text('My Location');
+                    setCookie('cityName', 'My Location', 365);
+                });
+
+            btn.textContent = 'My Location';
+            btn.disabled = false;
+            clickCollapseButton();
+            fetchAllModelsData();
+        },
+        function (error) {
+            btn.textContent = 'My Location';
+            btn.disabled = false;
+            alert('Unable to get your location. Please check your browser permissions.');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+});
+
     //#####
 
     
