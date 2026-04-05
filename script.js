@@ -246,9 +246,7 @@ function updateSavedLocationsList() {
 
 function saveSettingsAndFetchData() {
     // Get all the checkbox elements
-    console.log("save settings and fetch data function");
     const capeCheckbox = document.getElementById('capeCheckbox');
-    console.log('capeCheckbox:', capeCheckbox); // Check if the element is found
     const precipProbCheckbox = document.getElementById('precipProbCheckbox');
     const temp2mCheckbox = document.getElementById('temp2mCheckbox');
     const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
@@ -257,9 +255,7 @@ function saveSettingsAndFetchData() {
     const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
     const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
     const visibilityCheckbox = document.getElementById('visibilityCheckbox');
-    console.log(liftedIndexCheckbox);
     
-    console.log(document.getElementById('liftedIndexCheckbox'));
     // Save the checkbox states to cookies
     setCookie('variable_cape', capeCheckbox.checked ? 'true' : 'false', 365);
     setCookie('variable_precipitation_probability', precipProbCheckbox.checked ? 'true' : 'false', 365);
@@ -267,9 +263,7 @@ function saveSettingsAndFetchData() {
     setCookie('variable_cloud_cover', cloudCoverCheckbox.checked ? 'true' : 'false', 365);
     setCookie('variable_precipitation_sum', precipSumCheckbox.checked ? 'true' : 'false', 365);
     setCookie('variable_dewpoint_spread', dewpointSpreadCheckbox.checked ? 'true' : 'false', 365);
-    console.log('About to save checkbox state:', liftedIndexCheckbox.checked);
     setCookie('variable_lifted_index', liftedIndexCheckbox.checked ? 'true' : 'false', 365);
-    console.log(liftedIndexCheckbox.checked);
     setCookie('variable_visibility', visibilityCheckbox.checked ? 'true' : 'false', 365);
     // Hide the popup
      saveCheckboxState(capeCheckbox);
@@ -287,18 +281,6 @@ saveCheckboxState(visibilityCheckbox);
     // Fetch all model data
     fetchAllModelsData();
 }
-// document.addEventListener('DOMContentLoaded', function () {
-//         // Get references to checkboxes by their IDs
- //       const capeCheckbox = document.getElementById('capeCheckbox');
-   //     const precipProbCheckbox = document.getElementById('precipProbCheckbox');
-     //   const temp2mCheckbox = document.getElementById('temp2mCheckbox');
-       // const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
-       // const precipSumCheckbox = document.getElementById('precipSumCheckbox');
-
-       
-    //});
-
-    
 
 // Listen for click events on the "Edit" button
 
@@ -323,10 +305,8 @@ document.getElementById('toggleHighAltitudeButton').addEventListener('click', fu
 document.getElementById('checkWindShearButton').addEventListener('click', function () {
     
    
-        ////console.log("Wind shear button clicked");
         windShearEnabled = !windShearEnabled;
         setCookie('windShearEnabled', windShearEnabled ? 'true' : 'false', 365);
-        ////console.log(windShearEnabled);
         const button = this; // 'this' refers to the button element in a regular function.
 
         // Always display "Loading..." text and disable the button while processing
@@ -422,21 +402,17 @@ function fillTableWithTemperature(table, weatherData) {
                 window.open('https://scottypres.github.io/instructions.html', '_blank');
             });
 function displaywindshear() {
-     ////console.log('checkwindshear');
         
 
         
 
     // Select all tables that end in '-table', such as 'icon-table', 'gfs-table', etc.
-    ////console.log("Wind shear check starting...");
     const tables = document.querySelectorAll('table[id$="-table"]');
             tables.forEach(table => {
         
-        ////console.log(`Checking wind shear for table with ID: ${table.id}`); // Log which table is being checked
 
         // Get all the rows (tr elements) of the current table, excluding the header row
         const rows = table.querySelectorAll('tr:not(:first-child)');
-        ////console.log(`${table.id} has ${rows.length} data rows available for wind shear detection.`);
         const rowCount = rows.length;
 
         // Ensure only the last 5 rows are considered
@@ -464,8 +440,6 @@ function displaywindshear() {
                     const nextWindDirection = parseFloat(nextCell.dataset.windDirection);
 
                     // Log the wind speeds and directions being compared for shear
-                    //////console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Speed: ${currentWindSpeed}, Next Wind Speed: ${nextWindSpeed}`);
-                    // ////console.log(`Row: ${rowIndex + 1}, Column: ${cellIndex + 1}, Current Wind Direction: ${currentWindDirection}, Next Wind Direction: ${nextWindDirection}`);
 
                     // Check if the difference between current and next wind speed exceeds the threshold and check wind direction difference
                      if (isWindShearDetected(currentWindSpeed, nextWindSpeed, currentWindDirection, nextWindDirection)) {
@@ -478,41 +452,32 @@ function displaywindshear() {
         }
     });
 
-     ////console.log("Wind shear check completed.");
             
             
         
 }
 
 function removeWindShearStyles() {
-    ////console.log('removeWindShearStyles');
     document.querySelectorAll('.shear-detected').forEach(cell => {
         cell.classList.remove('shear-detected');
     });
 }
 function toggleHighAltitude() {
-    console.log('toggleHighAltitude called, highAltitudeVisible:', highAltitudeVisible);
     highAltitudeVisible = !highAltitudeVisible; // Toggle the state
-    console.log('New highAltitudeVisible state:', highAltitudeVisible);
     
     const tables = document.querySelectorAll('table[id$="-table"]');
     tables.forEach(table => {
-        console.log('Processing table:', table.id);
         const rows = table.getElementsByTagName('tr');
-        console.log('Total rows found:', rows.length);
         // Skip the header row by starting the loop at index 1
         for (let i = 1; i < rows.length; i++) {
             const altitudeText = rows[i].cells[0].innerText;
             const altitudeInFeet = altitudeText.replace(' ft', '');
-            console.log(`Row ${i}: Altitude text = "${altitudeText}", parsed value = ${parseInt(altitudeInFeet)}`);
             if (parseInt(altitudeInFeet) > 5000 && altitudeText !== 'High%' && 
                 altitudeText !== 'Mid%' && altitudeText !== 'Low%') {
-                console.log(`${highAltitudeVisible ? 'Showing' : 'Hiding'} row ${i} with altitude ${altitudeText}`);
                 rows[i].style.display = highAltitudeVisible ? '' : 'none'; // Show if highAltitudeVisible is true, hide if false
             }
         }
     });
-    console.log('toggleHighAltitude completed');
 }
 let daylightHoursShown = true;
 userLocation = getUserLocationFromCookies();
@@ -541,7 +506,6 @@ function toggleDaylightHours() {
         // Iterate over each table
         tables.forEach(table => {
             const headerCells = table.querySelectorAll('tr:first-child th:not(:first-child)'); // Header cells, excluding the first sticky column
-            ////console.log('daylight hours shown');
         
             headerCells.forEach((cell, index) => {
                 // Check if the header cell has the 'daylight' class
@@ -561,7 +525,6 @@ function toggleDaylightHours() {
                     dataCell.style.display = cell.style.display; // Match the display style of the header cell
                 });
             });
-            ////console.log(daylightHoursShown);
         });
 
         
@@ -584,9 +547,7 @@ let showingBestHours = false;
 ;
 function resetTables() {
     
-    console.log('resetTables');
     // Loop over each model to create the tables again using the stored data
-    //  ////console.log('resetTables');
     Object.keys(globalWeatherData).forEach(model => {
         const tableId = `${model.toLowerCase()}-table`;
         createTable(tableId, globalWeatherData[model], model);
@@ -707,18 +668,13 @@ function enableBestDaysButton() {
         bestDaysButton.disabled = false; // Enable the button
     }
 }
-function getWindArrowClass(degrees) {
-    // Ensure degrees are within 0-359 and add 180 degrees to flip the arrow
+function getWindArrowRotation(degrees) {
     degrees = (degrees + 180) % 360;
-    // Get the nearest multiple of 22.5
     const closestMultiple = Math.round(degrees / 22.5) * 22.5;
-    // Create the class name by replacing '.' with '-' to match CSS class naming
-    const classNameDegrees = closestMultiple.toString().replace('.', '-');
-    return 'wind-arrow rotate-' + classNameDegrees;
+    return closestMultiple;
 }
 function initialTableSetup() {
     const tableIds=['icon-table','gfs-table']
-    console.log('Initial Table Setup');
     
     tableIds.forEach(tableId => {
         const table = document.getElementById(tableId);
@@ -733,8 +689,6 @@ function initialTableSetup() {
 }
 function initialAllTableSetup(tableIds) {
     
-console.log('Initial All Table Setup');
-console.log('tableIDS: ', tableIds);
 
 tableIds.forEach(tableId => {
 const table = document.getElementById(tableId);
@@ -744,7 +698,6 @@ if (table && table.dataset.model) { // Ensure the dataset model attribute exists
     if (allTableWeatherData[tableId]) { // Check if the model exists in allTableWeatherData
         // Use model data to fill the table with wind speed
         fillAllTablesWithWindSpeed(table, allTableWeatherData[tableId]);
-        console.log(`Table setup for model: ${model}`);
         
     } else {
         console.error(`Model data not found for model: ${model}`);
@@ -798,16 +751,8 @@ allButtons.forEach(button => {
 });
 }
 
-function showConfigPopup() {
-document.getElementById('configPopup').style.display = 'flex';
-
-// Disable buttons other than 'submitThresholds' and 'fetchCoordinatesButton'
-toggleButtonsDisabledState(true, ['submitThresholds', 'editButton']);
-}
-
 document.getElementById('submitThresholds').addEventListener('click', submitThresholdsAndRepaint);
 function repaintGraphsWithNewThresholds(low, med, high) {
-    console.log('repaintgraphs');
     // Assume these are the names of three different tables you have
     lowWindThreshold = low;
     medWindThreshold = med;
@@ -856,7 +801,6 @@ document.querySelectorAll('table[id$="-table"]').forEach(table => {
 });
 
 document.getElementById('fetchCoordinatesButton').addEventListener('click', function () {
-    console.log('fetch coord button');
     clickCollapseButton();
    
     
@@ -884,7 +828,6 @@ document.getElementById('fetchCoordinatesButton').addEventListener('click', func
     
 let isUpdatingTables = false;
 async function fetchAllModelsData() {
-        console.log('fetchAllModelsData called');
 const displayAllTablesButton = document.getElementById('DisplayAllTables');
 displayAllTablesButton.textContent ="Display All Saved Locations";
       
@@ -902,13 +845,10 @@ displayAllTablesButton.textContent ="Display All Saved Locations";
             // Await all promises related to API calls.
             // This ensures all promises are evaluated before closing the Swal modal.
             await Promise.all(Object.entries(baseUrls).map(async ([model, baseUrl]) => {
-                console.log(`Processing model: ${model}`);
                 await checkAndFetchData(baseUrl, model); // await added here
-                console.log(`Finished processing model: ${model}`);
                 
             }));
 
-            console.log('All models data fetched');
             initialTableSetup(); // Call initial setup after all models have been processed.
         } catch (error) {
             console.error('Error fetching data for all models:', error);
@@ -950,7 +890,6 @@ function hasApiBeenCalledRecently(latitude, longitude) {
 
 
 async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableElement, tableId) {
-    console.log("checkAndFetchAllData");
 
     try {
         const daily = [
@@ -964,7 +903,6 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
         const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
         let additionalParameters = ''; // Initialize additional parameters string
 
-        model =='gfs';
         // Check the model to determine the correct forecast_days parameter
       
         const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14); // Default to max 14
@@ -973,7 +911,6 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
           
         // Fetch new data if necessary
         
-    //console.log('fetching new data');
             
             
                 // For GFS model, test parameters and handle missing wind data
@@ -1069,7 +1006,6 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
         if (model.toLowerCase() === 'gfs') {
             // The weatherData should already be available from the parameter testing
             const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${commonParameters}&daily=${daily}&current_weather=true${units}${additionalParameters}`;
-            console.log(requestUrl);
             try {
                 const response = await fetch(requestUrl);
                 if (!response.ok) {
@@ -1096,7 +1032,6 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
             }
         } else {
             const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${commonParameters}&daily=${daily}&current_weather=true${units}${additionalParameters}`;
-            console.log(requestUrl);
             try {
                 const response = await fetch(requestUrl);
                 if (!response.ok) {
@@ -1132,7 +1067,6 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
         }
         
         allTableWeatherData[tableId] = weatherData;
-        console.log('ALLTABLEWEATHERDATA CHECKANDFETCH: ', allTableWeatherData)
 
         if(tableElement instanceof HTMLTableElement) {
             // Passed an actual table element, we want to retrieve its ID
@@ -1141,7 +1075,6 @@ async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableE
             // If it's not an HTMLTableElement, it's expected to be an ID string
             createAllTables(tableId, allTableWeatherData[tableId], name, tableElement);
         }
-        console.log(`Data fetched and table created for ${name} using model: ${model}`);
     } catch (error) {
         console.error(`Failed to fetch data for ${name} using model ${model}`, error);
     }
@@ -1240,7 +1173,6 @@ async function getICONParametersWithFallback(baseUrl, lat, lon, units, additiona
                                    !weatherData.hourly.wind_direction_180m;
             
             if (missingWindData) {
-                console.log('ICON API missing 180m wind data, adding placeholder data');
                 // Add placeholder data for missing wind parameters
                 const timeLength = weatherData.hourly.time.length;
                 if (!weatherData.hourly.wind_speed_180m) {
@@ -1256,7 +1188,6 @@ async function getICONParametersWithFallback(baseUrl, lat, lon, units, additiona
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
     } catch (error) {
-        console.log('ICON API call failed with 180m wind parameters, trying without them');
         
         // Fallback: try without wind_speed_180m and wind_direction_180m
         const fallbackParameters = [
@@ -1332,7 +1263,6 @@ async function getICONParametersWithFallback(baseUrl, lat, lon, units, additiona
             const fallbackResponse = await fetch(fallbackRequestUrl);
             if (fallbackResponse.ok) {
                 const weatherData = await fallbackResponse.json();
-                console.log('ICON API call succeeded without 180m wind parameters, adding placeholder data');
                 
                 // Add placeholder data for missing 180m wind parameters
                 const timeLength = weatherData.hourly.time.length;
@@ -1446,7 +1376,6 @@ async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additional
                                    !weatherData.hourly.wind_gusts_10m;
             
             if (missingWindData) {
-                console.log('GFS API missing 10m wind data, adding placeholder data');
                 // Add placeholder data for missing wind parameters
                 const timeLength = weatherData.hourly.time.length;
                 if (!weatherData.hourly.wind_speed_10m) {
@@ -1465,7 +1394,6 @@ async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additional
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
     } catch (error) {
-        console.log('GFS API call failed with 10m wind parameters, trying without them');
         
         // Fallback: try without wind_speed_10m, wind_direction_10m, and wind_gusts_10m
         const fallbackParameters = [
@@ -1545,7 +1473,6 @@ async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additional
             const fallbackResponse = await fetch(fallbackRequestUrl);
             if (fallbackResponse.ok) {
                 const weatherData = await fallbackResponse.json();
-                console.log('GFS API call succeeded without 10m wind parameters, adding placeholder data');
                 
                 // Add placeholder data for missing 10m wind parameters
                 const timeLength = weatherData.hourly.time.length;
@@ -1565,9 +1492,6 @@ async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additional
 }
 
 async function checkAndFetchData(baseUrl, model) {
-    console.log("checkAndFetchData");
-    // ////console.log(`checkAndFetchData called for model ${model}`, new Date().toISOString());
-    console.log("check and fetch data");
     const dailyParameters = [
         'weather_code',
         'sunrise',
@@ -1592,7 +1516,6 @@ async function checkAndFetchData(baseUrl, model) {
     }
       let shouldFetchData = true;  // Default to true to indicate new data should be fetched
     const lastApiCallKey = `lastApiCall_${model}_${userLocation.latitude}_${userLocation.longitude}`;
-    console.log(lastApiCallKey);
     
     //#####
 
@@ -1615,10 +1538,8 @@ if (now - lastApiCallData.timestamp < cacheDuration) {
     createTable(`${model.toLowerCase()}-table`, lastApiCallData.data, model);
 }
 }
-console.log('should fetch data: ',shouldFetchData)
     // Fetch new data if necessary
     if (shouldFetchData) {
-//console.log('fetching new data');
         
         if (model.toLowerCase() === 'gfs' || model.toLowerCase() === 'openmeteo') {
             // For GFS model, test parameters and handle missing wind data
@@ -1712,10 +1633,7 @@ console.log('should fetch data: ',shouldFetchData)
         let weatherData;
         if (model.toLowerCase() === 'gfs') {
             const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-            console.log(requestUrl);
             try {
-                console.log("REQUEST");
-                console.log(requestUrl);
                 const response = await fetch(requestUrl);
 
                 // If the response is not okay, throw an error
@@ -1745,10 +1663,7 @@ console.log('should fetch data: ',shouldFetchData)
             }
         } else {
             const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-            console.log(requestUrl);
             try {
-                console.log("REQUEST");
-                console.log(requestUrl);
                 const response = await fetch(requestUrl);
 
                 // If the response is not okay, throw an error
@@ -1802,7 +1717,6 @@ console.log('should fetch data: ',shouldFetchData)
             // Store the fetched data globally
             globalWeatherData[model] = weatherData;
 
-            ////console.log(`Data fetched successfully for model ${model}`);
         } catch (error) {
             // Log the error if fetching the data fails
             console.error(`Failed to fetch data for model ${model}`, error);
@@ -1810,7 +1724,6 @@ console.log('should fetch data: ',shouldFetchData)
         }
     }
 
-    // ////console.log(`checkAndFetchData finished for model ${model}`, new Date().toISOString());
 }
 
 
@@ -1838,7 +1751,6 @@ function getCookie(name) {
         return "";
     }
 function saveCheckboxState(checkbox) {
-    console.log('Saving state for:', checkbox.id, 'State:', checkbox.checked);
 setCookie(checkbox.id, checkbox.checked ? 'true' : 'false', 365);
 }
 
@@ -1871,14 +1783,12 @@ function getCookieValueOrDefault(cookieName, defaultValue) {
     if (value !== "") {
         return isNaN(value) ? value : parseInt(value, 10); // Return value as a number if it's numeric
     }
-    return defaultValue; // Return default value if cookie is not found
-    console.log(liftedIndexCheckbox);
+    return defaultValue;
 }
 
 
 
 window.onload = function () {
-    console.log("window.onload");
      const cityNameFromCookie = getCookie('cityName');
 if (cityNameFromCookie) {
 document.getElementById('cityName').textContent = cityNameFromCookie;
@@ -1900,8 +1810,6 @@ document.getElementById('cityName').textContent = cityNameFromCookie;
 
 
     
-    //console.log('Before initializing checkboxes:');
-    //console.log(`Cape Checkbox Cookie: ${getCookie('variable_cape')}`);
     const gfsOpenMeteoLengthValue = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
     const iconLengthValue = getCookieValueOrDefault('iconLength', 7);
     const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
@@ -1931,8 +1839,6 @@ document.getElementById('cityName').textContent = cityNameFromCookie;
     document.getElementById('iconLength').value = iconLengthValue;
     
     
-    //console.log(`GFS/OpeMeteo length value: ${gfsOpenMeteoLengthValue}`);
-    //console.log(`ICON length value: ${iconLengthValue}`);
     const fogStatusCookie = getCookie('fogEnabled');
     if (fogStatusCookie !== "") {
         fogEnabled = (fogStatusCookie === 'true');
@@ -2022,7 +1928,6 @@ async function DisplayAllTables() {
        
 disableButtonsExcept(['DisplayAllTables']);
 $('#location-input').hide();
-console.log('Display All Tables called');
 
 
 const displayAllTablesButton = document.getElementById('DisplayAllTables');
@@ -2101,34 +2006,6 @@ document.getElementById('cityNameContainer').style.display = 'none';
 }
 
 // Function to copy tables for all saved locations
-function copyTablesForAllLocations(numberOfLocations) {
-const gfsTableOriginal = document.getElementById('gfs-table');
-for (let i = 1; i <= numberOfLocations; i++) {
-const tableCopy = gfsTableOriginal.cloneNode(true); // Deep clone the original table
-tableCopy.id = `table${i}-table`; // Assign a new ID based on the location index
-// You can now insert this new tableCopy into the DOM where needed
-}
-}
-
-
-function saveForecastLengthSettings() {
-    console.log('forecast length');
-        const gfsOpenMeteoLength = document.getElementById('gfsOpenMeteoLength').value;
-        const iconLength = document.getElementById('iconLength').value;
-
-        setCookie('gfsOpenMeteoLength', gfsOpenMeteoLength, 365);
-        setCookie('iconLength', iconLength, 365);
-
-        document.getElementById('forecastLengthPopup').style.display = 'none'; // Hide the popup
-
-        fetchAllModelsData();
-    }
-
-    // Function to close the forecast length popup
-    function closeForecastLengthPopup() {
-        document.getElementById('forecastLengthPopup').style.display = 'none';
-    }
-
     // Event listener for the Forecast Length button
     document.getElementById('forecastLengthButton').addEventListener('click', function () {
         document.getElementById('forecastLengthPopup').style.display = 'flex'; // Show the popup
@@ -2143,7 +2020,6 @@ function saveForecastLengthSettings() {
             document.getElementById('iconLength').addEventListener('input', function () {
                 document.getElementById('iconLengthValue').textContent = this.value;
             });})
-            console.log('DCOMContentLoaded');
             const saveAndFetchButton = document.getElementById('saveAndFetchButton');
 
             // Register the click event listener for the submit button
@@ -2280,8 +2156,6 @@ dayHeaders.forEach((headerCell, index) => {
 
 
 function createTable(tableId, weatherData, model) {
-    console.log('createTable');
-    console.log(weatherData);
     const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100].reverse();
     const timestamps = weatherData.hourly.time;
     const dataTable = document.getElementById(tableId);
@@ -2290,9 +2164,7 @@ function createTable(tableId, weatherData, model) {
     let currentDay = null; // Variable to store the current day as you loop through the timestamps
     // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
     let isDayArray = weatherData.hourly.is_day;
-    ////console.log(isDayArray);
     isDayArray = extendDaylightHours(isDayArray);
-    ////console.log(isDayArray);
     
     timestamps.forEach((timestamp, index) => {
         const date = new Date(timestamp);
@@ -2330,11 +2202,9 @@ function createTable(tableId, weatherData, model) {
 
 
     dataTable.dataset.model = model;
-    //////console.log(`Listeners added for ${model} model`);
 }
 
 function createAllTables(tableId, weatherData, locationName, tableElement) {
-    console.log(`Creating table with ID: ${tableId} for location: ${locationName}`);
     const altitudeLabels = [1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100].reverse();
     const timestamps = weatherData.hourly.time;
     const dataTable = tableElement;
@@ -2350,9 +2220,7 @@ table.id = tableId;
     let tableHtml = `<tr><th style="min-width: 125px;">${locationName}</th>`;
     let currentDay = null; // Variable to store the current day as you loop through the timestamps    // Assuming that weatherData.hourly.is_day is an array with the same length as timestamps
     let isDayArray = weatherData.hourly.is_day;
-    ////console.log(isDayArray);
     isDayArray = extendDaylightHours(isDayArray);
-    ////console.log(isDayArray);
     
     timestamps.forEach((timestamp, index) => {
         const date = new Date(timestamp);
@@ -2393,21 +2261,18 @@ return;
 
 
     dataTable.dataset.model = model;
-    //////console.log(`Listeners added for ${model} model`);
 if (tableElement) {
 // Create a header for the table to display the location name
 const locationHeader = document.createElement('h3');
 
 
 // Fill the table with the generated HTML
-console.log(`Updating innerHTML for table with ID: ${tableId}`);
 
 tableElement.innerHTML = tableHtml;
 
 // Get a reference to the container where the tables should be appended
 const tablesContainer = document.getElementById('tables-container');
 globalWeatherData[tableId] = weatherData;
-console.log('GLOBALWEATHERDATA',globalWeatherData)
 
 // Append the location name and the table to the container
 tablesContainer.appendChild(locationHeader); // Adds the location name as a header
@@ -2415,7 +2280,6 @@ tablesContainer.appendChild(tableElement);   // Appends the table after the head
 } else {
 console.error(`Table element not found for ID: ${tableId}`);
 }
-console.log(`Table creation completed for location ${locationName}`);
 };
 document.getElementById('cloudsButton').addEventListener('click', function() {
 toggleWindClouds();
@@ -2430,7 +2294,6 @@ function toggleWindClouds() {
     
     // If we're switching to clouds and high altitudes are hidden, show them first
     if (!highAltitudeVisible && document.querySelector('table[id$="-table"]').dataset.showing === 'winds') {
-        console.log('Switching to clouds - enabling high altitudes first');
         highAltitudeVisible = true;
         const highAltitudeButton = document.getElementById('toggleHighAltitudeButton');
         if (highAltitudeButton) {
@@ -2479,7 +2342,6 @@ function toggleWindClouds() {
 
 
 function extendDaylightHours(isDayArray) {
-    ////console.log('extendDaylightHours');
         const transitions = [];
 
         // Step 1: Identify all transition indices
@@ -2506,8 +2368,6 @@ function extendDaylightHours(isDayArray) {
         return isDayArray;
     }
 function fillAllTablesWithWindSpeed(table, weatherData) {
-console.log('filltablewithwindspeed');
-console.log(`Filling table with ID: ${table.id} using data:`, weatherData);
 
 // Safety check: ensure table has at least one row
 const existingRows = table.getElementsByTagName('tr');
@@ -2543,265 +2403,173 @@ let tableHtml = '<tr>' + existingRows[0].innerHTML + '</tr>';
             // Iterate over wind speeds and directions together
             weatherData.hourly[windSpeedKey].forEach((windSpeed, idx) => {
                 const windDirection = weatherData.hourly[windDirectionKey][idx];
-                const windArrowClass = getWindArrowClass(windDirection);
+                const rotation = getWindArrowRotation(windDirection);
                 const roundedWindSpeed = windSpeed !== null ? Math.round(windSpeed) : '?';
-
-                // Get the background and text color based on the wind speed
                 const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
 
-                // We're using the upwards arrow Unicode symbol and rotating it using CSS
-                const windArrowUnicode = '&#x2191;&#xFE0E;'; // Upwards arrow (we'll rotate it using CSS)
-
-                // Add wind speed and a Unicode arrow for wind direction with the proper rotation
                 tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};"
 data-wind-speed="${roundedWindSpeed}" data-wind-direction="${windDirection}">
 <div>${roundedWindSpeed}</div>
-<div class="${windArrowClass}">${windArrowUnicode}</div>
+<div class="wind-arrow" style="transform: rotate(${rotation}deg)">&#x2191;&#xFE0E;</div>
 </td>`;
             });
-            
 
             tableHtml += '</tr>';
-
         }
-        
-        }) ;
-    
+    });
 
+    tableHtml += buildExtraRows(table, weatherData);
 
-    // Finally, set the table's HTML to the newly created rows
-    
     table.innerHTML = tableHtml;
-
-    const windGustsKey = `wind_gusts_10m`;
-    if (weatherData.hourly.hasOwnProperty(windGustsKey)) {
-        // Start the gusts table row with a descriptive header
-        tableHtml += `<tr><th class="sticky-header small-text-cell">Gusts</th>`;
-
-        // Add a data cell for each time interval with wind gusts data
-        weatherData.hourly[windGustsKey].forEach((windGust, idx) => {
-            const roundedWindGust = windGust !== null ? Math.round(windGust) : '?';
-
-            // Get the background and text color based on the wind gust speed
-            const { backgroundColor, textColor } = getWindSpeedColor(roundedWindGust);
-
-            // Add wind gust value with the appropriate color coding
-            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">
-            <div>${roundedWindGust}</div>
-          </td>`;
-        });
-        
-
-        // Close the gusts table row
-        tableHtml += '</tr>';
-
+    applyTablePostProcessing(table);
     }
-    
-        // Assuming weatherData.hourly['cape'] is an array of CAPE values at hourly intervals
-        if (weatherData.hourly.hasOwnProperty('cape') && capeCheckbox && capeCheckbox.checked) {
 
-            // Add CAPE row header
-            tableHtml += `<tr><th class="sticky-header small-text-cell">CAPE</th>`;
+// Shared function to build extra rows (gusts, CAPE, precip, temp, humidity, etc.)
+function buildExtraRows(table, weatherData) {
+    let html = '';
+    const capeCheckbox = document.getElementById('capeCheckbox');
+    const precipProbCheckbox = document.getElementById('precipProbCheckbox');
+    const temp2mCheckbox = document.getElementById('temp2mCheckbox');
+    const cloudCoverCheckbox = document.getElementById('cloudCoverCheckbox');
+    const precipSumCheckbox = document.getElementById('precipSumCheckbox');
 
-            // Add CAPE data cells for each time interval
-            weatherData.hourly['cape'].forEach(capeValue => {
-                const { backgroundColor, textColor } = getCAPEColor(capeValue); // Get colors based on value
-                const shortCapeValue = formatCapeValue(capeValue); // Ensure this line is before its usage
-
-                // Add CAPE data cells with gradient background and contrast text
-                tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${shortCapeValue}</td>`;
-            
-            });
-
-            // Close the CAPE table row
-            tableHtml += '</tr>';
-        }
-
-    
-    
-    
-      const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
-        if (liftedIndexCheckbox && liftedIndexCheckbox.checked && weatherData.hourly.hasOwnProperty('lifted_index')) {
-            tableHtml += '<tr><th class="sticky-header small-text-cell">Lifted Index</th>';
-            weatherData.hourly['lifted_index'].forEach(liftedIndex => {
-                const { backgroundColor, textColor } = getLiftedIndexColor(liftedIndex);
-                tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${liftedIndex.toFixed(1)}</td>`;
-            });
-            tableHtml += '</tr>';
-        }
-
- 
-        // Precipitation probability only exists for certain models
-        if (weatherData.hourly.hasOwnProperty('precipitation_probability') && precipProbCheckbox && precipProbCheckbox.checked) {
-            // Add precipitation probability row header
-            tableHtml += '<tr><th class="sticky-header small-text-cell">Precip %</th>';
-
-            // Add precipitation probability data cells for each time interval
-            weatherData.hourly.precipitation_probability.forEach(precipProbability => {
-                precipProbability = precipProbability !== null ? precipProbability : '?';  // Check for null values
-                const { backgroundColor, textColor } = getPrecipitationProbabilityColor(precipProbability);
-
-                // Substitute N/A for missing precipitation_probability values or add cell with the actual value
-                tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipProbability !== '?' ? precipProbability: precipProbability}</td>`;
-            });
-
-            tableHtml += '</tr>';
-            
-            
-        }
-        
-       
-    
-    if (table.id === 'icon-table' && precipSumCheckbox && precipSumCheckbox.checked) {
-        // Add Precipitation row header
-        tableHtml += '<tr><th class="sticky-header small-text-cell">Precip (in)</th>';
-
-        // Add Precipitation data cells for each time interval
-        weatherData.hourly.precipitation.forEach(precipValue => {
-            const backgroundColor = getPrecipitationColor(precipValue);
-            const textColor = getTextColorForBackground(backgroundColor);
-            if (precipValue !== null) {
-            // Round to two decimal places and convert to string for display
-            const precipValueDisplay = precipValue.toFixed(2);
-
-            // Add the Precipitation data cell with fading blue background based on the value
-            tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipValueDisplay}</td>`;
-        } else {}
+    // Wind gusts
+    if (weatherData.hourly.hasOwnProperty('wind_gusts_10m')) {
+        html += `<tr><th class="sticky-header small-text-cell">Gusts</th>`;
+        weatherData.hourly.wind_gusts_10m.forEach(windGust => {
+            const rounded = windGust !== null ? Math.round(windGust) : '?';
+            const { backgroundColor, textColor } = getWindSpeedColor(rounded);
+            html += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};"><div>${rounded}</div></td>`;
         });
-        
-         
-
-        // Close the Precipitation table row
-        tableHtml += '</tr>';
+        html += '</tr>';
     }
+
+    // CAPE
+    if (weatherData.hourly.hasOwnProperty('cape') && capeCheckbox && capeCheckbox.checked) {
+        html += `<tr><th class="sticky-header small-text-cell">CAPE</th>`;
+        weatherData.hourly.cape.forEach(capeValue => {
+            const { backgroundColor, textColor } = getCAPEColor(capeValue);
+            html += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${formatCapeValue(capeValue)}</td>`;
+        });
+        html += '</tr>';
+    }
+
+    // Lifted Index (GFS only)
+    const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
+    if (liftedIndexCheckbox && liftedIndexCheckbox.checked && weatherData.hourly.hasOwnProperty('lifted_index')) {
+        html += '<tr><th class="sticky-header small-text-cell">Lifted Index</th>';
+        weatherData.hourly.lifted_index.forEach(li => {
+            const { backgroundColor, textColor } = getLiftedIndexColor(li);
+            html += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${li.toFixed(1)}</td>`;
+        });
+        html += '</tr>';
+    }
+
+    // Precipitation probability
+    if (weatherData.hourly.hasOwnProperty('precipitation_probability') && precipProbCheckbox && precipProbCheckbox.checked) {
+        html += '<tr><th class="sticky-header small-text-cell">Precip %</th>';
+        weatherData.hourly.precipitation_probability.forEach(pp => {
+            pp = pp !== null ? pp : '?';
+            const { backgroundColor, textColor } = getPrecipitationProbabilityColor(pp);
+            html += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${pp}</td>`;
+        });
+        html += '</tr>';
+    }
+
+    // Precipitation sum (ICON)
+    if (table.id === 'icon-table' && precipSumCheckbox && precipSumCheckbox.checked && weatherData.hourly.hasOwnProperty('precipitation')) {
+        html += '<tr><th class="sticky-header small-text-cell">Precip (in)</th>';
+        weatherData.hourly.precipitation.forEach(pv => {
+            if (pv !== null) {
+                const bg = getPrecipitationColor(pv);
+                const tc = getTextColorForBackground(bg);
+                html += `<td class="data-cell small-text-cell" style="background-color: ${bg}; color: ${tc};">${pv.toFixed(2)}</td>`;
+            }
+        });
+        html += '</tr>';
+    }
+
+    // Temperature 2m
     if (weatherData.hourly.hasOwnProperty('temperature_2m') && temp2mCheckbox && temp2mCheckbox.checked) {
-        let temperatureRowHtml = '<tr><th class="sticky-header small-text-cell">Temp (°F)</th>'; // Header for the temperature row
+        html += '<tr><th class="sticky-header small-text-cell">Temp (\u00B0F)</th>';
         weatherData.hourly.temperature_2m.forEach(temp => {
-            const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
-            const displayedTemp = temp !== null ? Math.round(temp) : '?'; // Round temperature or use placeholder
-            temperatureRowHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
+            const { backgroundColor, textColor } = getTemperatureColor(temp);
+            html += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${temp !== null ? Math.round(temp) : '?'}</td>`;
         });
-        temperatureRowHtml += '</tr>';
-        tableHtml += temperatureRowHtml; // Add the temperature row to the table HTML
+        html += '</tr>';
     }
-    const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
-    if (weatherData.hourly.hasOwnProperty('relative_humidity_2m') && relativeHumidityCheckbox.checked) {
-        tableHtml += '<tr><th class="sticky-header small-text-cell">Rel. Humidity</th>';
 
-        const startColor = { r: 255, g: 255, b: 255 }; // White for 40% humidity
-        const endColor = { r: 0, g: 0, b: 255 }; // Blue for 100% humidity
+    // Relative humidity
+    const relHumCheckbox = document.getElementById('relativeHumidityCheckbox');
+    if (weatherData.hourly.hasOwnProperty('relative_humidity_2m') && relHumCheckbox && relHumCheckbox.checked) {
+        html += '<tr><th class="sticky-header small-text-cell">Rel. Humidity</th>';
         weatherData.hourly.relative_humidity_2m.forEach(humidity => {
-            let cellStyle = 'background-color: white;'; // Default cell style
-            if (fogEnabled && humidity > 90) {
-                cellStyle = 'border: 2px solid red;'; // Apply lightblue border when fog conditions are met
-            }
-            tableHtml += `<td class="data-cell small-text-cell" style="${cellStyle}">${Math.round(humidity)}%</td>`;
+            let cellStyle = 'background-color: white;';
+            if (fogEnabled && humidity > 90) cellStyle = 'border: 2px solid red;';
+            html += `<td class="data-cell small-text-cell" style="${cellStyle}">${Math.round(humidity)}%</td>`;
         });
-
-        tableHtml += '</tr>';
+        html += '</tr>';
     }
-    const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
-    if (dewpointSpreadCheckbox && dewpointSpreadCheckbox.checked && weatherData.hourly.hasOwnProperty('dew_point_2m') && weatherData.hourly.hasOwnProperty('temperature_2m')) {
-        let temperature2m = weatherData.hourly.temperature_2m;
-        let dewpoint2m = weatherData.hourly.dew_point_2m;
 
-        // Define a new row for the dewpoint spread
-        let dewpointSpreadRowHtml = `<tr><th class="sticky-header small-text-cell">Dp Spread</th>`;
-        for (let i = 0; i < temperature2m.length; i++) {
-            let spread = temperature2m[i] - dewpoint2m[i];
-            let cellStyle = 'background-color: white;'; // Default background color white
-            if (fogEnabled && spread < 3) {
-                cellStyle = 'border: 2px solid red;'; // Apply lightblue border when fog conditions are met
-            }
-            // Add the dewpoint spread cell with computed styles
-            dewpointSpreadRowHtml += `<td class="data-cell small-text-cell" style="${cellStyle}">${spread.toFixed(1)}</td>`;
+    // Dewpoint spread
+    const dpCheckbox = document.getElementById('dewpointSpreadCheckbox');
+    if (dpCheckbox && dpCheckbox.checked && weatherData.hourly.hasOwnProperty('dew_point_2m') && weatherData.hourly.hasOwnProperty('temperature_2m')) {
+        html += `<tr><th class="sticky-header small-text-cell">Dp Spread</th>`;
+        const temp2m = weatherData.hourly.temperature_2m;
+        const dp2m = weatherData.hourly.dew_point_2m;
+        for (let i = 0; i < temp2m.length; i++) {
+            const spread = temp2m[i] - dp2m[i];
+            let cellStyle = 'background-color: white;';
+            if (fogEnabled && spread < 3) cellStyle = 'border: 2px solid red;';
+            html += `<td class="data-cell small-text-cell" style="${cellStyle}">${spread.toFixed(1)}</td>`;
         }
-
-        // Close the dewpoint spread row
-        dewpointSpreadRowHtml += '</tr>';
-
-        // Add the dewpoint spread row to the existing HTML of the table
-        tableHtml += dewpointSpreadRowHtml;
+        html += '</tr>';
     }
-    if ((table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
-        
 
-        // Add Visibility row if option selected and data is available
-        if (weatherData.hourly.hasOwnProperty('visibility') && document.getElementById('visibilityCheckbox').checked) {
-            tableHtml += `<tr><th class="sticky-header small-text-cell">Visibility (mi)</th>`;
-            weatherData.hourly['visibility'].forEach(visibility => {
-                const visibilityInMiles = (visibility * 0.000621371).toFixed(1); // Convert meters to miles
-                let cellStyle = 'background-color: white;';
-                if (fogEnabled && visibilityInMiles < 20) {
-                    cellStyle = 'border: 2px solid red;';
-                }
-                tableHtml += `<td class="data-cell smallest-text-cell" style="${cellStyle}">${visibilityInMiles}</td>`;
-            });
-
-            tableHtml += '</tr>';
-        }
-        
-
-
+    // Visibility (GFS only)
+    if ((table.id === 'gfs-table' || table.id === 'openmeteo-table') && weatherData.hourly.hasOwnProperty('visibility') && document.getElementById('visibilityCheckbox').checked) {
+        html += `<tr><th class="sticky-header small-text-cell">Visibility (mi)</th>`;
+        weatherData.hourly.visibility.forEach(vis => {
+            const miles = (vis * 0.000621371).toFixed(1);
+            let cellStyle = 'background-color: white;';
+            if (fogEnabled && miles < 20) cellStyle = 'border: 2px solid red;';
+            html += `<td class="data-cell smallest-text-cell" style="${cellStyle}">${miles}</td>`;
+        });
+        html += '</tr>';
     }
-    
+
+    // Cloud cover
     if (weatherData.hourly.hasOwnProperty('cloud_cover') && cloudCoverCheckbox && cloudCoverCheckbox.checked) {
-        // Add cloud cover row header
-        tableHtml += `<tr><th class="sticky-header small-text-cell">Clouds %</th>`;
+        html += `<tr><th class="sticky-header small-text-cell">Clouds %</th>`;
+        weatherData.hourly.cloud_cover.forEach(cc => {
+            const opacity = cc * 0.70 / 100;
+            const bgColor = `rgba(0, 0, 0, ${opacity})`;
+            const tc = opacity > 0.5 ? 'white' : 'black';
+            html += `<td class="data-cell small-text-cell grey-bg" style="background-color: ${bgColor}; color: ${tc};">${cc}</td>`;
+        });
+        html += '</tr>';
+    }
 
-        // Add cloud cover data cells for each time interval
-        weatherData.hourly['cloud_cover'].forEach(cloudCover => {
-            const maxDarkness = 0.70; // Maximum darkness for cloud cover (70%)
-            const opacity = cloudCover * maxDarkness / 100;
-            const bgColor = `rgba(0, 0, 0, ${opacity})`; // Calculate background color based on cloud cover percentage
+    return html;
+}
 
-            // Determine text color based on the darkness of the background
-            // If opacity is more than 0.5 (halfway to max darkness), use light text color
-            const textColor = (opacity > 0.5) ? 'white' : 'black';
-
-            tableHtml += `<td class="data-cell small-text-cell grey-bg" style="background-color: ${bgColor}; color: ${textColor};">${cloudCover}</td>`;
-        });}
-        
-    // Finally, set the table's HTML to the newly created rows
-    table.innerHTML = tableHtml;
-
-    // New code to add black horizontal border below "33 ft" row
+// Shared post-processing for tables (borders, toggles, wind shear)
+function applyTablePostProcessing(table) {
     const allRows = table.getElementsByTagName('tr');
     for (let i = 0; i < allRows.length; i++) {
-        // Check if the first cell (header) contains "33 ft"
         if (allRows[i].cells[0].innerText === '33 ft') {
-            // If "33 ft" is found, set a black border above ("top" of) this row
-            if (i > 0) {  // Make sure it's not the first row
-                allRows[i - 1].style.borderBottom = '3px solid black'; // Apply border to the bottom of the row above
-            }
-            break; // Border applied, no need to continue loop
+            if (i > 0) allRows[i - 1].style.borderBottom = '3px solid black';
+            break;
         }
     }
     toggleHighAltitude();
-    
     toggleDaylightHours();
-    if (windShearEnabled) {
-        ////console.log('Wind Shear Enabled: Checking...');
-        // Asynchronously call the wind shear check function
-        displaywindshear();
-        // Once completed, set the text to reflect the current state
-        this.textContent = 'Disable Wind Shear';
-        this.disabled = false; // Re-enable the button
-    };
-    
+    if (windShearEnabled) displaywindshear();
     addVerticalBordersBetweenDays();
     cityName.style.display = 'block';
-
-    
-    
-    }
-    
+}
 
 function fillTableWithWindSpeed(table, weatherData) {
-    console.log('filltablewithwindspeed');
-    console.log(`Filling table with ID: ${table.id} for wind speed`);
-
-    // Safety check: ensure table has at least one row
     const existingRows = table.getElementsByTagName('tr');
     if (existingRows.length === 0) {
         console.error(`Table ${table.id} has no rows, cannot fill with wind speed data`);
@@ -2809,280 +2577,45 @@ function fillTableWithWindSpeed(table, weatherData) {
     }
 
     let tableHtml = '<tr>' + existingRows[0].innerHTML + '</tr>';
-    const altitudeLevels = [10, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100, 70, 50, 30].reverse(); // Order hPa values and feet values in descending order
-    let gustRowAdded = false;
+    const altitudeLevels = [10, 1000, 975, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200, 150, 100, 70, 50, 30].reverse();
+
     altitudeLevels.forEach(alt => {
-        let windSpeedKey, windDirectionKey;
-        let displayAltitude; // Define a variable to hold our display altitude
+        let windSpeedKey, windDirectionKey, displayAltitude;
 
         if (alt === 2 || alt === 10 || alt === 80 || alt === 180) {
-            // Handle the specific feet values (10m, 80m, 180m are in meters, need conversion to feet)
-            const altInFeet = Math.round(alt * 3.28084); // Convert meters to feet, rounding to the nearest whole number
+            const altInFeet = Math.round(alt * 3.28084);
             windSpeedKey = `wind_speed_${alt}m`;
             windDirectionKey = `wind_direction_${alt}m`;
-            displayAltitude = `${altInFeet} ft`; // Display in feet
+            displayAltitude = `${altInFeet} ft`;
         } else {
-            // Handle hPa values and convert to feet for display
             windSpeedKey = `windspeed_${alt}hPa`;
             windDirectionKey = `winddirection_${alt}hPa`;
-            displayAltitude = `${hPaToFeet(alt)} ft`; // Covert hPa to feet and display in feet
+            displayAltitude = `${hPaToFeet(alt)} ft`;
         }
 
-        // Check if wind data exists for this particular elevation
         if (weatherData.hourly.hasOwnProperty(windSpeedKey) && weatherData.hourly.hasOwnProperty(windDirectionKey)) {
             tableHtml += `<tr><th class="sticky-header">${displayAltitude}</th>`;
-
-            // Iterate over wind speeds and directions together
             weatherData.hourly[windSpeedKey].forEach((windSpeed, idx) => {
                 const windDirection = weatherData.hourly[windDirectionKey][idx];
-                const windArrowClass = getWindArrowClass(windDirection);
+                const rotation = getWindArrowRotation(windDirection);
                 const roundedWindSpeed = windSpeed !== null ? Math.round(windSpeed) : '?';
-
-                // Get the background and text color based on the wind speed
                 const { backgroundColor, textColor } = getWindSpeedColor(roundedWindSpeed);
 
-                // We're using the upwards arrow Unicode symbol and rotating it using CSS
-                const windArrowUnicode = '&#x2191;&#xFE0E;'; // Upwards arrow (we'll rotate it using CSS)
-
-                // Add wind speed and a Unicode arrow for wind direction with the proper rotation
                 tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};"
 data-wind-speed="${roundedWindSpeed}" data-wind-direction="${windDirection}">
 <div>${roundedWindSpeed}</div>
-<div class="${windArrowClass}">${windArrowUnicode}</div>
+<div class="wind-arrow" style="transform: rotate(${rotation}deg)">&#x2191;&#xFE0E;</div>
 </td>`;
             });
-            
-
             tableHtml += '</tr>';
-
         }
-        
-        }) ;
-    
+    });
 
+    tableHtml += buildExtraRows(table, weatherData);
 
-    // Finally, set the table's HTML to the newly created rows
     table.innerHTML = tableHtml;
-
-    const windGustsKey = `wind_gusts_10m`;
-    if (weatherData.hourly.hasOwnProperty(windGustsKey)) {
-        // Start the gusts table row with a descriptive header
-        tableHtml += `<tr><th class="sticky-header small-text-cell">Gusts</th>`;
-
-        // Add a data cell for each time interval with wind gusts data
-        weatherData.hourly[windGustsKey].forEach((windGust, idx) => {
-            const roundedWindGust = windGust !== null ? Math.round(windGust) : '?';
-
-            // Get the background and text color based on the wind gust speed
-            const { backgroundColor, textColor } = getWindSpeedColor(roundedWindGust);
-
-            // Add wind gust value with the appropriate color coding
-            tableHtml += `<td class="data-cell" style="background-color: ${backgroundColor}; color: ${textColor};">
-            <div>${roundedWindGust}</div>
-          </td>`;
-        });
-        
-
-        // Close the gusts table row
-        tableHtml += '</tr>';
-
-    }
-    
-        // Assuming weatherData.hourly['cape'] is an array of CAPE values at hourly intervals
-        if (weatherData.hourly.hasOwnProperty('cape') && capeCheckbox && capeCheckbox.checked) {
-
-            // Add CAPE row header
-            tableHtml += `<tr><th class="sticky-header small-text-cell">CAPE</th>`;
-
-            // Add CAPE data cells for each time interval
-            weatherData.hourly['cape'].forEach(capeValue => {
-                const { backgroundColor, textColor } = getCAPEColor(capeValue); // Get colors based on value
-                const shortCapeValue = formatCapeValue(capeValue); // Ensure this line is before its usage
-
-                // Add CAPE data cells with gradient background and contrast text
-                tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${shortCapeValue}</td>`;
-            
-            });
-
-            // Close the CAPE table row
-            tableHtml += '</tr>';
-        }
-
-    
-    
-    if ((table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
-      const liftedIndexCheckbox = document.getElementById('liftedIndexCheckbox');
-        if (liftedIndexCheckbox && liftedIndexCheckbox.checked && weatherData.hourly.hasOwnProperty('lifted_index')) {
-            tableHtml += '<tr><th class="sticky-header small-text-cell">Lifted Index</th>';
-            weatherData.hourly['lifted_index'].forEach(liftedIndex => {
-                const { backgroundColor, textColor } = getLiftedIndexColor(liftedIndex);
-                tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${liftedIndex.toFixed(1)}</td>`;
-            });
-            tableHtml += '</tr>';
-        }
-
- 
-        // Precipitation probability only exists for certain models
-        if (weatherData.hourly.hasOwnProperty('precipitation_probability') && precipProbCheckbox && precipProbCheckbox.checked) {
-            // Add precipitation probability row header
-            tableHtml += '<tr><th class="sticky-header small-text-cell">Precip %</th>';
-
-            // Add precipitation probability data cells for each time interval
-            weatherData.hourly.precipitation_probability.forEach(precipProbability => {
-                precipProbability = precipProbability !== null ? precipProbability : '?';  // Check for null values
-                const { backgroundColor, textColor } = getPrecipitationProbabilityColor(precipProbability);
-
-                // Substitute N/A for missing precipitation_probability values or add cell with the actual value
-                tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipProbability !== '?' ? precipProbability: precipProbability}</td>`;
-            });
-
-            tableHtml += '</tr>';
-            
-            
-        }
-        
-       
-    }
-    if (table.id === 'icon-table' && precipSumCheckbox && precipSumCheckbox.checked) {
-        // Add Precipitation row header
-        tableHtml += '<tr><th class="sticky-header small-text-cell">Precip (in)</th>';
-
-        // Add Precipitation data cells for each time interval
-        weatherData.hourly.precipitation.forEach(precipValue => {
-            const backgroundColor = getPrecipitationColor(precipValue);
-            const textColor = getTextColorForBackground(backgroundColor);
-            if (precipValue !== null) {
-            // Round to two decimal places and convert to string for display
-            const precipValueDisplay = precipValue.toFixed(2);
-
-            // Add the Precipitation data cell with fading blue background based on the value
-            tableHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${precipValueDisplay}</td>`;
-        } else {}
-        });
-        
-         
-
-        // Close the Precipitation table row
-        tableHtml += '</tr>';
-    }
-    if (weatherData.hourly.hasOwnProperty('temperature_2m') && temp2mCheckbox && temp2mCheckbox.checked) {
-        let temperatureRowHtml = '<tr><th class="sticky-header small-text-cell">Temp (°F)</th>'; // Header for the temperature row
-        weatherData.hourly.temperature_2m.forEach(temp => {
-            const { backgroundColor, textColor } = getTemperatureColor(temp); // Reusing getTemperatureColor function
-            const displayedTemp = temp !== null ? Math.round(temp) : '?'; // Round temperature or use placeholder
-            temperatureRowHtml += `<td class="data-cell small-text-cell" style="background-color: ${backgroundColor}; color: ${textColor};">${displayedTemp}</td>`;
-        });
-        temperatureRowHtml += '</tr>';
-        tableHtml += temperatureRowHtml; // Add the temperature row to the table HTML
-    }
-    const relativeHumidityCheckbox = document.getElementById('relativeHumidityCheckbox');
-    if (weatherData.hourly.hasOwnProperty('relative_humidity_2m') && relativeHumidityCheckbox.checked) {
-        tableHtml += '<tr><th class="sticky-header small-text-cell">Rel. Humidity</th>';
-
-        const startColor = { r: 255, g: 255, b: 255 }; // White for 40% humidity
-        const endColor = { r: 0, g: 0, b: 255 }; // Blue for 100% humidity
-        weatherData.hourly.relative_humidity_2m.forEach(humidity => {
-            let cellStyle = 'background-color: white;'; // Default cell style
-            if (fogEnabled && humidity > 90) {
-                cellStyle = 'border: 2px solid red;'; // Apply lightblue border when fog conditions are met
-            }
-            tableHtml += `<td class="data-cell small-text-cell" style="${cellStyle}">${Math.round(humidity)}%</td>`;
-        });
-
-        tableHtml += '</tr>';
-    }
-    const dewpointSpreadCheckbox = document.getElementById('dewpointSpreadCheckbox');
-    if (dewpointSpreadCheckbox && dewpointSpreadCheckbox.checked && weatherData.hourly.hasOwnProperty('dew_point_2m') && weatherData.hourly.hasOwnProperty('temperature_2m')) {
-        let temperature2m = weatherData.hourly.temperature_2m;
-        let dewpoint2m = weatherData.hourly.dew_point_2m;
-
-        // Define a new row for the dewpoint spread
-        let dewpointSpreadRowHtml = `<tr><th class="sticky-header small-text-cell">Dp Spread</th>`;
-        for (let i = 0; i < temperature2m.length; i++) {
-            let spread = temperature2m[i] - dewpoint2m[i];
-            let cellStyle = 'background-color: white;'; // Default background color white
-            if (fogEnabled && spread < 3) {
-                cellStyle = 'border: 2px solid red;'; // Apply lightblue border when fog conditions are met
-            }
-            // Add the dewpoint spread cell with computed styles
-            dewpointSpreadRowHtml += `<td class="data-cell small-text-cell" style="${cellStyle}">${spread.toFixed(1)}</td>`;
-        }
-
-        // Close the dewpoint spread row
-        dewpointSpreadRowHtml += '</tr>';
-
-        // Add the dewpoint spread row to the existing HTML of the table
-        tableHtml += dewpointSpreadRowHtml;
-    }
-    if ((table.id === 'gfs-table' || table.id === 'openmeteo-table')) {
-        
-
-        // Add Visibility row if option selected and data is available
-        if (weatherData.hourly.hasOwnProperty('visibility') && document.getElementById('visibilityCheckbox').checked) {
-            tableHtml += `<tr><th class="sticky-header small-text-cell">Visibility (mi)</th>`;
-            weatherData.hourly['visibility'].forEach(visibility => {
-                const visibilityInMiles = (visibility * 0.000621371).toFixed(1); // Convert meters to miles
-                let cellStyle = 'background-color: white;';
-                if (fogEnabled && visibilityInMiles < 20) {
-                    cellStyle = 'border: 2px solid red;';
-                }
-                tableHtml += `<td class="data-cell smallest-text-cell" style="${cellStyle}">${visibilityInMiles}</td>`;
-            });
-
-            tableHtml += '</tr>';
-        }
-        
-
-
-    }
-    
-    if (weatherData.hourly.hasOwnProperty('cloud_cover') && cloudCoverCheckbox && cloudCoverCheckbox.checked) {
-        // Add cloud cover row header
-        tableHtml += `<tr><th class="sticky-header small-text-cell">Clouds %</th>`;
-
-        // Add cloud cover data cells for each time interval
-        weatherData.hourly['cloud_cover'].forEach(cloudCover => {
-            const maxDarkness = 0.70; // Maximum darkness for cloud cover (70%)
-            const opacity = cloudCover * maxDarkness / 100;
-            const bgColor = `rgba(0, 0, 0, ${opacity})`; // Calculate background color based on cloud cover percentage
-
-            // Determine text color based on the darkness of the background
-            // If opacity is more than 0.5 (halfway to max darkness), use light text color
-            const textColor = (opacity > 0.5) ? 'white' : 'black';
-
-            tableHtml += `<td class="data-cell small-text-cell grey-bg" style="background-color: ${bgColor}; color: ${textColor};">${cloudCover}</td>`;
-        });}
-        
-    // Finally, set the table's HTML to the newly created rows
-    table.innerHTML = tableHtml;
-
-    // New code to add black horizontal border below "33 ft" row
-    const allRows = table.getElementsByTagName('tr');
-    for (let i = 0; i < allRows.length; i++) {
-        // Check if the first cell (header) contains "33 ft"
-        if (allRows[i].cells[0].innerText === '33 ft') {
-            // If "33 ft" is found, set a black border above ("top" of) this row
-            if (i > 0) {  // Make sure it's not the first row
-                allRows[i - 1].style.borderBottom = '3px solid black'; // Apply border to the bottom of the row above
-            }
-            break; // Border applied, no need to continue loop
-        }
-    }
-    toggleHighAltitude();
-    
-    toggleDaylightHours();
-    if (windShearEnabled) {
-        ////console.log('Wind Shear Enabled: Checking...');
-        // Asynchronously call the wind shear check function
-        displaywindshear();
-        // Once completed, set the text to reflect the current state
-        this.textContent = 'Disable Wind Shear';
-        this.disabled = false; // Re-enable the button
-    };
+    applyTablePostProcessing(table);
     enableAllButtons();
-    addVerticalBordersBetweenDays();
-    cityName.style.display = 'block';
-    
     }
 
 function getPrecipitationColor(precipValue) {
@@ -3180,7 +2713,6 @@ const colors = {
 };
 
 async function refreshWeatherDataAndTables(zipcode) {
-    console.log('refreshWeatherDataAndTables');
     // Fetch coordinates from zipcode
    
 
@@ -3219,8 +2751,6 @@ function getWindSpeedColor(windSpeed) {
         // Interpolating green to red
         backgroundColorRGB = interpolateColorRGB('green', 'red', (windSpeed - medWindThreshold) / (highWindThreshold - medWindThreshold));
     }
-    isColorDark();
-    // Set text color to white if background is dark
     if (isColorDark(backgroundColorRGB.r, backgroundColorRGB.g, backgroundColorRGB.b)) {
         textColor = 'white';
     }
@@ -3272,26 +2802,15 @@ function interpolateColorRGB(color1, color2, percentage) {
         return;
     }
 
-    console.log("=== Starting fillTableWithCloudCover ===");
-    console.log("Table model:", table.dataset.model);
     
     const model = table.dataset.model;
     table.dataset.showing = 'clouds';
     
     // Log the structure of weatherData.hourly
-    console.log("=== WeatherData Structure ===");
-    console.log("Available hourly keys:", Object.keys(weatherData.hourly));
-    console.log("Time array length:", weatherData.hourly.time?.length);
     
     // Get boundary layer height data only if it exists and only for GFS model
     const boundaryLayerHeight = model.toLowerCase() === 'gfs' ? weatherData.hourly?.boundary_layer_height : null;
-    console.log("=== Boundary Layer Height Data ===");
-    console.log("Model:", model);
-    console.log("Boundary layer height data:", boundaryLayerHeight);
-    console.log("Boundary layer height type:", typeof boundaryLayerHeight);
-    console.log("Boundary layer height length:", boundaryLayerHeight?.length);
     if (boundaryLayerHeight && Array.isArray(boundaryLayerHeight)) {
-        console.log("First few boundary layer heights:", boundaryLayerHeight.slice(0, 5));
     }
     
     // Safety check: ensure table has at least one row
@@ -3361,9 +2880,6 @@ function interpolateColorRGB(color1, color2, percentage) {
     
     // Add boundary layer height row only for GFS model
     if (model.toLowerCase() === 'gfs' && weatherData.hourly.hasOwnProperty('boundary_layer_height')) {
-        console.log("=== Adding Boundary Layer Height Row ===");
-        console.log("Table model:", table.dataset.model);
-        console.log("Boundary layer height data:", weatherData.hourly.boundary_layer_height);
         
         tableHtml += '<tr><th class="sticky-header small-text-cell" style="min-width: 15px;">Thermals (ft)</th>';
         weatherData.hourly.boundary_layer_height.forEach((height, index) => {
@@ -3372,7 +2888,6 @@ function interpolateColorRGB(color1, color2, percentage) {
             }
             // Round to nearest integer since it's already in feet
             const heightInFeet = Math.round(height);
-            console.log(`Boundary layer height: ${heightInFeet}ft`);
             
             // Check if current hour is between 10am and 5pm
             const currentHour = new Date(weatherData.hourly.time[index]).getHours();
@@ -3452,47 +2967,6 @@ function disableButtonsExcept(buttonIds) {
                 }
             });
         }
-// Initialize the tables to display clouds by default
-document.querySelectorAll('table[id$="-table"]').forEach(table => {
-    table.dataset.showing = 'winds'; // Default view
-});
-// Function to convert degrees to Unicode arrows with text-style rendering
-function getWindDirectionArrow(degrees) {
-        if (typeof degrees === 'undefined' || degrees === null) {
-            return ''; // Return empty string if the direction is undefined or null
-        }
-        const arrows = {
-            S: '&#x2191;&#xFE0E;', // Upwards arrow (used to be North, now South)
-            SW: '&#x2197;&#xFE0E;', // North East arrow (used to be NE, now SW)
-            W: '&#x2192;&#xFE0E;', // Rightwards arrow (used to be East, now West)
-            NW: '&#x2198;&#xFE0E;', // South East arrow (used to be SE, now NW)
-            N: '&#x2193;&#xFE0E;', // Downwards arrow (used to be South, now North)
-            NE: '&#x2199;&#xFE0E;', // South West arrow (used to be SW, now NE)
-            E: '&#x2190;&#xFE0E;', // Leftwards arrow (used to be West, now East)
-            SE: '&#x2196;&#xFE0E;'  // North West arrow (used to be NW, now SE)
-        };
-
-        // Convert the degrees to an arrow string with the given mapping
-        const directions = [
-            { direction: 'N', range: [337.5, 360], rangeStart: [0, 22.5] },
-            { direction: 'NE', range: [22.5, 67.5] },
-            { direction: 'E', range: [67.5, 112.5] },
-            { direction: 'SE', range: [112.5, 157.5] },
-            { direction: 'S', range: [157.5, 202.5] },
-            { direction: 'SW', range: [202.5, 247.5] },
-            { direction: 'W', range: [247.5, 292.5] },
-            { direction: 'NW', range: [292.5, 337.5] }
-        ];
-
-        for (let i = 0; i < directions.length; i++) {
-            const { direction, range, rangeStart } = directions[i];
-            if ((degrees >= range[0] && degrees < range[1]) || (rangeStart && degrees >= rangeStart[0] && degrees < rangeStart[1])) {
-                return arrows[direction]; // Return the Unicode arrow character for the direction
-            }
-         
-        }
-        return ''; // Return empty string if the direction does not fall within known ranges
-    }
 const collapseButton = document.getElementById('editButton');
 
 function clickCollapseButton() {
@@ -3568,7 +3042,6 @@ function manageViewButtons() {
     }
     }
     document.getElementById('returnToWindTableButton').addEventListener('click', function() {
-        console.log('Return to wind table clicked');
         // Restore the previous state of highAltitudeVisible
         highAltitudeVisible = previousHighAltitudeState;
         const highAltitudeButton = document.getElementById('toggleHighAltitudeButton');
@@ -3587,11 +3060,3 @@ function manageViewButtons() {
             manageViewButtons();
         });
     });
-    
-    // Add this function before fillTableWithCloudCover
-    function getCloudCoverColor(cloudCover) {
-        // Convert cloud cover percentage to opacity (0 to 0.75)
-        const maxDarkness = 0.75;
-        const opacity = (cloudCover / 100) * maxDarkness;
-        return `rgba(0, 0, 0, ${opacity})`;
-    }

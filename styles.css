@@ -73,7 +73,7 @@
             border: 2px solid #000000;
             display: none;
             position: absolute;
-            z-index: 1000px;
+            z-index: 1000;
             left:0px;
             top:60px;
             width: calc(100% - 2px); /* Assume border is 1px */
@@ -121,10 +121,6 @@
     visibility: hidden;
     display: none;
 }
-.button {
-    
-    /* ...other styles... */
-}
         #autocomplete-list {
             position: absolute;
             background: #fff;
@@ -154,82 +150,13 @@
 
         .column-header {
             font-size: 14px;
-            white-space: nowrap
+            white-space: nowrap;
             background-color: white;
             text-align: center;
             font-family: Arial, sans-serif;
             overflow: visible;
             text-overflow: ellipsis;
         }
-
-        /* Add a general data cell class to apply common data cell styles */
-        .wind-arrow.rotate-0 {
-    transform: rotate(0deg);
-}
-
-.wind-arrow.rotate-22-5 {
-    transform: rotate(22.5deg);
-}
-
-.wind-arrow.rotate-45 {
-    transform: rotate(45deg);
-}
-
-.wind-arrow.rotate-67-5 {
-    transform: rotate(67.5deg);
-}
-
-.wind-arrow.rotate-90 {
-    transform: rotate(90deg);
-}
-
-.wind-arrow.rotate-112-5 {
-    transform: rotate(112.5deg);
-}
-
-.wind-arrow.rotate-135 {
-    transform: rotate(135deg);
-}
-
-.wind-arrow.rotate-157-5 {
-    transform: rotate(157.5deg);
-}
-
-.wind-arrow.rotate-180 {
-    transform: rotate(180deg);
-}
-
-.wind-arrow.rotate-202-5 {
-    transform: rotate(202.5deg);
-}
-
-.wind-arrow.rotate-225 {
-    transform: rotate(225deg);
-}
-
-.wind-arrow.rotate-247-5 {
-    transform: rotate(247.5deg);
-}
-
-.wind-arrow.rotate-270 {
-    transform: rotate(270deg);
-}
-
-.wind-arrow.rotate-292-5 {
-    transform: rotate(292.5deg);
-}
-
-.wind-arrow.rotate-315 {
-    transform: rotate(315deg);
-}
-
-.wind-arrow.rotate-337-5 {
-    transform: rotate(337.5deg);
-}
-
-.wind-arrow.rotate-360 {
-    transform: rotate(360deg);
-}
 
         .data-cell {
             text-align: center;
@@ -328,15 +255,6 @@
     
 }
 
-        /* Updated CSS rule for first-column cells under `tbody` to inherit the width */
-        td:first-child {
-            position: sticky;
-            left: 0;
-            background-color: white;
-            z-index: 1;
-            
-        }
-
         td:not(:first-child) {
             white-space: nowrap;
             /* Prevent text wrapping in the data cells */
@@ -360,17 +278,11 @@
 
 .button-column {
     display: flex;
-    flex-direction: column; /* Stack the header and buttons vertically */
-    align-items: center; /* Center the buttons horizontally in the flex container */
-    margin-right: 15px; /* Spacing between columns */
     flex-direction: column;
+    align-items: center;
+    margin-right: 15px;
 }
 
-.column-header {
-    text-align: center; /* Center the header text */
-    margin-bottom: 10px; /* Spacing between header and buttons */
-    flex-direction: column;
-}
 
 #editButton {
     position: fixed; /* Fixed position relative to the viewport */
@@ -385,5 +297,4 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    zoom: 1;
 }
