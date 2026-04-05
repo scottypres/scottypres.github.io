@@ -859,13 +859,13 @@ document.getElementById('gpsLocationButton').addEventListener('click', function 
                     setCookie('cityName', 'My Location', 365);
                 });
 
-            btn.textContent = 'My Location';
+            btn.textContent = 'Use My Location';
             btn.disabled = false;
             clickCollapseButton();
             fetchAllModelsData();
         },
         function (error) {
-            btn.textContent = 'My Location';
+            btn.textContent = 'Use My Location';
             btn.disabled = false;
             alert('Unable to get your location. Please check your browser permissions.');
         },
