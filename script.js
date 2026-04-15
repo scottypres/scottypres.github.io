@@ -927,12 +927,14 @@ function hasApiBeenCalledRecently(latitude, longitude) {
     const lastApiCallKey = `lastApiCall_${latitude}_${longitude}`;
     const lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
     const now = Date.now();
-    const cacheDuration = 15 * 60 * 1000;
+    // Use shortest model interval (GFS/OpenMeteo = 60 min) as the threshold;
+    // per-model caching in checkAndFetchData handles ICON's longer 6-hour window
+    const cacheDuration = 60 * 60 * 1000; // 60 minutes
 
     if (lastApiCallDataStr) {
         const lastApiCallData = JSON.parse(lastApiCallDataStr);
         if (now - lastApiCallData.timestamp < cacheDuration) {
-            return true; // API has been called within last 15 minutes
+            return true; // API has been called within last 60 minutes
         }
     }
     return false;
@@ -942,187 +944,160 @@ function hasApiBeenCalledRecently(latitude, longitude) {
 async function checkAndFetchAllDataTables(baseUrl, model, lat, lon, name, tableElement, tableId) {
 
     try {
-        const daily = [
-            'weather_code',
-            'sunrise',
-            'sunset',
-            'uv_index_max',
-            'precipitation_sum'
-        ].join(',');
-
         const units = '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto';
-        let additionalParameters = ''; // Initialize additional parameters string
+        let additionalParameters = '';
 
-        // Check the model to determine the correct forecast_days parameter
-      
-        const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14); // Default to max 14
+        const forecastDays = getCookieValueOrDefault('gfsOpenMeteoLength', 14);
         additionalParameters += `&forecast_days=${forecastDays}`;
-       
-          
-        // Fetch new data if necessary
-        
-            
-            
-                // For GFS model, test parameters and handle missing wind data
-                if (model.toLowerCase() === 'gfs') {
-                    commonParameters = await getGFSParametersWithFallback(baseUrl, lat, lon, units, additionalParameters);
-                } else if (model.toLowerCase() === 'icon') {
-                    // ICON model parameter testing for missing 180m wind data
-                    commonParameters = await getICONParametersWithFallback(baseUrl, lat, lon, units, additionalParameters);
+
+        // Cache check for saved locations — same logic as checkAndFetchData
+        const lastApiCallKey = `lastApiCall_savedLoc_${model}_${lat}_${lon}`;
+        const now = Date.now();
+        const cacheDuration = model.toLowerCase() === 'icon'
+            ? 6 * 60 * 60 * 1000   // 6 hours for ICON
+            : 60 * 60 * 1000;      // 60 minutes for GFS/OpenMeteo
+        const lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
+
+        if (lastApiCallDataStr) {
+            const lastApiCallData = JSON.parse(lastApiCallDataStr);
+            if (now - lastApiCallData.timestamp < cacheDuration) {
+                // Use cached data
+                const weatherData = lastApiCallData.data;
+                allTableWeatherData[tableId] = weatherData;
+                if (tableElement instanceof HTMLTableElement) {
+                    createAllTables(tableElement.id, weatherData, name, tableElement);
                 } else {
-                    // For other models (like openmeteo), use full parameters
-                    commonParameters = [
-                        'temperature_2m', 'temperature_80m',
-                        'weather_code', 'relative_humidity_2m',
-                        'dew_point_2m',
-                        'visibility','lifted_index',
-                        'cloud_cover',
-                        'cloud_cover_low',
-                        'cloud_cover_mid',
-                        'cloud_cover_high',
-                        'cloud_cover_1000hPa',
-                        'cloud_cover_975hPa',
-                        'cloud_cover_950hPa',
-                        'cloud_cover_925hPa',
-                        'cloud_cover_900hPa',
-                        'cloud_cover_850hPa',
-                        'cloud_cover_800hPa',
-                        'cloud_cover_700hPa',
-                        'cloud_cover_600hPa',
-                        'cloud_cover_500hPa',
-                        'cloud_cover_400hPa',
-                        'cloud_cover_250hPa',
-                        'cloud_cover_200hPa',
-                        'cloud_cover_150hPa',
-                        'cloud_cover_300hPa',
-                        'cloud_cover_100hPa',
-                        'cloud_cover_70hPa',
-                        'cloud_cover_50hPa',
-                        'cloud_cover_30hPa',
-                        // Add new variables below
-                        'wind_speed_10m',
-                        'wind_speed_80m',
-                        'wind_speed_180m', 'wind_gusts_10m',
-                        'wind_direction_10m',
-                        'wind_direction_80m',
-                        'wind_direction_180m',
-                        'temperature_1000hPa',
-                        'temperature_975hPa',
-                        'temperature_950hPa',
-                        'temperature_925hPa',
-                        'temperature_900hPa',
-                        'temperature_850hPa',
-                        'temperature_800hPa',
-                        'temperature_700hPa',
-                        'temperature_600hPa',
-                        'temperature_500hPa',
-                        'temperature_400hPa',
-
-                        'windspeed_1000hPa',
-                        'windspeed_975hPa',
-                        'windspeed_950hPa',
-                        'windspeed_925hPa',
-                        'windspeed_900hPa',
-                        'windspeed_850hPa',
-                        'windspeed_800hPa',
-                        'windspeed_700hPa',
-                        'windspeed_600hPa',
-                        'windspeed_500hPa',
-                        'windspeed_400hPa',
-                        'winddirection_1000hPa',
-                        'winddirection_975hPa',
-                        'winddirection_950hPa',
-                        'winddirection_925hPa',
-                        'winddirection_900hPa',
-                        'winddirection_850hPa',
-                        'winddirection_800hPa',
-                        'winddirection_700hPa',
-                        'winddirection_600hPa',
-                        'winddirection_500hPa',
-                        'winddirection_400hPa',
-                        'cape',
-                        'is_day',
-                        'precipitation_probability'
-                    ].join(',');
+                    createAllTables(tableId, weatherData, name, tableElement);
                 }
-        
-
-/////WE DID IT!
-
-
-        
-        // For GFS model, the API call might have already been made in getGFSParametersWithFallback
-        let weatherData;
-        if (model.toLowerCase() === 'gfs') {
-            // The weatherData should already be available from the parameter testing
-            const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${commonParameters}&daily=${daily}&current_weather=true${units}${additionalParameters}`;
-            try {
-                const response = await fetch(requestUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                weatherData = await response.json();
-                
-                // Add placeholder data for missing 10m wind parameters if they don't exist
-                if (!weatherData.hourly.wind_speed_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_speed_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_direction_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_direction_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_gusts_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_gusts_10m = new Array(timeLength).fill(null);
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for ${name} using model ${model}`, error);
-                return;
-            }
-        } else {
-            const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${commonParameters}&daily=${daily}&current_weather=true${units}${additionalParameters}`;
-            try {
-                const response = await fetch(requestUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                weatherData = await response.json();
-                
-                // Add placeholder data for missing parameters in ICON model
-                if (model.toLowerCase() === 'icon') {
-                    const timeLength = weatherData.hourly.time.length;
-                    
-                    // Add missing parameters that ICON doesn't support
-                    if (!weatherData.hourly.boundary_layer_height) {
-                        weatherData.hourly.boundary_layer_height = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.visibility) {
-                        weatherData.hourly.visibility = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.lifted_index) {
-                        weatherData.hourly.lifted_index = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.cape) {
-                        weatherData.hourly.cape = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.precipitation_probability) {
-                        weatherData.hourly.precipitation_probability = new Array(timeLength).fill(null);
-                    }
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for ${name} using model ${model}`, error);
                 return;
             }
         }
-        
+
+        // Fetch new data — use fallback functions that return data directly
+        let weatherData;
+
+        if (model.toLowerCase() === 'gfs') {
+            const result = await getGFSParametersWithFallback(baseUrl, lat, lon, units, additionalParameters);
+            weatherData = result.data;
+        } else if (model.toLowerCase() === 'icon') {
+            const result = await getICONParametersWithFallback(baseUrl, lat, lon, units, additionalParameters);
+            weatherData = result.data;
+
+            // Add missing parameters that ICON doesn't support
+            const timeLength = weatherData.hourly.time.length;
+            if (!weatherData.hourly.boundary_layer_height) {
+                weatherData.hourly.boundary_layer_height = new Array(timeLength).fill(null);
+            }
+            if (!weatherData.hourly.visibility) {
+                weatherData.hourly.visibility = new Array(timeLength).fill(null);
+            }
+            if (!weatherData.hourly.lifted_index) {
+                weatherData.hourly.lifted_index = new Array(timeLength).fill(null);
+            }
+            if (!weatherData.hourly.cape) {
+                weatherData.hourly.cape = new Array(timeLength).fill(null);
+            }
+            if (!weatherData.hourly.precipitation_probability) {
+                weatherData.hourly.precipitation_probability = new Array(timeLength).fill(null);
+            }
+        } else {
+            // OpenMeteo: direct fetch
+            commonParameters = [
+                'temperature_2m', 'temperature_80m',
+                'weather_code', 'relative_humidity_2m',
+                'dew_point_2m',
+                'visibility','lifted_index',
+                'cloud_cover',
+                'cloud_cover_low',
+                'cloud_cover_mid',
+                'cloud_cover_high',
+                'cloud_cover_1000hPa',
+                'cloud_cover_975hPa',
+                'cloud_cover_950hPa',
+                'cloud_cover_925hPa',
+                'cloud_cover_900hPa',
+                'cloud_cover_850hPa',
+                'cloud_cover_800hPa',
+                'cloud_cover_700hPa',
+                'cloud_cover_600hPa',
+                'cloud_cover_500hPa',
+                'cloud_cover_400hPa',
+                'cloud_cover_250hPa',
+                'cloud_cover_200hPa',
+                'cloud_cover_150hPa',
+                'cloud_cover_300hPa',
+                'cloud_cover_100hPa',
+                'cloud_cover_70hPa',
+                'cloud_cover_50hPa',
+                'cloud_cover_30hPa',
+                'wind_speed_10m',
+                'wind_speed_80m',
+                'wind_speed_180m', 'wind_gusts_10m',
+                'wind_direction_10m',
+                'wind_direction_80m',
+                'wind_direction_180m',
+                'temperature_1000hPa',
+                'temperature_975hPa',
+                'temperature_950hPa',
+                'temperature_925hPa',
+                'temperature_900hPa',
+                'temperature_850hPa',
+                'temperature_800hPa',
+                'temperature_700hPa',
+                'temperature_600hPa',
+                'temperature_500hPa',
+                'temperature_400hPa',
+                'windspeed_1000hPa',
+                'windspeed_975hPa',
+                'windspeed_950hPa',
+                'windspeed_925hPa',
+                'windspeed_900hPa',
+                'windspeed_850hPa',
+                'windspeed_800hPa',
+                'windspeed_700hPa',
+                'windspeed_600hPa',
+                'windspeed_500hPa',
+                'windspeed_400hPa',
+                'winddirection_1000hPa',
+                'winddirection_975hPa',
+                'winddirection_950hPa',
+                'winddirection_925hPa',
+                'winddirection_900hPa',
+                'winddirection_850hPa',
+                'winddirection_800hPa',
+                'winddirection_700hPa',
+                'winddirection_600hPa',
+                'winddirection_500hPa',
+                'winddirection_400hPa',
+                'cape',
+                'is_day',
+                'precipitation_probability'
+            ].join(',');
+
+            const daily = [
+                'weather_code', 'sunrise', 'sunset',
+                'uv_index_max', 'precipitation_sum'
+            ].join(',');
+
+            const requestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${commonParameters}&daily=${daily}&current_weather=true${units}${additionalParameters}`;
+            const response = await fetch(requestUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            weatherData = await response.json();
+        }
+
+        // Cache the fetched data
+        localStorage.setItem(lastApiCallKey, JSON.stringify({
+            timestamp: now,
+            data: weatherData
+        }));
+
         allTableWeatherData[tableId] = weatherData;
 
-        if(tableElement instanceof HTMLTableElement) {
-            // Passed an actual table element, we want to retrieve its ID
+        if (tableElement instanceof HTMLTableElement) {
             createAllTables(tableElement.id, allTableWeatherData[tableId], name, tableElement);
         } else {
-            // If it's not an HTMLTableElement, it's expected to be an ID string
             createAllTables(tableId, allTableWeatherData[tableId], name, tableElement);
         }
     } catch (error) {
@@ -1233,12 +1208,12 @@ async function getICONParametersWithFallback(baseUrl, lat, lon, units, additiona
                 }
             }
             
-            return fullParameters;
+            return { parameters: fullParameters, data: weatherData };
         } else {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
     } catch (error) {
-        
+
         // Fallback: try without wind_speed_180m and wind_direction_180m
         const fallbackParameters = [
             'temperature_2m', 'temperature_80m', 'temperature_180m','precipitation',
@@ -1319,7 +1294,7 @@ async function getICONParametersWithFallback(baseUrl, lat, lon, units, additiona
                 weatherData.hourly.wind_speed_180m = new Array(timeLength).fill(null);
                 weatherData.hourly.wind_direction_180m = new Array(timeLength).fill(null);
                 
-                return fallbackParameters;
+                return { parameters: fallbackParameters, data: weatherData };
             } else {
                 throw new Error(`Fallback HTTP error! Status: ${fallbackResponse.status}`);
             }
@@ -1439,12 +1414,12 @@ async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additional
                 }
             }
             
-            return fullParameters;
+            return { parameters: fullParameters, data: weatherData };
         } else {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
     } catch (error) {
-        
+
         // Fallback: try without wind_speed_10m, wind_direction_10m, and wind_gusts_10m
         const fallbackParameters = [
             'temperature_2m', 'temperature_80m',
@@ -1516,21 +1491,21 @@ async function getGFSParametersWithFallback(baseUrl, lat, lon, units, additional
             'is_day',
             'precipitation_probability'
         ].join(',');
-        
+
         const fallbackRequestUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&hourly=${fallbackParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-        
+
         try {
             const fallbackResponse = await fetch(fallbackRequestUrl);
             if (fallbackResponse.ok) {
                 const weatherData = await fallbackResponse.json();
-                
+
                 // Add placeholder data for missing 10m wind parameters
                 const timeLength = weatherData.hourly.time.length;
                 weatherData.hourly.wind_speed_10m = new Array(timeLength).fill(null);
                 weatherData.hourly.wind_direction_10m = new Array(timeLength).fill(null);
                 weatherData.hourly.wind_gusts_10m = new Array(timeLength).fill(null);
-                
-                return fallbackParameters;
+
+                return { parameters: fallbackParameters, data: weatherData };
             } else {
                 throw new Error(`Fallback HTTP error! Status: ${fallbackResponse.status}`);
             }
@@ -1570,7 +1545,12 @@ async function checkAndFetchData(baseUrl, model) {
     //#####
 
     const now = Date.now();
-    const cacheDuration = 15 * 60 * 1000; // 15 minutes in milliseconds
+    // Cache durations based on model update frequency:
+    // GFS/OpenMeteo (HRRR hybrid): updates ~hourly, cache for 60 minutes
+    // ICON: runs at 00, 06, 12, 18 UTC, cache for 6 hours
+    const cacheDuration = model.toLowerCase() === 'icon'
+        ? 6 * 60 * 60 * 1000   // 6 hours for ICON
+        : 60 * 60 * 1000;      // 60 minutes for GFS/OpenMeteo
    const lastApiCallDataStr = localStorage.getItem(lastApiCallKey);
 
     
@@ -1590,12 +1570,38 @@ if (now - lastApiCallData.timestamp < cacheDuration) {
 }
     // Fetch new data if necessary
     if (shouldFetchData) {
-        
-        if (model.toLowerCase() === 'gfs' || model.toLowerCase() === 'openmeteo') {
-            // For GFS model, test parameters and handle missing wind data
+
+        let weatherData;
+
+        try {
             if (model.toLowerCase() === 'gfs') {
-                commonParameters = await getGFSParametersWithFallback(baseUrl, userLocation.latitude, userLocation.longitude, units, additionalParameters);
+                // GFS: fetch with parameter fallback — returns { parameters, data }
+                const result = await getGFSParametersWithFallback(baseUrl, userLocation.latitude, userLocation.longitude, units, additionalParameters);
+                weatherData = result.data;
+            } else if (model.toLowerCase() === 'icon') {
+                // ICON: fetch with parameter fallback — returns { parameters, data }
+                const result = await getICONParametersWithFallback(baseUrl, userLocation.latitude, userLocation.longitude, units, additionalParameters);
+                weatherData = result.data;
+
+                // Add missing parameters that ICON doesn't support
+                const timeLength = weatherData.hourly.time.length;
+                if (!weatherData.hourly.boundary_layer_height) {
+                    weatherData.hourly.boundary_layer_height = new Array(timeLength).fill(null);
+                }
+                if (!weatherData.hourly.visibility) {
+                    weatherData.hourly.visibility = new Array(timeLength).fill(null);
+                }
+                if (!weatherData.hourly.lifted_index) {
+                    weatherData.hourly.lifted_index = new Array(timeLength).fill(null);
+                }
+                if (!weatherData.hourly.cape) {
+                    weatherData.hourly.cape = new Array(timeLength).fill(null);
+                }
+                if (!weatherData.hourly.precipitation_probability) {
+                    weatherData.hourly.precipitation_probability = new Array(timeLength).fill(null);
+                }
             } else {
+                // OpenMeteo: direct fetch (no parameter fallback needed)
                 commonParameters = [
                     'temperature_2m', 'temperature_80m',
                     'boundary_layer_height',
@@ -1625,7 +1631,6 @@ if (now - lastApiCallData.timestamp < cacheDuration) {
                     'cloud_cover_70hPa',
                     'cloud_cover_50hPa',
                     'cloud_cover_30hPa',
-                    // Add new variables below
                     'wind_speed_10m',
                     'wind_speed_80m',
                     'wind_speed_180m', 'wind_gusts_10m',
@@ -1643,7 +1648,6 @@ if (now - lastApiCallData.timestamp < cacheDuration) {
                     'temperature_600hPa',
                     'temperature_500hPa',
                     'temperature_400hPa',
-
                     'windspeed_1000hPa',
                     'windspeed_975hPa',
                     'windspeed_950hPa',
@@ -1670,95 +1674,22 @@ if (now - lastApiCallData.timestamp < cacheDuration) {
                     'is_day',
                     'precipitation_probability'
                 ].join(',');
-            }
-        } else if (model.toLowerCase() === 'icon') {
-            // ICON model parameter testing for missing 180m wind data
-            commonParameters = await getICONParametersWithFallback(baseUrl, userLocation.latitude, userLocation.longitude, units, additionalParameters);
-        }
 
-
-
-
-        // For GFS model, the API call might have already been made in getGFSParametersWithFallback
-        let weatherData;
-        if (model.toLowerCase() === 'gfs') {
-            const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-            try {
+                const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
                 const response = await fetch(requestUrl);
-
-                // If the response is not okay, throw an error
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-
-                // Parse the response as JSON
                 weatherData = await response.json();
-                
-                // Add placeholder data for missing 10m wind parameters if they don't exist
-                if (!weatherData.hourly.wind_speed_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_speed_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_direction_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_direction_10m = new Array(timeLength).fill(null);
-                }
-                if (!weatherData.hourly.wind_gusts_10m) {
-                    const timeLength = weatherData.hourly.time.length;
-                    weatherData.hourly.wind_gusts_10m = new Array(timeLength).fill(null);
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for model ${model}`, error);
-                return;
             }
-        } else {
-            const requestUrl = `${baseUrl}?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&hourly=${commonParameters}&daily=${dailyParameters}${units}${additionalParameters}`;
-            try {
-                const response = await fetch(requestUrl);
 
-                // If the response is not okay, throw an error
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                // Parse the response as JSON
-                weatherData = await response.json();
-                
-                // Add placeholder data for missing parameters in ICON model
-                if (model.toLowerCase() === 'icon') {
-                    const timeLength = weatherData.hourly.time.length;
-                    
-                    // Add missing parameters that ICON doesn't support
-                    if (!weatherData.hourly.boundary_layer_height) {
-                        weatherData.hourly.boundary_layer_height = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.visibility) {
-                        weatherData.hourly.visibility = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.lifted_index) {
-                        weatherData.hourly.lifted_index = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.cape) {
-                        weatherData.hourly.cape = new Array(timeLength).fill(null);
-                    }
-                    if (!weatherData.hourly.precipitation_probability) {
-                        weatherData.hourly.precipitation_probability = new Array(timeLength).fill(null);
-                    }
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for model ${model}`, error);
-                return;
-            }
-        }
-
-        try {
             // Cache the new API data
             localStorage.setItem(lastApiCallKey, JSON.stringify({
                 timestamp: now,
                 data: weatherData,
                 latitude: userLocation.latitude,
                 longitude: userLocation.longitude,
-                cityName: $('#cityName').text() // Store the current city name as well
+                cityName: $('#cityName').text()
             }));
 
             // Populate the respective table with the fetched data
@@ -1768,9 +1699,8 @@ if (now - lastApiCallData.timestamp < cacheDuration) {
             globalWeatherData[model] = weatherData;
 
         } catch (error) {
-            // Log the error if fetching the data fails
             console.error(`Failed to fetch data for model ${model}`, error);
-            // Optionally, handle the error in the UI
+            return;
         }
     }
 
@@ -2092,10 +2022,10 @@ document.getElementById('cityNameContainer').style.display = 'none';
             // Invalidate the cache by updating the timestamp for both models.
             ['gfs', 'icon'].forEach(model => {
                 const lastApiCallKey = `lastApiCall_${model}_${userLocation.latitude}_${userLocation.longitude}`;
-                // Manually adjust the timestamp to be older than the cache duration.
+                // Manually adjust the timestamp to be older than the longest cache duration (ICON = 6hrs).
                 localStorage.setItem(lastApiCallKey, JSON.stringify({
-                    timestamp: Date.now() - 1000 * 60 * 60,
-                    data: {} // You can set the data to an empty object or the most recent data as per your preference.
+                    timestamp: Date.now() - 7 * 60 * 60 * 1000, // 7 hours ago — exceeds all cache durations
+                    data: {}
                 }));
             });
             document.getElementById('forecastLengthPopup').style.display = 'none';
