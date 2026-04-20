@@ -216,13 +216,13 @@ def main() -> int:
 
     feed = fetch_json(FEED_URL)
 
+    # Post-NMS migration the feed no longer tags Palm Beach TFRs as "VIP" -
+    # they land under SECURITY, SPECIAL, etc. Filter on facility + description
+    # keywords and keep all types.
     def is_wpb_tfr(n: dict) -> bool:
         facility = n.get("facility", "")
-        tfr_type = n.get("type", "")
         desc = n.get("description", "").lower()
         if facility.upper() != "ZMA":
-            return False
-        if tfr_type.upper() != "VIP":
             return False
         return (
             "west palm beach" in desc
@@ -244,22 +244,25 @@ def main() -> int:
         if not notam_id:
             continue
 
+        # The NMS feed no longer exposes dateEffective/dateExpire, and the
+        # legacy detail_<id>.xml endpoint may or may not still work. Try it
+        # best-effort and fall back to the feed entry so we still alert.
+        eff_dt = None
+        exp_dt = None
         try:
             detail = fetch_detail(notam_id)
+            eff_dt = parse_utc(detail.get("effective"))
+            exp_dt = parse_utc(detail.get("expires"))
         except Exception as exc:
-            print(f"Failed detail fetch for {notam_id}: {exc}")
-            continue
+            print(f"Detail fetch unavailable for {notam_id}: {exc}")
 
-        eff_dt = parse_utc(detail.get("effective"))
-        exp_dt = parse_utc(detail.get("expires"))
-
-        if not exp_dt or exp_dt <= now:
-            # expired or missing expiration; ignore
+        if exp_dt and exp_dt <= now:
+            # definitively expired
             continue
 
         current_active[notam_id] = {
             "effective": eff_dt.isoformat() if eff_dt else None,
-            "expires": exp_dt.isoformat(),
+            "expires": exp_dt.isoformat() if exp_dt else None,
             "description": n.get("description", "").strip(),
             "type": n.get("type", "?"),
         }
@@ -267,7 +270,7 @@ def main() -> int:
         if notam_id not in seen:
             desc = n.get("description", "").strip()
             start_str = format_et(eff_dt, "Effective Immediately")
-            end_str = format_et(exp_dt)
+            end_str = format_et(exp_dt, "See description")
             link = (
                 f"https://tfr.faa.gov/tfr3/?page=detail_{notam_id.replace('/', '_')}"
             )
@@ -279,19 +282,17 @@ def main() -> int:
             )
             seen[notam_id] = current_active[notam_id]
         else:
-            # refresh stored info in case effective/expiration changed
             seen[notam_id].update(current_active[notam_id])
 
     # Find revocations: previously seen, not expired, now missing from feed
     for notam_id, info in list(seen.items()):
         exp_dt = parse_utc(info.get("expires"))
         if exp_dt and exp_dt <= now:
-            # naturally expired, just drop from state
             seen.pop(notam_id, None)
             continue
         if notam_id not in current_active:
             start = format_et(parse_utc(info.get("effective")), "Effective Immediately")
-            until = format_et(parse_utc(info.get("expires")))
+            until = format_et(parse_utc(info.get("expires")), "See description")
             revoke_msgs.append(
                 f"- {notam_id} revoked before expiration\n"
                 f"  Was: {start} to {until}"
