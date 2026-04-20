@@ -1,5 +1,6 @@
 import datetime
 from zoneinfo import ZoneInfo
+import gzip
 import http.cookiejar
 import json
 import os
@@ -9,6 +10,7 @@ import sys
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+import zlib
 
 FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
 TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -36,22 +38,54 @@ def _build_opener() -> urllib.request.OpenerDirector:
     return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
 
 
+BROWSER_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "application/json,text/xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate",
+    "Connection": "keep-alive",
+}
+
+
 def _open(url: str, timeout: int = 15):
     opener = _build_opener()
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers=BROWSER_HEADERS)
     return opener.open(req, timeout=timeout)
+
+
+def _read_body(resp) -> bytes:
+    raw = resp.read()
+    encoding = (resp.headers.get("Content-Encoding") or "").lower()
+    if encoding == "gzip":
+        return gzip.decompress(raw)
+    if encoding == "deflate":
+        try:
+            return zlib.decompress(raw)
+        except zlib.error:
+            return zlib.decompress(raw, -zlib.MAX_WBITS)
+    return raw
 
 
 def fetch_json(url: str):
     with _open(url) as resp:
-        return json.loads(resp.read().decode())
+        body = _read_body(resp)
+    try:
+        return json.loads(body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        snippet = body[:500].decode("utf-8", errors="replace")
+        print(
+            f"fetch_json failed to parse response from {url}: {exc}\n"
+            f"  Body length: {len(body)}\n"
+            f"  First 500 bytes: {snippet!r}"
+        )
+        raise
 
 
 def fetch_detail(notam_id: str):
     url_id = notam_id.replace("/", "_")
     url = f"https://tfr.faa.gov/download/detail_{url_id}.xml"
     with _open(url) as resp:
-        xml_text = resp.read()
+        xml_text = _read_body(resp)
     root = ET.fromstring(xml_text)
     eff = root.find(".//dateEffective")
     exp = root.find(".//dateExpire")
