@@ -12,7 +12,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 import zlib
 
-FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList"
+FEED_URL = "https://tfr.faa.gov/tfr3/export/json"
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 STATE_FILE = Path("TFRNotifier/state/last_wpb.json")
