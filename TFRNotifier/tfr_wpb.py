@@ -12,7 +12,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 import zlib
 
-FEED_URL = "https://tfr.faa.gov/tfr3/export/json?button1="
+FEED_URL = "https://tfr.faa.gov/tfrapi/exportTfrList?button1="
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 STATE_FILE = Path("TFRNotifier/state/last_wpb.json")
@@ -99,11 +99,11 @@ def fetch_json(url: str, attempts: int = 3):
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             last_exc = exc
             referer = url  # next try looks like a reload of the same page
-    text = last_body.decode("utf-8", errors="replace")
+    snippet = last_body[:500].decode("utf-8", errors="replace")
     print(
         f"fetch_json failed to parse response from {url} after {attempts} attempts: {last_exc}\n"
         f"  Body length: {len(last_body)}\n"
-        f"  Full body:\n{text}"
+        f"  First 500 bytes: {snippet!r}"
     )
     assert last_exc is not None
     raise last_exc
