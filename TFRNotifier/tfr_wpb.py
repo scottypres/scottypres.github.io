@@ -99,11 +99,11 @@ def fetch_json(url: str, attempts: int = 3):
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             last_exc = exc
             referer = url  # next try looks like a reload of the same page
-    snippet = last_body[:500].decode("utf-8", errors="replace")
+    text = last_body.decode("utf-8", errors="replace")
     print(
         f"fetch_json failed to parse response from {url} after {attempts} attempts: {last_exc}\n"
         f"  Body length: {len(last_body)}\n"
-        f"  First 500 bytes: {snippet!r}"
+        f"  Full body:\n{text}"
     )
     assert last_exc is not None
     raise last_exc
