@@ -1,5 +1,6 @@
 import datetime
 from zoneinfo import ZoneInfo
+import http.cookiejar
 import json
 import os
 from pathlib import Path
@@ -17,19 +18,39 @@ ET_ZONE = ZoneInfo("America/New_York")
 
 TZ_RE = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
 
+USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+)
+
 print("Python cwd:", os.getcwd())
 print("Files:", os.listdir("."))
 print("STATE_FILE real path:", STATE_FILE.resolve())
 
+
+def _build_opener() -> urllib.request.OpenerDirector:
+    # The FAA TFR site issues 302s that set session cookies; without a cookie
+    # jar urllib keeps hitting the redirect and bails with an infinite-loop
+    # error. Share one opener per request so cookies persist through redirects.
+    jar = http.cookiejar.CookieJar()
+    return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+
+
+def _open(url: str, timeout: int = 15):
+    opener = _build_opener()
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    return opener.open(req, timeout=timeout)
+
+
 def fetch_json(url: str):
-    with urllib.request.urlopen(url, timeout=15) as resp:
+    with _open(url) as resp:
         return json.loads(resp.read().decode())
 
 
 def fetch_detail(notam_id: str):
     url_id = notam_id.replace("/", "_")
     url = f"https://tfr.faa.gov/download/detail_{url_id}.xml"
-    with urllib.request.urlopen(url, timeout=15) as resp:
+    with _open(url) as resp:
         xml_text = resp.read()
     root = ET.fromstring(xml_text)
     eff = root.find(".//dateEffective")
