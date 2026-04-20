@@ -83,19 +83,30 @@ def _read_body(resp) -> bytes:
     return raw
 
 
-def fetch_json(url: str):
-    with _open(url, referer=TFR3_HOME) as resp:
-        body = _read_body(resp)
-    try:
-        return json.loads(body.decode("utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        snippet = body[:500].decode("utf-8", errors="replace")
-        print(
-            f"fetch_json failed to parse response from {url}: {exc}\n"
-            f"  Body length: {len(body)}\n"
-            f"  First 500 bytes: {snippet!r}"
-        )
-        raise
+def fetch_json(url: str, attempts: int = 3):
+    # The FAA ack page only flips to JSON on the second hit within the same
+    # session (the first request is the ack that sets server-side state).
+    # Retry up to `attempts` times, using the previous response URL as the
+    # Referer so each retry looks like a page reload.
+    last_body = b""
+    last_exc: Exception | None = None
+    referer = TFR3_HOME
+    for attempt in range(1, attempts + 1):
+        with _open(url, referer=referer) as resp:
+            last_body = _read_body(resp)
+        try:
+            return json.loads(last_body.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            last_exc = exc
+            referer = url  # next try looks like a reload of the same page
+    snippet = last_body[:500].decode("utf-8", errors="replace")
+    print(
+        f"fetch_json failed to parse response from {url} after {attempts} attempts: {last_exc}\n"
+        f"  Body length: {len(last_body)}\n"
+        f"  First 500 bytes: {snippet!r}"
+    )
+    assert last_exc is not None
+    raise last_exc
 
 
 def fetch_detail(notam_id: str):
