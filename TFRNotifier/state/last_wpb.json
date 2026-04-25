@@ -5,12 +5,6 @@
       "effective": "2025-10-20T12:00:00+00:00",
       "expires": "2026-10-20T12:00:00+00:00",
       "type": "SECURITY"
-    },
-    "6/4770": {
-      "description": "West Palm Beach, FL, Friday, April 24, 2026 through Saturday, April 25, 2026 Local",
-      "effective": "2026-04-24T21:00:00+00:00",
-      "expires": "2026-04-25T19:00:00+00:00",
-      "type": "VIP"
     }
   }
 }
