@@ -17,6 +17,18 @@
       "effective": "2026-06-01T04:00:00+00:00",
       "expires": "2026-07-21T03:59:00+00:00",
       "type": "SECURITY"
+    },
+    "6/7889": {
+      "description": "Palm Beach Gardens, FL",
+      "effective": null,
+      "expires": "2026-07-21T03:59:00+00:00",
+      "type": "SECURITY"
+    },
+    "6/7899": {
+      "description": "Palm Beach Gardens, FL",
+      "effective": null,
+      "expires": "2026-07-21T03:59:00+00:00",
+      "type": "SECURITY"
     }
   }
 }
