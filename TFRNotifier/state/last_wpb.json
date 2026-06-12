@@ -6,18 +6,6 @@
       "expires": "2026-10-20T12:00:00+00:00",
       "type": "SECURITY"
     },
-    "6/4133": {
-      "description": "PALM BEACH GARDENS, FL, Monday, June 1, 2026 through Monday, July 20, 2026 Local",
-      "effective": "2026-06-01T04:00:00+00:00",
-      "expires": "2026-07-21T03:59:00+00:00",
-      "type": "SECURITY"
-    },
-    "6/4150": {
-      "description": "Palm Beach Gardens, FL, Monday, June 1, 2026 through Monday, July 20, 2026 Local",
-      "effective": "2026-06-01T04:00:00+00:00",
-      "expires": "2026-07-21T03:59:00+00:00",
-      "type": "SECURITY"
-    },
     "6/7889": {
       "description": "Palm Beach Gardens, FL",
       "effective": null,
