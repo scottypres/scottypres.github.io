@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   poll:
@@ -61,3 +62,13 @@ jobs:
           else
             echo "No state change to commit."
           fi
+
+      # GitHub auto-disables scheduled workflows after 60 days without repo
+      # activity (bot commits via GITHUB_TOKEN don't count). Re-enabling the
+      # workflow via the API on every run resets that timer.
+      - name: Keep scheduled workflow enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X PUT \
+            "repos/${{ github.repository }}/actions/workflows/tfr-notify.yml/enable"
